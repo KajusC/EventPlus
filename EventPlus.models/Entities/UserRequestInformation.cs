@@ -7,7 +7,7 @@ public partial class UserRequestInformation
 {
     public int IdUserRequestInformation { get; set; }
 
-    public string? Klausimas { get; set; }
+    public string? Question { get; set; }
 
-    public string? Atsakas { get; set; }
+    public string? Response { get; set; }
 }

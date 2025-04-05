@@ -40,7 +40,7 @@ public partial class EventPlusContext : DbContext
 
     public virtual DbSet<EventPerformer> RenginioatlikÄJas { get; set; }
 
-    public virtual DbSet<EventSponsors> Renginiopartneris { get; set; }
+    public virtual DbSet<EventPartner> Renginiopartneris { get; set; }
 
     public virtual DbSet<Seating> Seatings { get; set; }
 
@@ -59,10 +59,6 @@ public partial class EventPlusContext : DbContext
     public virtual DbSet<UserType> UserTypes { get; set; }
 
     public virtual DbSet<Userrequest> Userrequests { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost;Database=EventPlus;Username=postgres;Password=postgres");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -167,10 +163,10 @@ public partial class EventPlusContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("name");
             entity.Property(e => e.Price).HasColumnName("price");
-            entity.Property(e => e.TurimaÄæranga).HasColumnName("turima_ÄÆranga");
+            entity.Property(e => e.Equipment).HasColumnName("turima_ÄÆranga");
 
-            entity.HasOne(d => d.TurimaÄærangaNavigation).WithMany(p => p.EventLocations)
-                .HasForeignKey(d => d.TurimaÄæranga)
+            entity.HasOne(d => d.EquipmentNavigation).WithMany(p => p.EventLocations)
+                .HasForeignKey(d => d.Equipment)
                 .HasConstraintName("event_location_turima_ÄÆranga_fkey");
         });
 
@@ -290,13 +286,13 @@ public partial class EventPlusContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("fk_eventid_event");
 
-            entity.HasOne(d => d.FkEventidEventNavigation).WithOne(p => p.RenginioatlikÄJa)
+            entity.HasOne(d => d.FkEventidEventNavigation).WithOne(p => p.EventPerformer)
                 .HasForeignKey<EventPerformer>(d => d.FkEventidEvent)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("renginioatlikÄ—jas_fk_eventid_event_fkey");
         });
 
-        modelBuilder.Entity<EventSponsors>(entity =>
+        modelBuilder.Entity<EventPartner>(entity =>
         {
             entity.HasKey(e => e.FkEventidEvent).HasName("renginiopartneris_pkey");
 
@@ -306,8 +302,8 @@ public partial class EventPlusContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("fk_eventid_event");
 
-            entity.HasOne(d => d.FkEventidEventNavigation).WithOne(p => p.Renginiopartneri)
-                .HasForeignKey<EventSponsors>(d => d.FkEventidEvent)
+            entity.HasOne(d => d.FkEventidEventNavigation).WithOne(p => p.EventPartner)
+                .HasForeignKey<EventPartner>(d => d.FkEventidEvent)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("renginiopartneris_fk_eventid_event_fkey");
         });
@@ -463,10 +459,10 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("user_request_information");
 
             entity.Property(e => e.IdUserRequestInformation).HasColumnName("id_user_request_information");
-            entity.Property(e => e.Atsakas)
+            entity.Property(e => e.Response)
                 .HasMaxLength(255)
                 .HasColumnName("atsakas");
-            entity.Property(e => e.Klausimas)
+            entity.Property(e => e.Question)
                 .HasMaxLength(255)
                 .HasColumnName("klausimas");
         });

@@ -1,5 +1,8 @@
 
+using eventplus.models.EventRepository.Repository;
+using EventPlus.Server.EventBase.Logic;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
@@ -16,9 +19,20 @@ namespace EventPlus.Server
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            var app = builder.Build();
+            builder.Services.AddDbContext<eventplus.models.context.EventPlusContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            Console.WriteLine(app.Environment.IsDevelopment());
+            // Repositories
+            builder.Services.AddScoped<IEventRepository, EventRepository>();
+
+            // Logic
+            builder.Services.AddScoped<IEventLogic, EventLogic>();
+
+
+            // AutoMapper
+            builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            var app = builder.Build();
 
             if (builder.Environment.IsDevelopment())
             {

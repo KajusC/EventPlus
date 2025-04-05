@@ -13,6 +13,7 @@
     <ProjectReference Include="..\eventplus.client\eventplus.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="..\eventplus.models\eventplus.models.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -21,11 +21,11 @@ public partial class EventLocation
 
     public double? Price { get; set; }
 
-    public int? TurimaÄæranga { get; set; }
+    public int? Equipment { get; set; }
 
     public virtual Event? Event { get; set; }
 
     public virtual ICollection<Sector> Sectors { get; set; } = new List<Sector>();
 
-    public virtual Equipment? TurimaÄærangaNavigation { get; set; }
+    public virtual Equipment? EquipmentNavigation { get; set; }
 }

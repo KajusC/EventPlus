@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace eventplus.models.Entities;
 
-public partial class Event
+public class Event
 {
     public int IdEvent { get; set; }
 
@@ -11,9 +11,9 @@ public partial class Event
 
     public string? Description { get; set; }
 
-    public DateOnly? StartDate { get; set; }
+    public DateTime? StartDate { get; set; }
 
-    public DateOnly? EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
 
     public int? MaxTicketCount { get; set; }
 
@@ -31,9 +31,9 @@ public partial class Event
 
     public virtual Organiser FkOrganiseridUserNavigation { get; set; } = null!;
 
-    public virtual EventPerformer? RenginioatlikÄJa { get; set; }
+    public virtual EventPerformer? EventPerformer { get; set; }
 
-    public virtual EventSponsors? Renginiopartneri { get; set; }
+    public virtual EventPartner? EventPartner { get; set; }
 
     public virtual ICollection<SectorPrice> SectorPrices { get; set; } = new List<SectorPrice>();
 

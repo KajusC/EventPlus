@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace eventplus.models.Entities;
 
-public partial class EventSponsors
+public partial class EventPartner
 {
     public int FkEventidEvent { get; set; }
 
