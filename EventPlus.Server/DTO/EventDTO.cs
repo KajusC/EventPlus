@@ -1,4 +1,4 @@
-﻿namespace EventPlus.Server.EventBase.DTO
+﻿namespace EventPlus.Server.DTO
 {
     public class EventDTO
     {

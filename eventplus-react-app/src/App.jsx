@@ -8,11 +8,13 @@ import EventView from './pages/events/EventView';
 import EventList from './pages/events/EventList';
 import EventInsert from './pages/events/EventInsert';
 import EventEdit from './pages/events/EventEdit';
+import Navbar from './components/common/Navbar';
 
 function App() {
     return (
         <Router>
-            {/* <Header /> */}
+            <Navbar />
+            <Header />
             <Navigation />
             <Routes>
                 <Route path="/" element={<MainMenu />} />

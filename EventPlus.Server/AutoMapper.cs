@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using eventplus.models.Entities;
-using EventPlus.Server.EventBase.DTO;
+using EventPlus.Server.DTO;
 
 namespace EventPlus.Server
 {

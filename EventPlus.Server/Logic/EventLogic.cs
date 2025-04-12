@@ -1,8 +1,9 @@
 ﻿using AutoMapper;
 using eventplus.models.EventRepository.Repository;
-using EventPlus.Server.EventBase.DTO;
+using EventPlus.Server.DTO;
+using EventPlus.Server.Logic.Interface;
 
-namespace EventPlus.Server.EventBase.Logic
+namespace EventPlus.Server.Logic
 {
     public class EventLogic : IEventLogic
     {

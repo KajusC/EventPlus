@@ -5,7 +5,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #151E3F;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -24,10 +24,19 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  /* Remove display: flex and place-items: center */
+  /* These properties are causing layout issues */
+  display: block; /* Change to block display */
+  width: 100%; /* Ensure body takes full width */
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 h1 {
@@ -52,6 +61,12 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Add footer styling to ensure it stays at bottom */
+footer {
+  width: 100%;
+  margin-top: auto;
 }
 
 @media (prefers-color-scheme: light) {

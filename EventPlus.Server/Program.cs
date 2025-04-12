@@ -1,6 +1,7 @@
 
 using eventplus.models.EventRepository.Repository;
-using EventPlus.Server.EventBase.Logic;
+using EventPlus.Server.Logic;
+using EventPlus.Server.Logic.Interface;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -18,6 +19,14 @@ namespace EventPlus.Server
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowSpecificOrigin",
+                    builder => builder.WithOrigins("https://localhost:5173")
+                                      .AllowAnyHeader()
+                                      .AllowAnyMethod());
+            });
 
             builder.Services.AddDbContext<eventplus.models.context.EventPlusContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -46,6 +55,8 @@ namespace EventPlus.Server
 
             app.UseHttpsRedirection();
             app.UseAuthorization();
+
+            app.UseCors("AllowSpecificOrigin");
 
             app.MapControllers();
             app.MapFallbackToFile("/index.html");

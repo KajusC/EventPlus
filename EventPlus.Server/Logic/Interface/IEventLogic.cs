@@ -1,7 +1,7 @@
 ﻿using eventplus.models.Entities;
-using EventPlus.Server.EventBase.DTO;
+using EventPlus.Server.DTO;
 
-namespace EventPlus.Server.EventBase.Logic
+namespace EventPlus.Server.Logic.Interface
 {
     public interface IEventLogic
     {

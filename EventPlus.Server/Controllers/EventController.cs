@@ -1,11 +1,11 @@
-﻿using EventPlus.Server.EventBase.DTO;
-using EventPlus.Server.EventBase.Logic;
+﻿using EventPlus.Server.DTO;
+using EventPlus.Server.Logic.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace EventPlus.Server.EventBase.Controller
+namespace EventPlus.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
