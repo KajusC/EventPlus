@@ -352,7 +352,7 @@ public partial class EventPlusContext : DbContext
 
             entity.HasOne(d => d.FkEventLocationidEventLocationNavigation).WithMany(p => p.Sectors)
                 .HasForeignKey(d => d.FkEventLocationidEventLocation)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("sector_fk_event_locationid_event_location_fkey");
         });
 
@@ -370,12 +370,12 @@ public partial class EventPlusContext : DbContext
 
             entity.HasOne(d => d.FkEventidEventNavigation).WithMany(p => p.SectorPrices)
                 .HasForeignKey(d => d.FkEventidEvent)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("sector_price_fk_eventid_event_fkey");
 
             entity.HasOne(d => d.Sector).WithMany(p => p.SectorPrices)
                 .HasForeignKey(d => new { d.FkSectoridSector, d.FkSectorfkEventLocationidEventLocation })
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("sector_price_fk_sectorid_sector_fk_sectorfk_event_location_fkey");
         });
 
@@ -389,6 +389,7 @@ public partial class EventPlusContext : DbContext
             entity.Property(e => e.FkEventidEvent).HasColumnName("fk_eventid_event");
             entity.Property(e => e.FkUseridUser).HasColumnName("fk_userid_user");
             entity.Property(e => e.GenerationDate).HasColumnName("generation_date");
+            entity.Property(e => e.ScannedDate).HasColumnName("scanned_date");
             entity.Property(e => e.Price).HasColumnName("price");
             entity.Property(e => e.QrCode)
                 .HasMaxLength(255)
@@ -400,7 +401,7 @@ public partial class EventPlusContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("ticket_fk_eventid_event_fkey");
 
-            entity.HasOne(d => d.FkUseridUserNavigation).WithMany(p => p.Tickets)
+            entity.HasOne(d => d.User).WithMany(p => p.Tickets)
                 .HasForeignKey(d => d.FkUseridUser)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("ticket_fk_userid_user_fkey");
@@ -408,6 +409,16 @@ public partial class EventPlusContext : DbContext
             entity.HasOne(d => d.TypeNavigation).WithMany(p => p.Tickets)
                 .HasForeignKey(d => d.Type)
                 .HasConstraintName("ticket_type_fkey");
+        });
+
+        modelBuilder.Entity<TicketStatus>(entity =>
+        {
+            entity.HasKey(e => e.IdTicketStatus).HasName("ticket_status_pkey");
+            entity.ToTable("ticket_status");
+            entity.Property(e => e.IdTicketStatus).HasColumnName("id_ticket_status");
+            entity.Property(e => e.Name)
+                .HasMaxLength(255)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<TicketType>(entity =>
@@ -494,6 +505,121 @@ public partial class EventPlusContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("userrequest_fk_userid_user_fkey");
         });
+
+        modelBuilder.Entity<Equipment>().HasData(
+        new Equipment { IdEquipment = 1, Name = "Music" },
+        new Equipment { IdEquipment = 2, Name = "Projector" },
+        new Equipment { IdEquipment = 3, Name = "Microphone" },
+        new Equipment { IdEquipment = 4, Name = "TV" }
+    );
+
+        modelBuilder.Entity<TicketStatus>().HasData(
+            new TicketStatus { IdTicketStatus = 1, Name = "Valid" },
+            new TicketStatus { IdTicketStatus = 2, Name = "Invalid" },
+            new TicketStatus { IdTicketStatus = 3, Name = "Scanned" }
+        );
+
+        modelBuilder.Entity<Category>().HasData(
+            new Category { IdCategory = 1, Name = "Music" },
+            new Category { IdCategory = 2, Name = "Conference" },
+            new Category { IdCategory = 3, Name = "Sports" }
+        );
+
+        modelBuilder.Entity<Loyalty>().HasData(
+            new Loyalty { IdLoyalty = 1, Points = 0 }
+        );
+
+        modelBuilder.Entity<User>().HasData(
+            new User
+            {
+                IdUser = 1,
+                Name = "Event",
+                Surname = "Organizer",
+                Username = "organizer",
+                Password = "password123",
+                FkLoyaltyidLoyalty = 1,
+                LastLogin = DateOnly.FromDateTime(DateTime.Now)
+            }
+        );
+
+        modelBuilder.Entity<Organiser>().HasData(
+            new Organiser
+            {
+                IdUser = 1,
+                FollowerAmount = 0,
+                Rating = 5.0
+            }
+        );
+
+        modelBuilder.Entity<EventLocation>().HasData(
+            new EventLocation
+            {
+                IdEventLocation = 1,
+                Name = "Conference Center",
+                Address = "123 Main St",
+                City = "Boston",
+                Country = "USA",
+                Capacity = 500,
+                Contacts = "contact@venue.com",
+                Price = 1000.0,
+                Equipment = 2 // Projector
+            }
+        );
+
+        modelBuilder.Entity<Event>().HasData(
+            new Event
+            {
+                IdEvent = 1,
+                Name = "Tech Conference 2025",
+                Description = "Annual technology conference",
+                StartDate = new DateTime(2025, 6, 15, 9, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 6, 17, 17, 0, 0, DateTimeKind.Utc),
+                MaxTicketCount = 500,
+                Category = 2, // Conference
+                FkEventLocationidEventLocation = 1,
+                FkOrganiseridUser = 1
+            }
+        );
+
+
+        modelBuilder.Entity<Sector>().HasData(
+            new Sector
+            {
+                IdSector = 1,
+                FkEventLocationidEventLocation = 1,
+                Name = "Main Hall"
+            },
+            new Sector
+            {
+                IdSector = 2,
+                FkEventLocationidEventLocation = 1,
+                Name = "VIP Section"
+            }
+        );
+
+        modelBuilder.Entity<SectorPrice>().HasData(
+            new SectorPrice
+            {
+                IdSectorPrice = 1,
+                Price = 50.0,
+                FkSectoridSector = 1,
+                FkSectorfkEventLocationidEventLocation = 1,
+                FkEventidEvent = 1
+            },
+            new SectorPrice
+            {
+                IdSectorPrice = 2,
+                Price = 150.0,
+                FkSectoridSector = 2,
+                FkSectorfkEventLocationidEventLocation = 1,
+                FkEventidEvent = 1
+            }
+        );
+
+        modelBuilder.Entity<TicketType>().HasData(
+            new TicketType { IdTicketType = 1, Name = "Standard" },
+            new TicketType { IdTicketType = 2, Name = "VIP" }
+        );
 
         OnModelCreatingPartial(modelBuilder);
     }

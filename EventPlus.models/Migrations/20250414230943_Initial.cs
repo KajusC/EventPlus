@@ -4,10 +4,12 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace eventplus.models.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -92,6 +94,19 @@ namespace eventplus.models.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("performer_pkey", x => x.id_performer);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ticket_status",
+                columns: table => new
+                {
+                    id_ticket_status = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("ticket_status_pkey", x => x.id_ticket_status);
                 });
 
             migrationBuilder.CreateTable(
@@ -198,7 +213,8 @@ namespace eventplus.models.Migrations
                         name: "sector_fk_event_locationid_event_location_fkey",
                         column: x => x.fk_event_locationid_event_location,
                         principalTable: "event_location",
-                        principalColumn: "id_event_location");
+                        principalColumn: "id_event_location",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -368,12 +384,14 @@ namespace eventplus.models.Migrations
                         name: "sector_price_fk_eventid_event_fkey",
                         column: x => x.fk_eventid_event,
                         principalTable: "event",
-                        principalColumn: "id_event");
+                        principalColumn: "id_event",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "sector_price_fk_sectorid_sector_fk_sectorfk_event_location_fkey",
                         columns: x => new { x.fk_sectorid_sector, x.fk_sectorfk_event_locationid_event_location },
                         principalTable: "sector",
-                        principalColumns: new[] { "id_sector", "fk_event_locationid_event_location" });
+                        principalColumns: new[] { "id_sector", "fk_event_locationid_event_location" },
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -384,14 +402,21 @@ namespace eventplus.models.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     price = table.Column<double>(type: "double precision", nullable: true),
                     generation_date = table.Column<DateOnly>(type: "date", nullable: true),
+                    scanned_date = table.Column<DateOnly>(type: "date", nullable: true),
                     qr_code = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     type = table.Column<int>(type: "integer", nullable: true),
                     fk_userid_user = table.Column<int>(type: "integer", nullable: false),
-                    fk_eventid_event = table.Column<int>(type: "integer", nullable: false)
+                    fk_eventid_event = table.Column<int>(type: "integer", nullable: false),
+                    TicketStatusesIdTicketStatus = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("ticket_pkey", x => x.id_ticket);
+                    table.ForeignKey(
+                        name: "FK_ticket_ticket_status_TicketStatusesIdTicketStatus",
+                        column: x => x.TicketStatusesIdTicketStatus,
+                        principalTable: "ticket_status",
+                        principalColumn: "id_ticket_status");
                     table.ForeignKey(
                         name: "ticket_fk_eventid_event_fkey",
                         column: x => x.fk_eventid_event,
@@ -434,6 +459,89 @@ namespace eventplus.models.Migrations
                         column: x => x.fk_ticketid_ticket,
                         principalTable: "ticket",
                         principalColumn: "id_ticket");
+                });
+
+            migrationBuilder.InsertData(
+                table: "category",
+                columns: new[] { "id_category", "name" },
+                values: new object[,]
+                {
+                    { 1, "Music" },
+                    { 2, "Conference" },
+                    { 3, "Sports" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "equipment",
+                columns: new[] { "id_equipment", "name" },
+                values: new object[,]
+                {
+                    { 1, "Music" },
+                    { 2, "Projector" },
+                    { 3, "Microphone" },
+                    { 4, "TV" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "loyalty",
+                columns: new[] { "id_loyalty", "points" },
+                values: new object[] { 1, 0 });
+
+            migrationBuilder.InsertData(
+                table: "ticket_status",
+                columns: new[] { "id_ticket_status", "name" },
+                values: new object[,]
+                {
+                    { 1, "Valid" },
+                    { 2, "Invalid" },
+                    { 3, "Scanned" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "ticket_type",
+                columns: new[] { "id_ticket_type", "name" },
+                values: new object[,]
+                {
+                    { 1, "Standard" },
+                    { 2, "VIP" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "User",
+                columns: new[] { "id_user", "fk_loyaltyid_loyalty", "last_login", "name", "password", "surname", "username" },
+                values: new object[] { 1, 1, new DateOnly(2025, 4, 15), "Event", "password123", "Organizer", "organizer" });
+
+            migrationBuilder.InsertData(
+                table: "event_location",
+                columns: new[] { "id_event_location", "address", "capacity", "city", "contacts", "country", "turima_ÄÆranga", "name", "price" },
+                values: new object[] { 1, "123 Main St", 500, "Boston", "contact@venue.com", "USA", 2, "Conference Center", 1000.0 });
+
+            migrationBuilder.InsertData(
+                table: "organiser",
+                columns: new[] { "id_user", "follower_amount", "rating" },
+                values: new object[] { 1, 0, 5.0 });
+
+            migrationBuilder.InsertData(
+                table: "sector",
+                columns: new[] { "fk_event_locationid_event_location", "id_sector", "name" },
+                values: new object[,]
+                {
+                    { 1, 1, "Main Hall" },
+                    { 1, 2, "VIP Section" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "event",
+                columns: new[] { "id_event", "category", "description", "end_date", "fk_event_locationid_event_location", "fk_organiserid_user", "max_ticket_count", "name", "start_date" },
+                values: new object[] { 1, 2, "Annual technology conference", new DateTime(2025, 6, 17, 17, 0, 0, 0, DateTimeKind.Utc), 1, 1, 500, "Tech Conference 2025", new DateTime(2025, 6, 15, 9, 0, 0, 0, DateTimeKind.Utc) });
+
+            migrationBuilder.InsertData(
+                table: "sector_price",
+                columns: new[] { "id_sector_price", "fk_eventid_event", "fk_sectorfk_event_locationid_event_location", "fk_sectorid_sector", "price" },
+                values: new object[,]
+                {
+                    { 1, 1, 1, 1, 50.0 },
+                    { 2, 1, 1, 2, 150.0 }
                 });
 
             migrationBuilder.CreateIndex(
@@ -509,6 +617,11 @@ namespace eventplus.models.Migrations
                 column: "fk_userid_user");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ticket_TicketStatusesIdTicketStatus",
+                table: "ticket",
+                column: "TicketStatusesIdTicketStatus");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ticket_type",
                 table: "ticket",
                 column: "type");
@@ -564,6 +677,9 @@ namespace eventplus.models.Migrations
 
             migrationBuilder.DropTable(
                 name: "sector");
+
+            migrationBuilder.DropTable(
+                name: "ticket_status");
 
             migrationBuilder.DropTable(
                 name: "event");

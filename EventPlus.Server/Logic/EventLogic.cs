@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using eventplus.models.EventRepository.Repository;
+using eventplus.models.Repository.EventRepository;
 using EventPlus.Server.DTO;
 using EventPlus.Server.Logic.Interface;
 
@@ -61,8 +61,38 @@ namespace EventPlus.Server.Logic
             {
                 throw new ArgumentNullException(nameof(eventEntity));
             }
+
+            if (!ValidateEventData(eventEntity))
+            {
+                return false;
+            }
+
             var eventEntityMapped = _mapper.Map<eventplus.models.Entities.Event>(eventEntity);
             return await _eventRepository.UpdateEventAsync(eventEntityMapped);
+        }
+
+        private static bool ValidateEventData(EventDTO eventDTO)
+        {
+            if (string.IsNullOrWhiteSpace(eventDTO.Name))
+            {
+                return false;
+            }
+            if (eventDTO.StartDate == null || eventDTO.EndDate == null)
+            {
+                return false;
+            }
+            if (eventDTO.StartDate >= eventDTO.EndDate)
+            {
+                return false;
+            }
+
+            if (eventDTO.MaxTicketCount < 0)
+            {
+                return false;
+            }
+
+
+            return true;
         }
     }
 }

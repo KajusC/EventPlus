@@ -12,8 +12,8 @@ using eventplus.models.context;
 namespace eventplus.models.Migrations
 {
     [DbContext(typeof(EventPlusContext))]
-    [Migration("20250412180523_initial")]
-    partial class initial
+    [Migration("20250414230943_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -56,6 +56,23 @@ namespace eventplus.models.Migrations
                         .HasName("category_pkey");
 
                     b.ToTable("category", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdCategory = 1,
+                            Name = "Music"
+                        },
+                        new
+                        {
+                            IdCategory = 2,
+                            Name = "Conference"
+                        },
+                        new
+                        {
+                            IdCategory = 3,
+                            Name = "Sports"
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.Equipment", b =>
@@ -77,6 +94,28 @@ namespace eventplus.models.Migrations
                         .HasName("equipment_pkey");
 
                     b.ToTable("equipment", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdEquipment = 1,
+                            Name = "Music"
+                        },
+                        new
+                        {
+                            IdEquipment = 2,
+                            Name = "Projector"
+                        },
+                        new
+                        {
+                            IdEquipment = 3,
+                            Name = "Microphone"
+                        },
+                        new
+                        {
+                            IdEquipment = 4,
+                            Name = "TV"
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.Event", b =>
@@ -133,6 +172,20 @@ namespace eventplus.models.Migrations
                         .IsUnique();
 
                     b.ToTable("event", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdEvent = 1,
+                            Category = 2,
+                            Description = "Annual technology conference",
+                            EndDate = new DateTime(2025, 6, 17, 17, 0, 0, 0, DateTimeKind.Utc),
+                            FkEventLocationidEventLocation = 1,
+                            FkOrganiseridUser = 1,
+                            MaxTicketCount = 500,
+                            Name = "Tech Conference 2025",
+                            StartDate = new DateTime(2025, 6, 15, 9, 0, 0, 0, DateTimeKind.Utc)
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.EventLocation", b =>
@@ -187,6 +240,20 @@ namespace eventplus.models.Migrations
                     b.HasIndex("Equipment");
 
                     b.ToTable("event_location", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdEventLocation = 1,
+                            Address = "123 Main St",
+                            Capacity = 500,
+                            City = "Boston",
+                            Contacts = "contact@venue.com",
+                            Country = "USA",
+                            Equipment = 2,
+                            Name = "Conference Center",
+                            Price = 1000.0
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.EventPartner", b =>
@@ -293,6 +360,13 @@ namespace eventplus.models.Migrations
                         .HasName("loyalty_pkey");
 
                     b.ToTable("loyalty", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdLoyalty = 1,
+                            Points = 0
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.Organiser", b =>
@@ -313,6 +387,14 @@ namespace eventplus.models.Migrations
                         .HasName("organiser_pkey");
 
                     b.ToTable("organiser", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdUser = 1,
+                            FollowerAmount = 0,
+                            Rating = 5.0
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.Partner", b =>
@@ -439,6 +521,20 @@ namespace eventplus.models.Migrations
                     b.HasIndex("FkEventLocationidEventLocation");
 
                     b.ToTable("sector", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdSector = 1,
+                            FkEventLocationidEventLocation = 1,
+                            Name = "Main Hall"
+                        },
+                        new
+                        {
+                            IdSector = 2,
+                            FkEventLocationidEventLocation = 1,
+                            Name = "VIP Section"
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.SectorPrice", b =>
@@ -474,6 +570,24 @@ namespace eventplus.models.Migrations
                     b.HasIndex("FkSectoridSector", "FkSectorfkEventLocationidEventLocation");
 
                     b.ToTable("sector_price", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdSectorPrice = 1,
+                            FkEventidEvent = 1,
+                            FkSectorfkEventLocationidEventLocation = 1,
+                            FkSectoridSector = 1,
+                            Price = 50.0
+                        },
+                        new
+                        {
+                            IdSectorPrice = 2,
+                            FkEventidEvent = 1,
+                            FkSectorfkEventLocationidEventLocation = 1,
+                            FkSectoridSector = 2,
+                            Price = 150.0
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.Ticket", b =>
@@ -506,6 +620,13 @@ namespace eventplus.models.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("qr_code");
 
+                    b.Property<DateOnly?>("ScannedDate")
+                        .HasColumnType("date")
+                        .HasColumnName("scanned_date");
+
+                    b.Property<int?>("TicketStatusesIdTicketStatus")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("Type")
                         .HasColumnType("integer")
                         .HasColumnName("type");
@@ -517,9 +638,49 @@ namespace eventplus.models.Migrations
 
                     b.HasIndex("FkUseridUser");
 
+                    b.HasIndex("TicketStatusesIdTicketStatus");
+
                     b.HasIndex("Type");
 
                     b.ToTable("ticket", (string)null);
+                });
+
+            modelBuilder.Entity("eventplus.models.Entities.TicketStatus", b =>
+                {
+                    b.Property<int>("IdTicketStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id_ticket_status");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdTicketStatus"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.HasKey("IdTicketStatus")
+                        .HasName("ticket_status_pkey");
+
+                    b.ToTable("ticket_status", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdTicketStatus = 1,
+                            Name = "Valid"
+                        },
+                        new
+                        {
+                            IdTicketStatus = 2,
+                            Name = "Invalid"
+                        },
+                        new
+                        {
+                            IdTicketStatus = 3,
+                            Name = "Scanned"
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.TicketType", b =>
@@ -541,6 +702,18 @@ namespace eventplus.models.Migrations
                         .HasName("ticket_type_pkey");
 
                     b.ToTable("ticket_type", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdTicketType = 1,
+                            Name = "Standard"
+                        },
+                        new
+                        {
+                            IdTicketType = 2,
+                            Name = "VIP"
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.User", b =>
@@ -587,6 +760,18 @@ namespace eventplus.models.Migrations
                         .IsUnique();
 
                     b.ToTable("User", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            IdUser = 1,
+                            FkLoyaltyidLoyalty = 1,
+                            LastLogin = new DateOnly(2025, 4, 15),
+                            Name = "Event",
+                            Password = "password123",
+                            Surname = "Organizer",
+                            Username = "organizer"
+                        });
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.UserRequestInformation", b =>
@@ -777,6 +962,7 @@ namespace eventplus.models.Migrations
                     b.HasOne("eventplus.models.Entities.EventLocation", "FkEventLocationidEventLocationNavigation")
                         .WithMany("Sectors")
                         .HasForeignKey("FkEventLocationidEventLocation")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("sector_fk_event_locationid_event_location_fkey");
 
@@ -788,12 +974,14 @@ namespace eventplus.models.Migrations
                     b.HasOne("eventplus.models.Entities.Event", "FkEventidEventNavigation")
                         .WithMany("SectorPrices")
                         .HasForeignKey("FkEventidEvent")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("sector_price_fk_eventid_event_fkey");
 
                     b.HasOne("eventplus.models.Entities.Sector", "Sector")
                         .WithMany("SectorPrices")
                         .HasForeignKey("FkSectoridSector", "FkSectorfkEventLocationidEventLocation")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("sector_price_fk_sectorid_sector_fk_sectorfk_event_location_fkey");
 
@@ -810,11 +998,15 @@ namespace eventplus.models.Migrations
                         .IsRequired()
                         .HasConstraintName("ticket_fk_eventid_event_fkey");
 
-                    b.HasOne("eventplus.models.Entities.User", "FkUseridUserNavigation")
+                    b.HasOne("eventplus.models.Entities.User", "User")
                         .WithMany("Tickets")
                         .HasForeignKey("FkUseridUser")
                         .IsRequired()
                         .HasConstraintName("ticket_fk_userid_user_fkey");
+
+                    b.HasOne("eventplus.models.Entities.TicketStatus", "TicketStatuses")
+                        .WithMany("Tickets")
+                        .HasForeignKey("TicketStatusesIdTicketStatus");
 
                     b.HasOne("eventplus.models.Entities.TicketType", "TypeNavigation")
                         .WithMany("Tickets")
@@ -823,9 +1015,11 @@ namespace eventplus.models.Migrations
 
                     b.Navigation("FkEventidEventNavigation");
 
-                    b.Navigation("FkUseridUserNavigation");
+                    b.Navigation("TicketStatuses");
 
                     b.Navigation("TypeNavigation");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.User", b =>
@@ -905,6 +1099,11 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Entities.Ticket", b =>
                 {
                     b.Navigation("Seating");
+                });
+
+            modelBuilder.Entity("eventplus.models.Entities.TicketStatus", b =>
+                {
+                    b.Navigation("Tickets");
                 });
 
             modelBuilder.Entity("eventplus.models.Entities.TicketType", b =>

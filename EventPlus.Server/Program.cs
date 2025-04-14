@@ -1,5 +1,7 @@
-
-using eventplus.models.EventRepository.Repository;
+using eventplus.models.Repository.EventRepository;
+using eventplus.models.Repository.FeedbackRepository;
+using eventplus.models.Repository.SectorRepository;
+using eventplus.models.Repository.TicketRepository;
 using EventPlus.Server.Logic;
 using EventPlus.Server.Logic.Interface;
 using Microsoft.AspNetCore.Builder;
@@ -33,9 +35,15 @@ namespace EventPlus.Server
 
             // Repositories
             builder.Services.AddScoped<IEventRepository, EventRepository>();
+            builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+            builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+            builder.Services.AddScoped<ISectorRepository, SectorRepository>();
 
             // Logic
             builder.Services.AddScoped<IEventLogic, EventLogic>();
+            builder.Services.AddScoped<ITicketLogic, TicketLogic>();
+            builder.Services.AddScoped<IFeedbackLogic, FeedbackLogic>();
+            builder.Services.AddScoped<ISectorLogic, SectorLogic>();
 
 
             // AutoMapper

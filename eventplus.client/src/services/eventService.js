@@ -19,12 +19,13 @@ export const createEvent = async (eventData) => {
 
 export const updateEvent = async (id, eventData) => {
     console.log(eventData);
-    const response = await axios.put(API_URL, eventData);
+    const response = await axios.put(`${API_URL}/${id}`, eventData);
     console.log(response.data);
     return response.data;
 };
 
 export const deleteEvent = async (id) => {
     const response = await axios.delete(`${API_URL}/${id}`);
+    console.log(response.data);
     return response.data;
 };

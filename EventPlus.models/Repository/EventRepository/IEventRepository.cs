@@ -1,7 +1,7 @@
 ﻿using eventplus.models.Entities;
 
 
-namespace eventplus.models.EventRepository.Repository
+namespace eventplus.models.Repository.EventRepository
 {
     public interface IEventRepository
     {

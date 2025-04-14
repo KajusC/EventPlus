@@ -11,6 +11,8 @@ public partial class Ticket
 
     public DateOnly? GenerationDate { get; set; }
 
+    public DateOnly? ScannedDate { get; set; }
+
     public string? QrCode { get; set; }
 
     public int? Type { get; set; }
@@ -21,9 +23,11 @@ public partial class Ticket
 
     public virtual Event FkEventidEventNavigation { get; set; } = null!;
 
-    public virtual User FkUseridUserNavigation { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
 
     public virtual Seating? Seating { get; set; }
 
     public virtual TicketType? TypeNavigation { get; set; }
+
+    public virtual TicketStatus? TicketStatuses { get; set; }
 }

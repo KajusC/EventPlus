@@ -2,7 +2,7 @@
 using eventplus.models.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace eventplus.models.EventRepository.Repository
+namespace eventplus.models.Repository.EventRepository
 {
     public class EventRepository : IEventRepository
     {
