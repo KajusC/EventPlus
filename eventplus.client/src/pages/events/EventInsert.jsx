@@ -1,49 +1,563 @@
 import React, { useState } from 'react';
-import EventForm from '../../components/events/EventForm';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { createEvent } from '../../services/eventService';
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  Alert,
+  Grid,
+  Card,
+  CardContent,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Stack,
+  Snackbar,
+  Paper,
+  Divider,
+  IconButton,
+  Chip,
+  CircularProgress
+} from "@mui/material";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { 
+  Add as AddIcon, 
+  Save as SaveIcon, 
+  ArrowBack as ArrowBackIcon,
+  Event as EventIcon,
+  Description as DescriptionIcon,
+  Category as CategoryIcon,
+  ConfirmationNumber as TicketIcon,
+  CalendarMonth as CalendarIcon
+} from "@mui/icons-material";
+
+// Category name mapping
+const getCategoryName = (categoryId) => {
+  const categories = {
+    1: 'Music',
+    2: 'Business',
+    // Add more mappings as needed
+    default: 'Event'
+  };
+  return categories[categoryId] || categories.default;
+};
+
+// Event category to image mapping
+const getCategoryImage = (category) => {
+  const images = {
+    1: 'https://source.unsplash.com/random/1200x400/?concert',
+    2: 'https://source.unsplash.com/random/1200x400/?conference',
+    // Add more mappings as needed
+    default: 'https://source.unsplash.com/random/1200x400/?event'
+  };
+  return images[category] || images.default;
+};
 
 function EventInsert() {
-    const [eventData, setEventData] = useState({
-        name: '',
-        description: '',
-        category: '',
-        startDate: '',
-        endDate: '',
-        ticketsAvailable: 0
-    });
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    category: 1, // Default category
+    startDate: new Date(),
+    endDate: new Date(new Date().getTime() + 2 * 60 * 60 * 1000),
+    maxTicketCount: 0,
+    fkEventLocationidEventLocation: 1, // TODO - FIX THIS, BECAUSE ITS HARD CODED
+    fkOrganiseridUser: 1, // TODO - FIX THIS, BECAUSE ITS HARD CODED
+  });
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
-    const navigate = useNavigate();
+  const categories = [1, 2];
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setEventData({
-            ...eventData,
-            [name]: value
-        });
-    };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await createEvent(eventData);
-            alert("Event created successfully.");
-            navigate('/events'); // Redirect to the event list after creation
-        } catch (error) {
-            alert("Error creating event: " + error.message);
-        }
-    };
+  const handleDateChange = (name) => (newDate) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: newDate,
+    }));
+  };
 
-    return (
-        <div>
-            <h1>Create New Event</h1>
-            <EventForm 
-                eventData={eventData} 
-                onChange={handleChange} 
-                onSubmit={handleSubmit} 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      const eventToCreate = {
+        ...formData,
+        maxTicketCount: parseInt(formData.maxTicketCount, 10),
+        category: parseInt(formData.category, 10),
+      };
+
+      await createEvent(eventToCreate);
+      setToast({
+        open: true,
+        message: "Event created successfully!",
+        severity: "success",
+      });
+      setTimeout(() => {
+        navigate('/events');
+      }, 1500);
+    } catch (err) {
+      setError(err.message || "Failed to create event");
+      setToast({
+        open: true,
+        message: `Error: ${err.message || "Failed to create event"}`,
+        severity: "error",
+      });
+      console.error("Create error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseToast = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setToast({ ...toast, open: false });
+  };
+
+  const categoryName = getCategoryName(formData.category);
+  const imageUrl = getCategoryImage(formData.category);
+
+  return (
+    <>
+      {/* Hero Section */}
+      <Box 
+        sx={{
+          width: '100%',
+          position: 'relative',
+          height: { xs: '220px', md: '280px' },
+          overflow: 'hidden',
+          mt: 8,
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundImage: `url(${imageUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%)',
+              zIndex: 1
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'radial-gradient(circle at center, rgba(106,17,203,0.3) 0%, rgba(37,117,252,0) 70%)',
+              zIndex: 1,
+            }
+          }}
+        />
+        <Container 
+          maxWidth="lg"
+          sx={{
+            position: 'relative',
+            zIndex: 2,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            pb: 4
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            <IconButton 
+              onClick={() => navigate('/events')} 
+              sx={{ 
+                color: 'white', 
+                mr: 2,
+                bgcolor: 'rgba(255,255,255,0.1)',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.2)'
+                }
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Chip 
+              icon={<EventIcon sx={{ color: 'white !important' }} />}
+              label="New Event" 
+              sx={{ 
+                color: 'white',
+                bgcolor: 'rgba(106,17,203,0.8)', 
+                fontWeight: 600,
+                px: 1
+              }} 
             />
-        </div>
-    );
+          </Box>
+
+          <Typography 
+            variant="h3" 
+            component="h1"
+            sx={{
+              color: 'white',
+              fontWeight: 700,
+              textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+              fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.5rem' },
+              lineHeight: 1.2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5
+            }}
+          >
+            <AddIcon sx={{ fontSize: { xs: 24, md: 30 } }} /> Create New Event
+          </Typography>
+          
+          <Typography 
+            variant="subtitle1" 
+            sx={{ 
+              color: 'rgba(255,255,255,0.8)', 
+              mt: 1,
+              maxWidth: '700px'
+            }}
+          >
+            Fill in the details below to create your event and share it with attendees
+          </Typography>
+        </Container>
+      </Box>
+
+      <Container maxWidth="lg" sx={{ mt: { xs: -3, md: -5 }, mb: 8, position: 'relative', zIndex: 3 }}>
+        <Card 
+          sx={{
+            borderRadius: 3,
+            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+            overflow: 'hidden',
+            p: 0,
+            bgcolor: '#fcfcfc'
+          }}
+        >
+          <CardContent sx={{ p: { xs: 3, md: 5 } }}>
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={4}>
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                    <EventIcon sx={{ mt: 1.5, mr: 2, color: 'text.secondary' }} />
+                    <TextField
+                      fullWidth
+                      label="Event Name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      variant="standard"
+                      required
+                      placeholder="Give your event a clear, catchy name"
+                      sx={{
+                        '& .MuiInputBase-input': {
+                          fontSize: '1.5rem', 
+                          fontWeight: 600,
+                          lineHeight: 1.5
+                        },
+                      }}
+                    />
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                    <DescriptionIcon sx={{ mt: 1, mr: 2, color: 'text.secondary' }} />
+                    <Paper 
+                      elevation={0} 
+                      sx={{ 
+                        bgcolor: 'rgba(0,0,0,0.02)', 
+                        p: 2, 
+                        borderRadius: 2,
+                        border: '1px solid rgba(0,0,0,0.06)',
+                        width: '100%'
+                      }}
+                    >
+                      <Typography 
+                        variant="caption" 
+                        component="label" 
+                        sx={{ 
+                          display: 'block', 
+                          mb: 1, 
+                          color: 'text.secondary',
+                          fontSize: '0.85rem'
+                        }}
+                      >
+                        Description
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        variant="standard"
+                        multiline
+                        rows={4}
+                        required
+                        placeholder="Describe your event in detail - what can attendees expect?"
+                        InputProps={{
+                          disableUnderline: true,
+                        }}
+                        sx={{
+                          '& .MuiInputBase-root': {
+                            p: 0,
+                          },
+                          '& textarea': {
+                            lineHeight: 1.6,
+                          },
+                        }}
+                      />
+                    </Paper>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }}>
+                    <Chip 
+                      label="Event Details" 
+                      size="small"
+                      sx={{ 
+                        px: 2,
+                        background: 'linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)',
+                        color: 'white',
+                        fontWeight: 500
+                      }}
+                    />
+                  </Divider>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <CategoryIcon sx={{ mr: 2, color: 'text.secondary' }} />
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel>Category</InputLabel>
+                      <Select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                        label="Category"
+                        required
+                        sx={{
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(106, 17, 203, 0.2)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(106, 17, 203, 0.5)',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#6a11cb',
+                          }
+                        }}
+                      >
+                        {categories.map((category) => (
+                          <MenuItem key={category} value={category}>
+                            {getCategoryName(category)}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TicketIcon sx={{ mr: 2, color: 'text.secondary' }} />
+                    <TextField
+                      fullWidth
+                      label="Available Tickets"
+                      name="maxTicketCount"
+                      value={formData.maxTicketCount}
+                      onChange={handleInputChange}
+                      type="number"
+                      variant="outlined"
+                      required
+                      placeholder="How many tickets are available?"
+                      InputProps={{
+                        sx: { 
+                          borderRadius: 2,
+                        }
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(106, 17, 203, 0.2)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(106, 17, 203, 0.5)',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#6a11cb',
+                        }
+                      }}
+                    />
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <CalendarIcon sx={{ mr: 2, color: 'text.secondary' }} />
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                      <DateTimePicker
+                        label="Start Date"
+                        value={formData.startDate}
+                        onChange={handleDateChange("startDate")}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            required: true,
+                            sx: {
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'rgba(106, 17, 203, 0.2)',
+                                borderRadius: 2
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'rgba(106, 17, 203, 0.5)',
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#6a11cb',
+                              }
+                            }
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <CalendarIcon sx={{ mr: 2, color: 'text.secondary' }} />
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                      <DateTimePicker
+                        label="End Date"
+                        value={formData.endDate}
+                        onChange={handleDateChange("endDate")}
+                        minDateTime={formData.startDate}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            required: true,
+                            sx: {
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'rgba(106, 17, 203, 0.2)',
+                                borderRadius: 2
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'rgba(106, 17, 203, 0.5)',
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#6a11cb',
+                              }
+                            }
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box
+                    sx={{ 
+                      borderTop: "1px solid", 
+                      borderColor: "divider", 
+                      pt: 4,
+                      mt: 2,
+                      display: 'flex',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <Button
+                      variant="outlined"
+                      color="inherit"
+                      onClick={() => navigate('/events')}
+                      startIcon={<ArrowBackIcon />}
+                      sx={{ 
+                        borderColor: 'rgba(0,0,0,0.23)',
+                        color: 'text.secondary',
+                        '&:hover': {
+                          bgcolor: 'rgba(0,0,0,0.04)',
+                          borderColor: 'text.primary'
+                        },
+                        px: 3
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={loading}
+                      startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+                      sx={{ 
+                        px: 4,
+                        py: 1.2,
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        boxShadow: '0 3px 5px rgba(0,0,0,0.1)',
+                        backgroundImage: 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)',
+                        '&:hover': {
+                          boxShadow: '0 6px 10px rgba(0,0,0,0.15)',
+                          transform: 'translateY(-1px)',
+                        },
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {loading ? "Creating..." : "Create Event"}
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </form>
+          </CardContent>
+        </Card>
+      </Container>
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={3000}
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseToast}
+          severity={toast.severity}
+          sx={{ width: "100%" }}
+          elevation={6}
+          variant="filled"
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
+    </>
+  );
 }
 
 export default EventInsert;
