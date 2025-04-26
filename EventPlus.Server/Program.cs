@@ -1,9 +1,13 @@
-using eventplus.models.Repository.EventRepository;
-using eventplus.models.Repository.FeedbackRepository;
-using eventplus.models.Repository.SectorRepository;
-using eventplus.models.Repository.TicketRepository;
-using EventPlus.Server.Logic;
-using EventPlus.Server.Logic.Interface;
+using eventplus.models.Domain;
+using eventplus.models.Infrastructure.context;
+using eventplus.models.Infrastructure.Persistance.Repositories.Events;
+using eventplus.models.Infrastructure.Persistance.Repositories.Feedbacks;
+using eventplus.models.Infrastructure.Persistance.Repositories.Sectors;
+using eventplus.models.Infrastructure.Persistance.Repositories.Tickets;
+using EventPlus.Server.Application.Events.Handler;
+using EventPlus.Server.Application.Feedbacks.Handler;
+using EventPlus.Server.Application.Sectors.Handler;
+using EventPlus.Server.Application.Tickets.Handler;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -30,7 +34,7 @@ namespace EventPlus.Server
                                       .AllowAnyMethod());
             });
 
-            builder.Services.AddDbContext<eventplus.models.context.EventPlusContext>(options =>
+            builder.Services.AddDbContext<EventPlusContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // Repositories

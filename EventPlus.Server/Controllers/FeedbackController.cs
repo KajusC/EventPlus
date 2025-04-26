@@ -1,5 +1,5 @@
-﻿using EventPlus.Server.DTO;
-using EventPlus.Server.Logic.Interface;
+﻿using EventPlus.Server.Application.Feedbacks.Handler;
+using EventPlus.Server.Application.Feedbacks.ViewModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,7 +35,7 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateFeedback([FromBody] FeedbackDTO feedback)
+        public async Task<IActionResult> CreateFeedback([FromBody] FeedbackViewModel feedback)
         {
             if (feedback == null)
             {
@@ -72,7 +72,7 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateFeedback([FromBody] FeedbackDTO feedback)
+        public async Task<IActionResult> UpdateFeedback([FromBody] FeedbackViewModel feedback)
         {
             if (feedback == null)
             {

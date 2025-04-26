@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using eventplus.models.context;
+using eventplus.models.Infrastructure.context;
 
 #nullable disable
 
@@ -22,26 +22,11 @@ namespace eventplus.models.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("eventplus.models.Entities.Administrator", b =>
-                {
-                    b.Property<int>("IdUser")
-                        .HasColumnType("integer")
-                        .HasColumnName("id_user");
-
-                    b.HasKey("IdUser")
-                        .HasName("administrator_pkey");
-
-                    b.ToTable("administrator", (string)null);
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.Category", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.Category", b =>
                 {
                     b.Property<int>("IdCategory")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_category");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdCategory"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -52,7 +37,7 @@ namespace eventplus.models.Migrations
                     b.HasKey("IdCategory")
                         .HasName("category_pkey");
 
-                    b.ToTable("category", (string)null);
+                    b.ToTable("category", "models");
 
                     b.HasData(
                         new
@@ -63,23 +48,30 @@ namespace eventplus.models.Migrations
                         new
                         {
                             IdCategory = 2,
-                            Name = "Conference"
+                            Name = "Theatre"
                         },
                         new
                         {
                             IdCategory = 3,
-                            Name = "Sports"
+                            Name = "Opera"
+                        },
+                        new
+                        {
+                            IdCategory = 4,
+                            Name = "Exposition"
+                        },
+                        new
+                        {
+                            IdCategory = 5,
+                            Name = "Fashion show"
                         });
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Equipment", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.Equipment", b =>
                 {
                     b.Property<int>("IdEquipment")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_equipment");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdEquipment"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -90,18 +82,18 @@ namespace eventplus.models.Migrations
                     b.HasKey("IdEquipment")
                         .HasName("equipment_pkey");
 
-                    b.ToTable("equipment", (string)null);
+                    b.ToTable("equipment", "models");
 
                     b.HasData(
                         new
                         {
                             IdEquipment = 1,
-                            Name = "Music"
+                            Name = "Sound System"
                         },
                         new
                         {
                             IdEquipment = 2,
-                            Name = "Projector"
+                            Name = "TV"
                         },
                         new
                         {
@@ -111,18 +103,15 @@ namespace eventplus.models.Migrations
                         new
                         {
                             IdEquipment = 4,
-                            Name = "TV"
+                            Name = "Projector"
                         });
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Event", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.Event", b =>
                 {
                     b.Property<int>("IdEvent")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_event");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdEvent"));
 
                     b.Property<int?>("Category")
                         .HasColumnType("integer")
@@ -133,8 +122,8 @@ namespace eventplus.models.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("description");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("timestamp with time zone")
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date")
                         .HasColumnName("end_date");
 
                     b.Property<int>("FkEventLocationidEventLocation")
@@ -154,8 +143,8 @@ namespace eventplus.models.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("name");
 
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("timestamp with time zone")
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date")
                         .HasColumnName("start_date");
 
                     b.HasKey("IdEvent")
@@ -168,7 +157,7 @@ namespace eventplus.models.Migrations
                     b.HasIndex(new[] { "FkEventLocationidEventLocation" }, "event_fk_event_locationid_event_location_key")
                         .IsUnique();
 
-                    b.ToTable("event", (string)null);
+                    b.ToTable("event", "models");
 
                     b.HasData(
                         new
@@ -176,23 +165,20 @@ namespace eventplus.models.Migrations
                             IdEvent = 1,
                             Category = 2,
                             Description = "Annual technology conference",
-                            EndDate = new DateTime(2025, 6, 17, 17, 0, 0, 0, DateTimeKind.Utc),
+                            EndDate = new DateOnly(2025, 6, 17),
                             FkEventLocationidEventLocation = 1,
                             FkOrganiseridUser = 1,
                             MaxTicketCount = 500,
                             Name = "Tech Conference 2025",
-                            StartDate = new DateTime(2025, 6, 15, 9, 0, 0, 0, DateTimeKind.Utc)
+                            StartDate = new DateOnly(2025, 6, 15)
                         });
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.EventLocation", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.EventLocation", b =>
                 {
                     b.Property<int>("IdEventLocation")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_event_location");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdEventLocation"));
 
                     b.Property<string>("Address")
                         .HasMaxLength(255)
@@ -218,9 +204,9 @@ namespace eventplus.models.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("country");
 
-                    b.Property<int?>("Equipment")
+                    b.Property<int?>("HoldingEquipment")
                         .HasColumnType("integer")
-                        .HasColumnName("turima_ÄÆranga");
+                        .HasColumnName("holding_equipment");
 
                     b.Property<string>("Name")
                         .HasMaxLength(255)
@@ -234,9 +220,9 @@ namespace eventplus.models.Migrations
                     b.HasKey("IdEventLocation")
                         .HasName("event_location_pkey");
 
-                    b.HasIndex("Equipment");
+                    b.HasIndex("HoldingEquipment");
 
-                    b.ToTable("event_location", (string)null);
+                    b.ToTable("event_location", "models");
 
                     b.HasData(
                         new
@@ -247,161 +233,41 @@ namespace eventplus.models.Migrations
                             City = "Boston",
                             Contacts = "contact@venue.com",
                             Country = "USA",
-                            Equipment = 2,
+                            HoldingEquipment = 2,
                             Name = "Conference Center",
                             Price = 1000.0
                         });
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.EventPartner", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.Eventpartner", b =>
                 {
                     b.Property<int>("FkEventidEvent")
                         .HasColumnType("integer")
                         .HasColumnName("fk_eventid_event");
 
                     b.HasKey("FkEventidEvent")
-                        .HasName("renginiopartneris_pkey");
+                        .HasName("eventpartner_pkey");
 
-                    b.ToTable("renginiopartneris", (string)null);
+                    b.ToTable("eventpartner", "models");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.EventPerformer", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.Eventperformer", b =>
                 {
                     b.Property<int>("FkEventidEvent")
                         .HasColumnType("integer")
                         .HasColumnName("fk_eventid_event");
 
                     b.HasKey("FkEventidEvent")
-                        .HasName("renginioatlikÄ—jas_pkey");
+                        .HasName("eventperformer_pkey");
 
-                    b.ToTable("renginioatlikÄ—jas", (string)null);
+                    b.ToTable("eventperformer", "models");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Feedback", b =>
-                {
-                    b.Property<int>("IdFeedback")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id_feedback");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdFeedback"));
-
-                    b.Property<string>("Comment")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("comment");
-
-                    b.Property<int>("FkEventidEvent")
-                        .HasColumnType("integer")
-                        .HasColumnName("fk_eventid_event");
-
-                    b.Property<int>("FkUseridUser")
-                        .HasColumnType("integer")
-                        .HasColumnName("fk_userid_user");
-
-                    b.Property<int?>("Type")
-                        .HasColumnType("integer")
-                        .HasColumnName("type");
-
-                    b.Property<double?>("Vote")
-                        .HasColumnType("double precision")
-                        .HasColumnName("vote");
-
-                    b.HasKey("IdFeedback")
-                        .HasName("feedback_pkey");
-
-                    b.HasIndex("FkEventidEvent");
-
-                    b.HasIndex("FkUseridUser");
-
-                    b.HasIndex("Type");
-
-                    b.ToTable("feedback", (string)null);
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.FeedbackType", b =>
-                {
-                    b.Property<int>("IdFeedbackType")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id_feedback_type");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdFeedbackType"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("name");
-
-                    b.HasKey("IdFeedbackType")
-                        .HasName("feedback_type_pkey");
-
-                    b.ToTable("feedback_type", (string)null);
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.Loyalty", b =>
-                {
-                    b.Property<int>("IdLoyalty")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id_loyalty");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdLoyalty"));
-
-                    b.Property<int?>("Points")
-                        .HasColumnType("integer")
-                        .HasColumnName("points");
-
-                    b.HasKey("IdLoyalty")
-                        .HasName("loyalty_pkey");
-
-                    b.ToTable("loyalty", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            IdLoyalty = 1,
-                            Points = 0
-                        });
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.Organiser", b =>
-                {
-                    b.Property<int>("IdUser")
-                        .HasColumnType("integer")
-                        .HasColumnName("id_user");
-
-                    b.Property<int?>("FollowerAmount")
-                        .HasColumnType("integer")
-                        .HasColumnName("follower_amount");
-
-                    b.Property<double?>("Rating")
-                        .HasColumnType("double precision")
-                        .HasColumnName("rating");
-
-                    b.HasKey("IdUser")
-                        .HasName("organiser_pkey");
-
-                    b.ToTable("organiser", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            IdUser = 1,
-                            FollowerAmount = 0,
-                            Rating = 5.0
-                        });
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.Partner", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.Partner", b =>
                 {
                     b.Property<int>("IdPartner")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_partner");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdPartner"));
 
                     b.Property<string>("Description")
                         .HasMaxLength(255)
@@ -421,27 +287,24 @@ namespace eventplus.models.Migrations
                     b.HasKey("IdPartner")
                         .HasName("partner_pkey");
 
-                    b.ToTable("partner", (string)null);
+                    b.ToTable("partner", "models");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Performer", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.Performer", b =>
                 {
                     b.Property<int>("IdPerformer")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_performer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdPerformer"));
 
                     b.Property<string>("Name")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("name");
 
-                    b.Property<string>("Profesija")
+                    b.Property<string>("Profession")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
-                        .HasColumnName("profesija");
+                        .HasColumnName("profession");
 
                     b.Property<string>("Surname")
                         .HasMaxLength(255)
@@ -451,29 +314,119 @@ namespace eventplus.models.Migrations
                     b.HasKey("IdPerformer")
                         .HasName("performer_pkey");
 
-                    b.ToTable("performer", (string)null);
+                    b.ToTable("performer", "models");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Seating", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Feedbacks.AdministratorFeedback", b =>
+                {
+                    b.Property<int>("FkAdministratoridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_administratorid_user");
+
+                    b.Property<int>("FkFeedbackidFeedback")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_feedbackid_feedback");
+
+                    b.HasKey("FkAdministratoridUser", "FkFeedbackidFeedback")
+                        .HasName("administrator_feedback_pkey");
+
+                    b.HasIndex(new[] { "FkFeedbackidFeedback" }, "administrator_feedback_fk_feedbackid_feedback_key")
+                        .IsUnique();
+
+                    b.ToTable("administrator_feedback", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Feedbacks.Feedback", b =>
+                {
+                    b.Property<int>("IdFeedback")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_feedback");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("comment");
+
+                    b.Property<int>("FkEventidEvent")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_eventid_event");
+
+                    b.Property<double?>("Score")
+                        .HasColumnType("double precision")
+                        .HasColumnName("score");
+
+                    b.Property<int?>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.HasKey("IdFeedback")
+                        .HasName("feedback_pkey");
+
+                    b.HasIndex("FkEventidEvent");
+
+                    b.HasIndex("Type");
+
+                    b.ToTable("feedback", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Feedbacks.FeedbackType", b =>
+                {
+                    b.Property<int>("IdFeedbackType")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_feedback_type");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.HasKey("IdFeedbackType")
+                        .HasName("feedback_type_pkey");
+
+                    b.ToTable("feedback_type", "models");
+
+                    b.HasData(
+                        new
+                        {
+                            IdFeedbackType = 1,
+                            Name = "Positive"
+                        },
+                        new
+                        {
+                            IdFeedbackType = 2,
+                            Name = "Negative"
+                        });
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Feedbacks.UserFeedback", b =>
+                {
+                    b.Property<int>("FkUseridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_userid_user");
+
+                    b.Property<int>("FkFeedbackidFeedback")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_feedbackid_feedback");
+
+                    b.HasKey("FkUseridUser", "FkFeedbackidFeedback")
+                        .HasName("user_feedback_pkey");
+
+                    b.HasIndex(new[] { "FkFeedbackidFeedback" }, "user_feedback_fk_feedbackid_feedback_key")
+                        .IsUnique();
+
+                    b.ToTable("user_feedback", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Sectors.Seating", b =>
                 {
                     b.Property<int>("IdSeating")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_seating");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdSeating"));
-
-                    b.Property<int>("FkSectoridSector")
+                    b.Property<int?>("FkSectoridSector")
                         .HasColumnType("integer")
                         .HasColumnName("fk_sectorid_sector");
-
-                    b.Property<int>("FkSectorfkEventLocationidEventLocation")
-                        .HasColumnType("integer")
-                        .HasColumnName("fk_sectorfk_event_locationid_event_location");
-
-                    b.Property<int>("FkTicketidTicket")
-                        .HasColumnType("integer")
-                        .HasColumnName("fk_ticketid_ticket");
 
                     b.Property<int?>("Place")
                         .HasColumnType("integer")
@@ -483,25 +436,19 @@ namespace eventplus.models.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("row");
 
-                    b.HasKey("IdSeating", "FkSectoridSector", "FkSectorfkEventLocationidEventLocation")
+                    b.HasKey("IdSeating")
                         .HasName("seating_pkey");
 
-                    b.HasIndex("FkSectoridSector", "FkSectorfkEventLocationidEventLocation");
+                    b.HasIndex("FkSectoridSector");
 
-                    b.HasIndex(new[] { "FkTicketidTicket" }, "seating_fk_ticketid_ticket_key")
-                        .IsUnique();
-
-                    b.ToTable("seating", (string)null);
+                    b.ToTable("seating", "models");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Sector", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Sectors.Sector", b =>
                 {
                     b.Property<int>("IdSector")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_sector");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdSector"));
 
                     b.Property<int>("FkEventLocationidEventLocation")
                         .HasColumnType("integer")
@@ -512,12 +459,12 @@ namespace eventplus.models.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("name");
 
-                    b.HasKey("IdSector", "FkEventLocationidEventLocation")
+                    b.HasKey("IdSector")
                         .HasName("sector_pkey");
 
                     b.HasIndex("FkEventLocationidEventLocation");
 
-                    b.ToTable("sector", (string)null);
+                    b.ToTable("sector", "models");
 
                     b.HasData(
                         new
@@ -534,22 +481,15 @@ namespace eventplus.models.Migrations
                         });
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.SectorPrice", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Sectors.SectorPrice", b =>
                 {
                     b.Property<int>("IdSectorPrice")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_sector_price");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdSectorPrice"));
 
                     b.Property<int>("FkEventidEvent")
                         .HasColumnType("integer")
                         .HasColumnName("fk_eventid_event");
-
-                    b.Property<int>("FkSectorfkEventLocationidEventLocation")
-                        .HasColumnType("integer")
-                        .HasColumnName("fk_sectorfk_event_locationid_event_location");
 
                     b.Property<int>("FkSectoridSector")
                         .HasColumnType("integer")
@@ -564,16 +504,15 @@ namespace eventplus.models.Migrations
 
                     b.HasIndex("FkEventidEvent");
 
-                    b.HasIndex("FkSectoridSector", "FkSectorfkEventLocationidEventLocation");
+                    b.HasIndex("FkSectoridSector");
 
-                    b.ToTable("sector_price", (string)null);
+                    b.ToTable("sector_price", "models");
 
                     b.HasData(
                         new
                         {
                             IdSectorPrice = 1,
                             FkEventidEvent = 1,
-                            FkSectorfkEventLocationidEventLocation = 1,
                             FkSectoridSector = 1,
                             Price = 50.0
                         },
@@ -581,32 +520,53 @@ namespace eventplus.models.Migrations
                         {
                             IdSectorPrice = 2,
                             FkEventidEvent = 1,
-                            FkSectorfkEventLocationidEventLocation = 1,
                             FkSectoridSector = 2,
                             Price = 150.0
                         });
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Ticket", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.AdministratorTicket", b =>
+                {
+                    b.Property<int>("FkAdministratoridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_administratorid_user");
+
+                    b.Property<int>("FkTicketidTicket")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_ticketid_ticket");
+
+                    b.HasKey("FkAdministratoridUser", "FkTicketidTicket")
+                        .HasName("administrator_ticket_pkey");
+
+                    b.HasIndex(new[] { "FkTicketidTicket" }, "administrator_ticket_fk_ticketid_ticket_key")
+                        .IsUnique();
+
+                    b.ToTable("administrator_ticket", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.Ticket", b =>
                 {
                     b.Property<int>("IdTicket")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_ticket");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdTicket"));
 
                     b.Property<int>("FkEventidEvent")
                         .HasColumnType("integer")
                         .HasColumnName("fk_eventid_event");
 
-                    b.Property<int>("FkUseridUser")
+                    b.Property<int>("FkSeatingidSeating")
                         .HasColumnType("integer")
-                        .HasColumnName("fk_userid_user");
+                        .HasColumnName("fk_seatingid_seating");
+
+                    b.Property<int>("FkTicketstatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_ticketstatus");
 
                     b.Property<DateOnly?>("GenerationDate")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("date")
-                        .HasColumnName("generation_date");
+                        .HasColumnName("generation_date")
+                        .HasDefaultValueSql("CURRENT_DATE");
 
                     b.Property<double?>("Price")
                         .HasColumnType("double precision")
@@ -617,12 +577,9 @@ namespace eventplus.models.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("qr_code");
 
-                    b.Property<DateOnly?>("ScannedDate")
-                        .HasColumnType("date")
+                    b.Property<DateTime?>("ScannedDate")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("scanned_date");
-
-                    b.Property<int?>("TicketStatusesIdTicketStatus")
-                        .HasColumnType("integer");
 
                     b.Property<int?>("Type")
                         .HasColumnType("integer")
@@ -633,61 +590,21 @@ namespace eventplus.models.Migrations
 
                     b.HasIndex("FkEventidEvent");
 
-                    b.HasIndex("FkUseridUser");
-
-                    b.HasIndex("TicketStatusesIdTicketStatus");
+                    b.HasIndex("FkTicketstatus");
 
                     b.HasIndex("Type");
 
-                    b.ToTable("ticket", (string)null);
+                    b.HasIndex(new[] { "FkSeatingidSeating" }, "ticket_fk_seatingid_seating_key")
+                        .IsUnique();
+
+                    b.ToTable("ticket", "models");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.TicketStatus", b =>
-                {
-                    b.Property<int>("IdTicketStatus")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id_ticket_status");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdTicketStatus"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("name");
-
-                    b.HasKey("IdTicketStatus")
-                        .HasName("ticket_status_pkey");
-
-                    b.ToTable("ticket_status", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            IdTicketStatus = 1,
-                            Name = "Valid"
-                        },
-                        new
-                        {
-                            IdTicketStatus = 2,
-                            Name = "Invalid"
-                        },
-                        new
-                        {
-                            IdTicketStatus = 3,
-                            Name = "Scanned"
-                        });
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.TicketType", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.TicketType", b =>
                 {
                     b.Property<int>("IdTicketType")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_ticket_type");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdTicketType"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -698,7 +615,7 @@ namespace eventplus.models.Migrations
                     b.HasKey("IdTicketType")
                         .HasName("ticket_type_pkey");
 
-                    b.ToTable("ticket_type", (string)null);
+                    b.ToTable("ticket_type", "models");
 
                     b.HasData(
                         new
@@ -710,25 +627,282 @@ namespace eventplus.models.Migrations
                         {
                             IdTicketType = 2,
                             Name = "VIP"
+                        },
+                        new
+                        {
+                            IdTicketType = 3,
+                            Name = "Super-VIP"
                         });
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.User", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.Ticketstatus", b =>
                 {
-                    b.Property<int>("IdUser")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("IdStatus")
                         .HasColumnType("integer")
-                        .HasColumnName("id_user");
+                        .HasColumnName("id_status");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdUser"));
+                    b.Property<string>("Name")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.HasKey("IdStatus")
+                        .HasName("ticketstatus_pkey");
+
+                    b.ToTable("ticketstatus", "models");
+
+                    b.HasData(
+                        new
+                        {
+                            IdStatus = 1,
+                            Name = "Active"
+                        },
+                        new
+                        {
+                            IdStatus = 2,
+                            Name = "Inactive"
+                        },
+                        new
+                        {
+                            IdStatus = 3,
+                            Name = "Scanned"
+                        });
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.UserTicket", b =>
+                {
+                    b.Property<int>("FkUseridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_userid_user");
+
+                    b.Property<int>("FkTicketidTicket")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_ticketid_ticket");
+
+                    b.HasKey("FkUseridUser", "FkTicketidTicket")
+                        .HasName("user_ticket_pkey");
+
+                    b.HasIndex(new[] { "FkTicketidTicket" }, "user_ticket_fk_ticketid_ticket_key")
+                        .IsUnique();
+
+                    b.ToTable("user_ticket", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.Question", b =>
+                {
+                    b.Property<int>("IdQuestion")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_question");
+
+                    b.Property<int?>("FkAdministratoridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_administratorid_user");
+
+                    b.Property<string>("FormulatedQuestion")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("formulated_question");
+
+                    b.HasKey("IdQuestion")
+                        .HasName("question_pkey");
+
+                    b.HasIndex("FkAdministratoridUser");
+
+                    b.ToTable("question", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.UserRequestAnswer", b =>
+                {
+                    b.Property<int>("IdUserRequestAnswer")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_user_request_answer");
+
+                    b.Property<string>("Answer")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("answer");
+
+                    b.Property<int>("FkQuestionidQuestion")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_questionid_question");
+
+                    b.HasKey("IdUserRequestAnswer")
+                        .HasName("user_request_answer_pkey");
+
+                    b.HasIndex("FkQuestionidQuestion");
+
+                    b.ToTable("user_request_answer", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.UserRequestAnswerAdministrator", b =>
+                {
+                    b.Property<int>("FkUserRequestAnsweridUserRequestAnswer")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_user_request_answerid_user_request_answer");
+
+                    b.Property<int>("FkAdministratoridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_administratorid_user");
+
+                    b.HasKey("FkUserRequestAnsweridUserRequestAnswer", "FkAdministratoridUser")
+                        .HasName("user_request_answer_administrator_pkey");
+
+                    b.HasIndex("FkAdministratoridUser");
+
+                    b.HasIndex(new[] { "FkUserRequestAnsweridUserRequestAnswer" }, "user_request_answer_administr_fk_user_request_answerid_user_key")
+                        .IsUnique();
+
+                    b.ToTable("user_request_answer_administrator", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.UserRequestAnswerOrganiser", b =>
+                {
+                    b.Property<int>("FkUserRequestAnsweridUserRequestAnswer")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_user_request_answerid_user_request_answer");
+
+                    b.Property<int>("FkOrganiseridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_organiserid_user");
+
+                    b.HasKey("FkUserRequestAnsweridUserRequestAnswer", "FkOrganiseridUser")
+                        .HasName("user_request_answer_organiser_pkey");
+
+                    b.HasIndex("FkOrganiseridUser");
+
+                    b.HasIndex(new[] { "FkUserRequestAnsweridUserRequestAnswer" }, "user_request_answer_organiser_fk_user_request_answerid_user_key")
+                        .IsUnique();
+
+                    b.ToTable("user_request_answer_organiser", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.UserRequestAnswerUser", b =>
+                {
+                    b.Property<int>("FkUserRequestAnsweridUserRequestAnswer")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_user_request_answerid_user_request_answer");
+
+                    b.Property<int>("FkUseridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_userid_user");
+
+                    b.HasKey("FkUserRequestAnsweridUserRequestAnswer", "FkUseridUser")
+                        .HasName("user_request_answer_user_pkey");
+
+                    b.HasIndex("FkUseridUser");
+
+                    b.HasIndex(new[] { "FkUserRequestAnsweridUserRequestAnswer" }, "user_request_answer_user_fk_user_request_answerid_user_requ_key")
+                        .IsUnique();
+
+                    b.ToTable("user_request_answer_user", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserLoyalties.AdministratorLoyalty", b =>
+                {
+                    b.Property<int>("FkAdministratoridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_administratorid_user");
 
                     b.Property<int>("FkLoyaltyidLoyalty")
                         .HasColumnType("integer")
                         .HasColumnName("fk_loyaltyid_loyalty");
 
-                    b.Property<DateOnly?>("LastLogin")
+                    b.HasKey("FkAdministratoridUser", "FkLoyaltyidLoyalty")
+                        .HasName("administrator_loyalty_pkey");
+
+                    b.HasIndex(new[] { "FkAdministratoridUser" }, "administrator_loyalty_fk_administratorid_user_key")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "FkLoyaltyidLoyalty" }, "administrator_loyalty_fk_loyaltyid_loyalty_key")
+                        .IsUnique();
+
+                    b.ToTable("administrator_loyalty", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserLoyalties.Loyalty", b =>
+                {
+                    b.Property<int>("IdLoyalty")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_loyalty");
+
+                    b.Property<DateOnly?>("Date")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("date")
-                        .HasColumnName("last_login");
+                        .HasColumnName("date")
+                        .HasDefaultValueSql("CURRENT_DATE");
+
+                    b.Property<int?>("Points")
+                        .HasColumnType("integer")
+                        .HasColumnName("points");
+
+                    b.HasKey("IdLoyalty")
+                        .HasName("loyalty_pkey");
+
+                    b.ToTable("loyalty", "models");
+
+                    b.HasData(
+                        new
+                        {
+                            IdLoyalty = 1,
+                            Points = 0
+                        });
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserLoyalties.OrganiserLoyalty", b =>
+                {
+                    b.Property<int>("FkOrganiseridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_organiserid_user");
+
+                    b.Property<int>("FkLoyaltyidLoyalty")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_loyaltyid_loyalty");
+
+                    b.HasKey("FkOrganiseridUser", "FkLoyaltyidLoyalty")
+                        .HasName("organiser_loyalty_pkey");
+
+                    b.HasIndex(new[] { "FkLoyaltyidLoyalty" }, "organiser_loyalty_fk_loyaltyid_loyalty_key")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "FkOrganiseridUser" }, "organiser_loyalty_fk_organiserid_user_key")
+                        .IsUnique();
+
+                    b.ToTable("organiser_loyalty", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserLoyalties.UserLoyalty", b =>
+                {
+                    b.Property<int>("FkUseridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_userid_user");
+
+                    b.Property<int>("FkLoyaltyidLoyalty")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_loyaltyid_loyalty");
+
+                    b.HasKey("FkUseridUser", "FkLoyaltyidLoyalty")
+                        .HasName("user_loyalty_pkey");
+
+                    b.HasIndex(new[] { "FkLoyaltyidLoyalty" }, "user_loyalty_fk_loyaltyid_loyalty_key")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "FkUseridUser" }, "user_loyalty_fk_userid_user_key")
+                        .IsUnique();
+
+                    b.ToTable("user_loyalty", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Users.Administrator", b =>
+                {
+                    b.Property<int>("IdUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_user");
+
+                    b.Property<DateTime?>("LastLogin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("last_login")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Name")
                         .HasMaxLength(255)
@@ -751,19 +925,144 @@ namespace eventplus.models.Migrations
                         .HasColumnName("username");
 
                     b.HasKey("IdUser")
-                        .HasName("User_pkey");
+                        .HasName("administrator_pkey");
 
-                    b.HasIndex(new[] { "FkLoyaltyidLoyalty" }, "User_fk_loyaltyid_loyalty_key")
-                        .IsUnique();
+                    b.ToTable("administrator", "models");
+                });
 
-                    b.ToTable("User", (string)null);
+            modelBuilder.Entity("eventplus.models.Domain.Users.Organiser", b =>
+                {
+                    b.Property<int>("IdUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_user");
+
+                    b.Property<int?>("FollowerCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("follower_count");
+
+                    b.Property<DateTime?>("LastLogin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("last_login")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Password")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("password");
+
+                    b.Property<double?>("Rating")
+                        .HasColumnType("double precision")
+                        .HasColumnName("rating");
+
+                    b.Property<string>("Surname")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("surname");
+
+                    b.Property<string>("Username")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("username");
+
+                    b.HasKey("IdUser")
+                        .HasName("organiser_pkey");
+
+                    b.ToTable("organiser", "models");
 
                     b.HasData(
                         new
                         {
                             IdUser = 1,
-                            FkLoyaltyidLoyalty = 1,
-                            LastLogin = new DateOnly(2025, 4, 15),
+                            FollowerCount = 0,
+                            Rating = 5.0
+                        });
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Users.OrganiserFeedback", b =>
+                {
+                    b.Property<int>("FkOrganiseridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_organiserid_user");
+
+                    b.Property<int>("FkFeedbackidFeedback")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_feedbackid_feedback");
+
+                    b.HasKey("FkOrganiseridUser", "FkFeedbackidFeedback")
+                        .HasName("organiser_feedback_pkey");
+
+                    b.HasIndex(new[] { "FkFeedbackidFeedback" }, "organiser_feedback_fk_feedbackid_feedback_key")
+                        .IsUnique();
+
+                    b.ToTable("organiser_feedback", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Users.OrganiserTicket", b =>
+                {
+                    b.Property<int>("FkOrganiseridUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_organiserid_user");
+
+                    b.Property<int>("FkTicketidTicket")
+                        .HasColumnType("integer")
+                        .HasColumnName("fk_ticketid_ticket");
+
+                    b.HasKey("FkOrganiseridUser", "FkTicketidTicket")
+                        .HasName("organiser_ticket_pkey");
+
+                    b.HasIndex(new[] { "FkTicketidTicket" }, "organiser_ticket_fk_ticketid_ticket_key")
+                        .IsUnique();
+
+                    b.ToTable("organiser_ticket", "models");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Users.User", b =>
+                {
+                    b.Property<int>("IdUser")
+                        .HasColumnType("integer")
+                        .HasColumnName("id_user");
+
+                    b.Property<DateTime?>("LastLogin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("last_login")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Password")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("password");
+
+                    b.Property<string>("Surname")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("surname");
+
+                    b.Property<string>("Username")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("username");
+
+                    b.HasKey("IdUser")
+                        .HasName("user_pkey");
+
+                    b.ToTable("user", "models");
+
+                    b.HasData(
+                        new
+                        {
+                            IdUser = 1,
                             Name = "Event",
                             Password = "password123",
                             Surname = "Organizer",
@@ -771,39 +1070,11 @@ namespace eventplus.models.Migrations
                         });
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.UserRequestInformation", b =>
-                {
-                    b.Property<int>("IdUserRequestInformation")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id_user_request_information");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdUserRequestInformation"));
-
-                    b.Property<string>("Question")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("klausimas");
-
-                    b.Property<string>("Response")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("atsakas");
-
-                    b.HasKey("IdUserRequestInformation")
-                        .HasName("user_request_information_pkey");
-
-                    b.ToTable("user_request_information", (string)null);
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.UserType", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Users.UserType", b =>
                 {
                     b.Property<int>("IdUserType")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_user_type");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdUserType"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -814,46 +1085,40 @@ namespace eventplus.models.Migrations
                     b.HasKey("IdUserType")
                         .HasName("user_type_pkey");
 
-                    b.ToTable("user_type", (string)null);
+                    b.ToTable("user_type", "models");
+
+                    b.HasData(
+                        new
+                        {
+                            IdUserType = 1,
+                            Name = "Regular"
+                        },
+                        new
+                        {
+                            IdUserType = 2,
+                            Name = "Organizer"
+                        },
+                        new
+                        {
+                            IdUserType = 3,
+                            Name = "Admin"
+                        });
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Userrequest", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.Event", b =>
                 {
-                    b.Property<int>("FkUseridUser")
-                        .HasColumnType("integer")
-                        .HasColumnName("fk_userid_user");
-
-                    b.HasKey("FkUseridUser")
-                        .HasName("userrequest_pkey");
-
-                    b.ToTable("userrequest", (string)null);
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.Administrator", b =>
-                {
-                    b.HasOne("eventplus.models.Entities.User", "IdUserNavigation")
-                        .WithOne("Administrator")
-                        .HasForeignKey("eventplus.models.Entities.Administrator", "IdUser")
-                        .IsRequired()
-                        .HasConstraintName("administrator_id_user_fkey");
-
-                    b.Navigation("IdUserNavigation");
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.Event", b =>
-                {
-                    b.HasOne("eventplus.models.Entities.Category", "CategoryNavigation")
+                    b.HasOne("eventplus.models.Domain.Events.Category", "CategoryNavigation")
                         .WithMany("Events")
                         .HasForeignKey("Category")
                         .HasConstraintName("event_category_fkey");
 
-                    b.HasOne("eventplus.models.Entities.EventLocation", "FkEventLocationidEventLocationNavigation")
+                    b.HasOne("eventplus.models.Domain.Events.EventLocation", "FkEventLocationidEventLocationNavigation")
                         .WithOne("Event")
-                        .HasForeignKey("eventplus.models.Entities.Event", "FkEventLocationidEventLocation")
+                        .HasForeignKey("eventplus.models.Domain.Events.Event", "FkEventLocationidEventLocation")
                         .IsRequired()
                         .HasConstraintName("event_fk_event_locationid_event_location_fkey");
 
-                    b.HasOne("eventplus.models.Entities.Organiser", "FkOrganiseridUserNavigation")
+                    b.HasOne("eventplus.models.Domain.Users.Organiser", "FkOrganiseridUserNavigation")
                         .WithMany("Events")
                         .HasForeignKey("FkOrganiseridUser")
                         .IsRequired()
@@ -866,197 +1131,369 @@ namespace eventplus.models.Migrations
                     b.Navigation("FkOrganiseridUserNavigation");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.EventLocation", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.EventLocation", b =>
                 {
-                    b.HasOne("eventplus.models.Entities.Equipment", "EquipmentNavigation")
+                    b.HasOne("eventplus.models.Domain.Events.Equipment", "HoldingEquipmentNavigation")
                         .WithMany("EventLocations")
-                        .HasForeignKey("Equipment")
-                        .HasConstraintName("event_location_turima_ÄÆranga_fkey");
+                        .HasForeignKey("HoldingEquipment")
+                        .HasConstraintName("event_location_holding_equipment_fkey");
 
-                    b.Navigation("EquipmentNavigation");
+                    b.Navigation("HoldingEquipmentNavigation");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.EventPartner", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Feedbacks.AdministratorFeedback", b =>
                 {
-                    b.HasOne("eventplus.models.Entities.Event", "FkEventidEventNavigation")
-                        .WithOne("EventPartner")
-                        .HasForeignKey("eventplus.models.Entities.EventPartner", "FkEventidEvent")
+                    b.HasOne("eventplus.models.Domain.Users.Administrator", "FkAdministratoridUserNavigation")
+                        .WithMany("AdministratorFeedbacks")
+                        .HasForeignKey("FkAdministratoridUser")
                         .IsRequired()
-                        .HasConstraintName("renginiopartneris_fk_eventid_event_fkey");
+                        .HasConstraintName("administrator_feedback_fk_administratorid_user_fkey");
 
-                    b.Navigation("FkEventidEventNavigation");
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.EventPerformer", b =>
-                {
-                    b.HasOne("eventplus.models.Entities.Event", "FkEventidEventNavigation")
-                        .WithOne("EventPerformer")
-                        .HasForeignKey("eventplus.models.Entities.EventPerformer", "FkEventidEvent")
+                    b.HasOne("eventplus.models.Domain.Feedbacks.Feedback", "FkFeedbackidFeedbackNavigation")
+                        .WithOne("AdministratorFeedback")
+                        .HasForeignKey("eventplus.models.Domain.Feedbacks.AdministratorFeedback", "FkFeedbackidFeedback")
                         .IsRequired()
-                        .HasConstraintName("renginioatlikÄ—jas_fk_eventid_event_fkey");
+                        .HasConstraintName("administrator_feedback_fk_feedbackid_feedback_fkey");
 
-                    b.Navigation("FkEventidEventNavigation");
+                    b.Navigation("FkAdministratoridUserNavigation");
+
+                    b.Navigation("FkFeedbackidFeedbackNavigation");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Feedback", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Feedbacks.Feedback", b =>
                 {
-                    b.HasOne("eventplus.models.Entities.Event", "FkEventidEventNavigation")
+                    b.HasOne("eventplus.models.Domain.Events.Event", "FkEventidEventNavigation")
                         .WithMany("Feedbacks")
                         .HasForeignKey("FkEventidEvent")
                         .IsRequired()
                         .HasConstraintName("feedback_fk_eventid_event_fkey");
 
-                    b.HasOne("eventplus.models.Entities.User", "FkUseridUserNavigation")
-                        .WithMany("Feedbacks")
-                        .HasForeignKey("FkUseridUser")
-                        .IsRequired()
-                        .HasConstraintName("feedback_fk_userid_user_fkey");
-
-                    b.HasOne("eventplus.models.Entities.FeedbackType", "TypeNavigation")
+                    b.HasOne("eventplus.models.Domain.Feedbacks.FeedbackType", "TypeNavigation")
                         .WithMany("Feedbacks")
                         .HasForeignKey("Type")
                         .HasConstraintName("feedback_type_fkey");
 
                     b.Navigation("FkEventidEventNavigation");
 
-                    b.Navigation("FkUseridUserNavigation");
-
                     b.Navigation("TypeNavigation");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Organiser", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Feedbacks.UserFeedback", b =>
                 {
-                    b.HasOne("eventplus.models.Entities.User", "IdUserNavigation")
-                        .WithOne("Organiser")
-                        .HasForeignKey("eventplus.models.Entities.Organiser", "IdUser")
+                    b.HasOne("eventplus.models.Domain.Feedbacks.Feedback", "FkFeedbackidFeedbackNavigation")
+                        .WithOne("UserFeedback")
+                        .HasForeignKey("eventplus.models.Domain.Feedbacks.UserFeedback", "FkFeedbackidFeedback")
                         .IsRequired()
-                        .HasConstraintName("organiser_id_user_fkey");
+                        .HasConstraintName("user_feedback_fk_feedbackid_feedback_fkey");
 
-                    b.Navigation("IdUserNavigation");
+                    b.HasOne("eventplus.models.Domain.Users.User", "FkUseridUserNavigation")
+                        .WithMany("UserFeedbacks")
+                        .HasForeignKey("FkUseridUser")
+                        .IsRequired()
+                        .HasConstraintName("user_feedback_fk_userid_user_fkey");
+
+                    b.Navigation("FkFeedbackidFeedbackNavigation");
+
+                    b.Navigation("FkUseridUserNavigation");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Seating", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Sectors.Seating", b =>
                 {
-                    b.HasOne("eventplus.models.Entities.Ticket", "FkTicketidTicketNavigation")
-                        .WithOne("Seating")
-                        .HasForeignKey("eventplus.models.Entities.Seating", "FkTicketidTicket")
-                        .IsRequired()
-                        .HasConstraintName("seating_fk_ticketid_ticket_fkey");
-
-                    b.HasOne("eventplus.models.Entities.Sector", "Sector")
+                    b.HasOne("eventplus.models.Domain.Sectors.Sector", "FkSectoridSectorNavigation")
                         .WithMany("Seatings")
-                        .HasForeignKey("FkSectoridSector", "FkSectorfkEventLocationidEventLocation")
-                        .IsRequired()
-                        .HasConstraintName("seating_fk_sectorid_sector_fk_sectorfk_event_locationid_ev_fkey");
+                        .HasForeignKey("FkSectoridSector")
+                        .HasConstraintName("seating_fk_sectorid_sector_fkey");
 
-                    b.Navigation("FkTicketidTicketNavigation");
-
-                    b.Navigation("Sector");
+                    b.Navigation("FkSectoridSectorNavigation");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Sector", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Sectors.Sector", b =>
                 {
-                    b.HasOne("eventplus.models.Entities.EventLocation", "FkEventLocationidEventLocationNavigation")
+                    b.HasOne("eventplus.models.Domain.Events.EventLocation", "FkEventLocationidEventLocationNavigation")
                         .WithMany("Sectors")
                         .HasForeignKey("FkEventLocationidEventLocation")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("sector_fk_event_locationid_event_location_fkey");
 
                     b.Navigation("FkEventLocationidEventLocationNavigation");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.SectorPrice", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Sectors.SectorPrice", b =>
                 {
-                    b.HasOne("eventplus.models.Entities.Event", "FkEventidEventNavigation")
+                    b.HasOne("eventplus.models.Domain.Events.Event", "FkEventidEventNavigation")
                         .WithMany("SectorPrices")
                         .HasForeignKey("FkEventidEvent")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("sector_price_fk_eventid_event_fkey");
 
-                    b.HasOne("eventplus.models.Entities.Sector", "Sector")
+                    b.HasOne("eventplus.models.Domain.Sectors.Sector", "FkSectoridSectorNavigation")
                         .WithMany("SectorPrices")
-                        .HasForeignKey("FkSectoridSector", "FkSectorfkEventLocationidEventLocation")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("FkSectoridSector")
                         .IsRequired()
-                        .HasConstraintName("sector_price_fk_sectorid_sector_fk_sectorfk_event_location_fkey");
+                        .HasConstraintName("sector_price_fk_sectorid_sector_fkey");
 
                     b.Navigation("FkEventidEventNavigation");
 
-                    b.Navigation("Sector");
+                    b.Navigation("FkSectoridSectorNavigation");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Ticket", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.AdministratorTicket", b =>
                 {
-                    b.HasOne("eventplus.models.Entities.Event", "FkEventidEventNavigation")
+                    b.HasOne("eventplus.models.Domain.Users.Administrator", "FkAdministratoridUserNavigation")
+                        .WithMany("AdministratorTickets")
+                        .HasForeignKey("FkAdministratoridUser")
+                        .IsRequired()
+                        .HasConstraintName("administrator_ticket_fk_administratorid_user_fkey");
+
+                    b.HasOne("eventplus.models.Domain.Tickets.Ticket", "FkTicketidTicketNavigation")
+                        .WithOne("AdministratorTicket")
+                        .HasForeignKey("eventplus.models.Domain.Tickets.AdministratorTicket", "FkTicketidTicket")
+                        .IsRequired()
+                        .HasConstraintName("administrator_ticket_fk_ticketid_ticket_fkey");
+
+                    b.Navigation("FkAdministratoridUserNavigation");
+
+                    b.Navigation("FkTicketidTicketNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.Ticket", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.Events.Event", "FkEventidEventNavigation")
                         .WithMany("Tickets")
                         .HasForeignKey("FkEventidEvent")
                         .IsRequired()
                         .HasConstraintName("ticket_fk_eventid_event_fkey");
 
-                    b.HasOne("eventplus.models.Entities.User", "User")
-                        .WithMany("Tickets")
-                        .HasForeignKey("FkUseridUser")
+                    b.HasOne("eventplus.models.Domain.Sectors.Seating", "FkSeatingidSeatingNavigation")
+                        .WithOne("Ticket")
+                        .HasForeignKey("eventplus.models.Domain.Tickets.Ticket", "FkSeatingidSeating")
                         .IsRequired()
-                        .HasConstraintName("ticket_fk_userid_user_fkey");
+                        .HasConstraintName("ticket_fk_seatingid_seating_fkey");
 
-                    b.HasOne("eventplus.models.Entities.TicketStatus", "TicketStatuses")
+                    b.HasOne("eventplus.models.Domain.Tickets.Ticketstatus", "FkTicketstatusNavigation")
                         .WithMany("Tickets")
-                        .HasForeignKey("TicketStatusesIdTicketStatus");
+                        .HasForeignKey("FkTicketstatus")
+                        .IsRequired()
+                        .HasConstraintName("ticket_fk_ticketstatus_fkey");
 
-                    b.HasOne("eventplus.models.Entities.TicketType", "TypeNavigation")
+                    b.HasOne("eventplus.models.Domain.Tickets.TicketType", "TypeNavigation")
                         .WithMany("Tickets")
                         .HasForeignKey("Type")
                         .HasConstraintName("ticket_type_fkey");
 
                     b.Navigation("FkEventidEventNavigation");
 
-                    b.Navigation("TicketStatuses");
+                    b.Navigation("FkSeatingidSeatingNavigation");
+
+                    b.Navigation("FkTicketstatusNavigation");
 
                     b.Navigation("TypeNavigation");
-
-                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.User", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.UserTicket", b =>
                 {
-                    b.HasOne("eventplus.models.Entities.Loyalty", "FkLoyaltyidLoyaltyNavigation")
-                        .WithOne("User")
-                        .HasForeignKey("eventplus.models.Entities.User", "FkLoyaltyidLoyalty")
+                    b.HasOne("eventplus.models.Domain.Tickets.Ticket", "FkTicketidTicketNavigation")
+                        .WithOne("UserTicket")
+                        .HasForeignKey("eventplus.models.Domain.Tickets.UserTicket", "FkTicketidTicket")
                         .IsRequired()
-                        .HasConstraintName("User_fk_loyaltyid_loyalty_fkey");
+                        .HasConstraintName("user_ticket_fk_ticketid_ticket_fkey");
 
-                    b.Navigation("FkLoyaltyidLoyaltyNavigation");
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.Userrequest", b =>
-                {
-                    b.HasOne("eventplus.models.Entities.User", "FkUseridUserNavigation")
-                        .WithOne("Userrequest")
-                        .HasForeignKey("eventplus.models.Entities.Userrequest", "FkUseridUser")
+                    b.HasOne("eventplus.models.Domain.Users.User", "FkUseridUserNavigation")
+                        .WithMany("UserTickets")
+                        .HasForeignKey("FkUseridUser")
                         .IsRequired()
-                        .HasConstraintName("userrequest_fk_userid_user_fkey");
+                        .HasConstraintName("user_ticket_fk_userid_user_fkey");
+
+                    b.Navigation("FkTicketidTicketNavigation");
 
                     b.Navigation("FkUseridUserNavigation");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Category", b =>
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.Question", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.Users.Administrator", "FkAdministratoridUserNavigation")
+                        .WithMany("Questions")
+                        .HasForeignKey("FkAdministratoridUser")
+                        .HasConstraintName("question_fk_administratorid_user_fkey");
+
+                    b.Navigation("FkAdministratoridUserNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.UserRequestAnswer", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.UserAnswers.Question", "FkQuestionidQuestionNavigation")
+                        .WithMany("UserRequestAnswers")
+                        .HasForeignKey("FkQuestionidQuestion")
+                        .IsRequired()
+                        .HasConstraintName("user_request_answer_fk_questionid_question_fkey");
+
+                    b.Navigation("FkQuestionidQuestionNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.UserRequestAnswerAdministrator", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.Users.Administrator", "FkAdministratoridUserNavigation")
+                        .WithMany("UserRequestAnswerAdministrators")
+                        .HasForeignKey("FkAdministratoridUser")
+                        .IsRequired()
+                        .HasConstraintName("user_request_answer_administrator_fk_administratorid_user_fkey");
+
+                    b.HasOne("eventplus.models.Domain.UserAnswers.UserRequestAnswer", "FkUserRequestAnsweridUserRequestAnswerNavigation")
+                        .WithOne("UserRequestAnswerAdministrator")
+                        .HasForeignKey("eventplus.models.Domain.UserAnswers.UserRequestAnswerAdministrator", "FkUserRequestAnsweridUserRequestAnswer")
+                        .IsRequired()
+                        .HasConstraintName("user_request_answer_administr_fk_user_request_answerid_use_fkey");
+
+                    b.Navigation("FkAdministratoridUserNavigation");
+
+                    b.Navigation("FkUserRequestAnsweridUserRequestAnswerNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.UserRequestAnswerOrganiser", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.Users.Organiser", "FkOrganiseridUserNavigation")
+                        .WithMany("UserRequestAnswerOrganisers")
+                        .HasForeignKey("FkOrganiseridUser")
+                        .IsRequired()
+                        .HasConstraintName("user_request_answer_organiser_fk_organiserid_user_fkey");
+
+                    b.HasOne("eventplus.models.Domain.UserAnswers.UserRequestAnswer", "FkUserRequestAnsweridUserRequestAnswerNavigation")
+                        .WithOne("UserRequestAnswerOrganiser")
+                        .HasForeignKey("eventplus.models.Domain.UserAnswers.UserRequestAnswerOrganiser", "FkUserRequestAnsweridUserRequestAnswer")
+                        .IsRequired()
+                        .HasConstraintName("user_request_answer_organiser_fk_user_request_answerid_use_fkey");
+
+                    b.Navigation("FkOrganiseridUserNavigation");
+
+                    b.Navigation("FkUserRequestAnsweridUserRequestAnswerNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.UserRequestAnswerUser", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.UserAnswers.UserRequestAnswer", "FkUserRequestAnsweridUserRequestAnswerNavigation")
+                        .WithOne("UserRequestAnswerUser")
+                        .HasForeignKey("eventplus.models.Domain.UserAnswers.UserRequestAnswerUser", "FkUserRequestAnsweridUserRequestAnswer")
+                        .IsRequired()
+                        .HasConstraintName("user_request_answer_user_fk_user_request_answerid_user_req_fkey");
+
+                    b.HasOne("eventplus.models.Domain.Users.User", "FkUseridUserNavigation")
+                        .WithMany("UserRequestAnswerUsers")
+                        .HasForeignKey("FkUseridUser")
+                        .IsRequired()
+                        .HasConstraintName("user_request_answer_user_fk_userid_user_fkey");
+
+                    b.Navigation("FkUserRequestAnsweridUserRequestAnswerNavigation");
+
+                    b.Navigation("FkUseridUserNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserLoyalties.AdministratorLoyalty", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.Users.Administrator", "FkAdministratoridUserNavigation")
+                        .WithOne("AdministratorLoyalty")
+                        .HasForeignKey("eventplus.models.Domain.UserLoyalties.AdministratorLoyalty", "FkAdministratoridUser")
+                        .IsRequired()
+                        .HasConstraintName("administrator_loyalty_fk_administratorid_user_fkey");
+
+                    b.HasOne("eventplus.models.Domain.UserLoyalties.Loyalty", "FkLoyaltyidLoyaltyNavigation")
+                        .WithOne("AdministratorLoyalty")
+                        .HasForeignKey("eventplus.models.Domain.UserLoyalties.AdministratorLoyalty", "FkLoyaltyidLoyalty")
+                        .IsRequired()
+                        .HasConstraintName("administrator_loyalty_fk_loyaltyid_loyalty_fkey");
+
+                    b.Navigation("FkAdministratoridUserNavigation");
+
+                    b.Navigation("FkLoyaltyidLoyaltyNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserLoyalties.OrganiserLoyalty", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.UserLoyalties.Loyalty", "FkLoyaltyidLoyaltyNavigation")
+                        .WithOne("OrganiserLoyalty")
+                        .HasForeignKey("eventplus.models.Domain.UserLoyalties.OrganiserLoyalty", "FkLoyaltyidLoyalty")
+                        .IsRequired()
+                        .HasConstraintName("organiser_loyalty_fk_loyaltyid_loyalty_fkey");
+
+                    b.HasOne("eventplus.models.Domain.Users.Organiser", "FkOrganiseridUserNavigation")
+                        .WithOne("OrganiserLoyalty")
+                        .HasForeignKey("eventplus.models.Domain.UserLoyalties.OrganiserLoyalty", "FkOrganiseridUser")
+                        .IsRequired()
+                        .HasConstraintName("organiser_loyalty_fk_organiserid_user_fkey");
+
+                    b.Navigation("FkLoyaltyidLoyaltyNavigation");
+
+                    b.Navigation("FkOrganiseridUserNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.UserLoyalties.UserLoyalty", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.UserLoyalties.Loyalty", "FkLoyaltyidLoyaltyNavigation")
+                        .WithOne("UserLoyalty")
+                        .HasForeignKey("eventplus.models.Domain.UserLoyalties.UserLoyalty", "FkLoyaltyidLoyalty")
+                        .IsRequired()
+                        .HasConstraintName("user_loyalty_fk_loyaltyid_loyalty_fkey");
+
+                    b.HasOne("eventplus.models.Domain.Users.User", "FkUseridUserNavigation")
+                        .WithOne("UserLoyalty")
+                        .HasForeignKey("eventplus.models.Domain.UserLoyalties.UserLoyalty", "FkUseridUser")
+                        .IsRequired()
+                        .HasConstraintName("user_loyalty_fk_userid_user_fkey");
+
+                    b.Navigation("FkLoyaltyidLoyaltyNavigation");
+
+                    b.Navigation("FkUseridUserNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Users.OrganiserFeedback", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.Feedbacks.Feedback", "FkFeedbackidFeedbackNavigation")
+                        .WithOne("OrganiserFeedback")
+                        .HasForeignKey("eventplus.models.Domain.Users.OrganiserFeedback", "FkFeedbackidFeedback")
+                        .IsRequired()
+                        .HasConstraintName("organiser_feedback_fk_feedbackid_feedback_fkey");
+
+                    b.HasOne("eventplus.models.Domain.Users.Organiser", "FkOrganiseridUserNavigation")
+                        .WithMany("OrganiserFeedbacks")
+                        .HasForeignKey("FkOrganiseridUser")
+                        .IsRequired()
+                        .HasConstraintName("organiser_feedback_fk_organiserid_user_fkey");
+
+                    b.Navigation("FkFeedbackidFeedbackNavigation");
+
+                    b.Navigation("FkOrganiseridUserNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Users.OrganiserTicket", b =>
+                {
+                    b.HasOne("eventplus.models.Domain.Users.Organiser", "FkOrganiseridUserNavigation")
+                        .WithMany("OrganiserTickets")
+                        .HasForeignKey("FkOrganiseridUser")
+                        .IsRequired()
+                        .HasConstraintName("organiser_ticket_fk_organiserid_user_fkey");
+
+                    b.HasOne("eventplus.models.Domain.Tickets.Ticket", "FkTicketidTicketNavigation")
+                        .WithOne("OrganiserTicket")
+                        .HasForeignKey("eventplus.models.Domain.Users.OrganiserTicket", "FkTicketidTicket")
+                        .IsRequired()
+                        .HasConstraintName("organiser_ticket_fk_ticketid_ticket_fkey");
+
+                    b.Navigation("FkOrganiseridUserNavigation");
+
+                    b.Navigation("FkTicketidTicketNavigation");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Events.Category", b =>
                 {
                     b.Navigation("Events");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Equipment", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.Equipment", b =>
                 {
                     b.Navigation("EventLocations");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Event", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.Event", b =>
                 {
-                    b.Navigation("EventPartner");
-
-                    b.Navigation("EventPerformer");
-
                     b.Navigation("Feedbacks");
 
                     b.Navigation("SectorPrices");
@@ -1064,61 +1501,116 @@ namespace eventplus.models.Migrations
                     b.Navigation("Tickets");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.EventLocation", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Events.EventLocation", b =>
                 {
                     b.Navigation("Event");
 
                     b.Navigation("Sectors");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.FeedbackType", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Feedbacks.Feedback", b =>
+                {
+                    b.Navigation("AdministratorFeedback");
+
+                    b.Navigation("OrganiserFeedback");
+
+                    b.Navigation("UserFeedback");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Feedbacks.FeedbackType", b =>
                 {
                     b.Navigation("Feedbacks");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Loyalty", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Sectors.Seating", b =>
                 {
-                    b.Navigation("User");
+                    b.Navigation("Ticket");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Organiser", b =>
-                {
-                    b.Navigation("Events");
-                });
-
-            modelBuilder.Entity("eventplus.models.Entities.Sector", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Sectors.Sector", b =>
                 {
                     b.Navigation("Seatings");
 
                     b.Navigation("SectorPrices");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.Ticket", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.Ticket", b =>
                 {
-                    b.Navigation("Seating");
+                    b.Navigation("AdministratorTicket");
+
+                    b.Navigation("OrganiserTicket");
+
+                    b.Navigation("UserTicket");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.TicketStatus", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.TicketType", b =>
                 {
                     b.Navigation("Tickets");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.TicketType", b =>
+            modelBuilder.Entity("eventplus.models.Domain.Tickets.Ticketstatus", b =>
                 {
                     b.Navigation("Tickets");
                 });
 
-            modelBuilder.Entity("eventplus.models.Entities.User", b =>
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.Question", b =>
                 {
-                    b.Navigation("Administrator");
+                    b.Navigation("UserRequestAnswers");
+                });
 
-                    b.Navigation("Feedbacks");
+            modelBuilder.Entity("eventplus.models.Domain.UserAnswers.UserRequestAnswer", b =>
+                {
+                    b.Navigation("UserRequestAnswerAdministrator");
 
-                    b.Navigation("Organiser");
+                    b.Navigation("UserRequestAnswerOrganiser");
 
-                    b.Navigation("Tickets");
+                    b.Navigation("UserRequestAnswerUser");
+                });
 
-                    b.Navigation("Userrequest");
+            modelBuilder.Entity("eventplus.models.Domain.UserLoyalties.Loyalty", b =>
+                {
+                    b.Navigation("AdministratorLoyalty");
+
+                    b.Navigation("OrganiserLoyalty");
+
+                    b.Navigation("UserLoyalty");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Users.Administrator", b =>
+                {
+                    b.Navigation("AdministratorFeedbacks");
+
+                    b.Navigation("AdministratorLoyalty");
+
+                    b.Navigation("AdministratorTickets");
+
+                    b.Navigation("Questions");
+
+                    b.Navigation("UserRequestAnswerAdministrators");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Users.Organiser", b =>
+                {
+                    b.Navigation("Events");
+
+                    b.Navigation("OrganiserFeedbacks");
+
+                    b.Navigation("OrganiserLoyalty");
+
+                    b.Navigation("OrganiserTickets");
+
+                    b.Navigation("UserRequestAnswerOrganisers");
+                });
+
+            modelBuilder.Entity("eventplus.models.Domain.Users.User", b =>
+                {
+                    b.Navigation("UserFeedbacks");
+
+                    b.Navigation("UserLoyalty");
+
+                    b.Navigation("UserRequestAnswerUsers");
+
+                    b.Navigation("UserTickets");
                 });
 #pragma warning restore 612, 618
         }

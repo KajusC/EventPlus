@@ -18,9 +18,8 @@ export const createEvent = async (eventData) => {
 };
 
 export const updateEvent = async (id, eventData) => {
-    console.log(eventData);
-    const response = await axios.put(`${API_URL}/${id}`, eventData);
-    console.log(response.data);
+    const response = await axios.put(`${API_URL}`, eventData);
+    console.log(response);
     return response.data;
 };
 

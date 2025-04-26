@@ -33,4 +33,13 @@
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="8.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Application\Users\Handler\" />
+    <Folder Include="Application\Users\ViewModel\" />
+    <Folder Include="Application\UserLoyalty\Handler\" />
+    <Folder Include="Application\UserLoyalty\ViewModel\" />
+    <Folder Include="Application\UserAnswers\Handler\" />
+    <Folder Include="Application\UserAnswers\ViewModel\" />
+  </ItemGroup>
+
 </Project>

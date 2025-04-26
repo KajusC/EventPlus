@@ -1,5 +1,8 @@
-﻿using EventPlus.Server.DTO;
-using EventPlus.Server.Logic.Interface;
+﻿using EventPlus.Server.Application.Events.Handler;
+using EventPlus.Server.Application.Events.ViewModel;
+using EventPlus.Server.Application.Feedbacks.Handler;
+using EventPlus.Server.Application.Sectors.Handler;
+using EventPlus.Server.Application.Tickets.Handler;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlus.Server.Controllers
@@ -21,14 +24,14 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<EventDTO>>> GetAllEvents()
+        public async Task<ActionResult<List<EventViewModel>>> GetAllEvents()
         {
             var events = await _eventLogic.GetAllEventsAsync();
             return Ok(events);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<EventDTO>> GetEventById(int id)
+        public async Task<ActionResult<EventViewModel>> GetEventById(int id)
         {
             var eventEntity = await _eventLogic.GetEventByIdAsync(id);
             if (eventEntity == null)
@@ -39,7 +42,7 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<bool>> CreateEvent([FromBody] EventDTO eventEntity)
+        public async Task<ActionResult<bool>> CreateEvent([FromBody] EventViewModel eventEntity)
         {
             if (eventEntity == null)
             {
@@ -50,7 +53,7 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpPut]
-        public async Task<ActionResult<bool>> UpdateEvent([FromBody] EventDTO eventEntity)
+        public async Task<ActionResult<bool>> UpdateEvent([FromBody] EventViewModel eventEntity)
         {
             if (eventEntity == null)
             {

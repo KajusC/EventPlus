@@ -1,6 +1,6 @@
-﻿using eventplus.models.Entities;
-using EventPlus.Server.DTO;
-using EventPlus.Server.Logic.Interface;
+﻿using eventplus.models.Domain.Tickets;
+using EventPlus.Server.Application.Tickets.Handler;
+using EventPlus.Server.Application.Tickets.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlus.Server.Controllers
@@ -15,7 +15,7 @@ namespace EventPlus.Server.Controllers
             _ticketLogic = ticketLogic;
         }
         [HttpGet]
-        public async Task<ActionResult<List<TicketDTO>>> GetAllTickets()
+        public async Task<ActionResult<List<TicketViewModel>>> GetAllTickets()
         {
             var tickets = await _ticketLogic.GetAllTicketsAsync();
             return Ok(tickets);
@@ -31,7 +31,7 @@ namespace EventPlus.Server.Controllers
             return Ok(ticketEntity);
         }
         [HttpPost]
-        public async Task<ActionResult<bool>> CreateTicket([FromBody] TicketDTO ticketDTO)
+        public async Task<ActionResult<bool>> CreateTicket([FromBody] TicketViewModel ticketDTO)
         {
             if (ticketDTO == null)
             {
@@ -41,7 +41,7 @@ namespace EventPlus.Server.Controllers
             return CreatedAtAction(nameof(GetTicketById), new { id = ticketDTO.IdTicket }, result);
         }
         [HttpPut]
-        public async Task<ActionResult<bool>> UpdateTicket([FromBody] TicketDTO ticketDTO)
+        public async Task<ActionResult<bool>> UpdateTicket([FromBody] TicketViewModel ticketDTO)
         {
             if (ticketDTO == null)
             {
