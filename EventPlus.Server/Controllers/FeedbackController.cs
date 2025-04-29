@@ -1,5 +1,5 @@
-﻿using EventPlus.Server.Application.Feedbacks.Handler;
-using EventPlus.Server.Application.Feedbacks.ViewModel;
+﻿using EventPlus.Server.Application.IHandlers;
+using EventPlus.Server.Application.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

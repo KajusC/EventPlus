@@ -1,24 +1,48 @@
-﻿using eventplus.models.Infrastructure.Persistance.Repositories.Events;
-using eventplus.models.Infrastructure.Persistance.Repositories.Feedbacks;
-using eventplus.models.Infrastructure.Persistance.Repositories.Sectors;
-using eventplus.models.Infrastructure.Persistance.Repositories.Tickets;
+﻿using eventplus.models.Domain.Events;
+using eventplus.models.Infrastructure.context;
+using eventplus.models.Infrastructure.Persistance;
+using eventplus.models.Infrastructure.Persistance.IRepositories;
+using eventplus.models.Infrastructure.Persistance.Repositories;
 
 namespace eventplus.models.Infrastructure.UnitOfWork
 {
     public class UnitOfWork : IUnitOfWork
     {
-        public IEventRepository Events => throw new NotImplementedException();
+        private readonly EventPlusContext _context;
 
-        public ISectorRepository Sectors => throw new NotImplementedException();
+        private IEventRepository? _events;
+        private IRepository<EventLocation>? _eventLocations;
+        private IRepository<Partner>? _partners;
+        private IRepository<Equipment>? _equipments;
+        private IRepository<Performer>? _performers;
+        private ISectorRepository? _sectors;
+        private IFeedbackRepository? _feedbacks;
+        private ITicketRepository? _tickets;
 
-        public IFeedbackRepository Feedbacks => throw new NotImplementedException();
-
-        public ITicketRepository Tickets => throw new NotImplementedException();
-
-        public Task SaveAsync()
+        public UnitOfWork(EventPlusContext context)
         {
-            throw new NotImplementedException();
+            _context = context;
+        }
+
+        public IEventRepository Events => _events ??= new EventRepository(_context);
+
+        public IRepository<EventLocation> EventLocations => _eventLocations ??= new Repository<EventLocation>(_context);
+
+        public IRepository<Partner> Partners => _partners ??= new Repository<Partner>(_context);
+
+        public IRepository<Equipment> Equipments => _equipments ??= new Repository<Equipment>(_context);
+
+        public IRepository<Performer> Performers => _performers ??= new Repository<Performer>(_context);
+
+        public ISectorRepository Sectors => _sectors ??= new SectorRepository(_context);
+
+        public IFeedbackRepository Feedbacks => _feedbacks ??= new FeedbackRepository(_context);
+
+        public ITicketRepository Tickets => _tickets ??= new TicketRepository(_context);
+
+        public async Task SaveAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }
-

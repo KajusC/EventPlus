@@ -1,13 +1,12 @@
 using eventplus.models.Domain;
+using eventplus.models.Domain.Events;
 using eventplus.models.Infrastructure.context;
-using eventplus.models.Infrastructure.Persistance.Repositories.Events;
-using eventplus.models.Infrastructure.Persistance.Repositories.Feedbacks;
-using eventplus.models.Infrastructure.Persistance.Repositories.Sectors;
-using eventplus.models.Infrastructure.Persistance.Repositories.Tickets;
-using EventPlus.Server.Application.Events.Handler;
-using EventPlus.Server.Application.Feedbacks.Handler;
-using EventPlus.Server.Application.Sectors.Handler;
-using EventPlus.Server.Application.Tickets.Handler;
+using eventplus.models.Infrastructure.Persistance;
+using eventplus.models.Infrastructure.Persistance.IRepositories;
+using eventplus.models.Infrastructure.Persistance.Repositories;
+using eventplus.models.Infrastructure.UnitOfWork;
+using EventPlus.Server.Application.Handlers;
+using EventPlus.Server.Application.IHandlers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -42,6 +41,11 @@ namespace EventPlus.Server
             builder.Services.AddScoped<ITicketRepository, TicketRepository>();
             builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
             builder.Services.AddScoped<ISectorRepository, SectorRepository>();
+            builder.Services.AddScoped<IRepository<EventLocation>, EventLocationRepository>();
+            builder.Services.AddScoped<IRepository<Partner>, PartnerRepository>();
+            builder.Services.AddScoped<IRepository<Performer>, PerformerRepository>();
+
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // Logic
             builder.Services.AddScoped<IEventLogic, EventLogic>();

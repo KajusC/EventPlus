@@ -27,16 +27,6 @@
 
   <ItemGroup>
     <Folder Include="Infrastructure\context\" />
-    <Folder Include="Infrastructure\Persistance\Mapping\Events\" />
-    <Folder Include="Infrastructure\Persistance\Mapping\Feedbacks\" />
-    <Folder Include="Infrastructure\Persistance\Mapping\Users\" />
-    <Folder Include="Infrastructure\Persistance\Mapping\UserLoyalty\" />
-    <Folder Include="Infrastructure\Persistance\Mapping\UserAnswers\" />
-    <Folder Include="Infrastructure\Persistance\Mapping\Tickets\" />
-    <Folder Include="Infrastructure\Persistance\Mapping\Sectors\" />
-    <Folder Include="Infrastructure\Persistance\Repositories\Users\" />
-    <Folder Include="Infrastructure\Persistance\Repositories\UserLoyalty\" />
-    <Folder Include="Infrastructure\Persistance\Repositories\UserAnswers\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
 

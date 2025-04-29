@@ -1,8 +1,5 @@
-﻿using EventPlus.Server.Application.Events.Handler;
-using EventPlus.Server.Application.Events.ViewModel;
-using EventPlus.Server.Application.Feedbacks.Handler;
-using EventPlus.Server.Application.Sectors.Handler;
-using EventPlus.Server.Application.Tickets.Handler;
+﻿using EventPlus.Server.Application.IHandlers;
+using EventPlus.Server.Application.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlus.Server.Controllers
@@ -88,7 +85,29 @@ namespace EventPlus.Server.Controllers
                 return NotFound();
             }
             return NoContent();
+        }
 
+        [HttpPost("CreateFullEvent")]
+        public async Task<ActionResult<bool>> CreateFullEvent([FromBody] CompleteEvent completeEventEntity)
+        {
+            if (completeEventEntity == null)
+            {
+                return BadRequest("Eventcannot be null");
+            }
+
+            var result = await _eventLogic.CreateFullEvent(completeEventEntity.Event,
+                completeEventEntity.EventLocation,
+                completeEventEntity.Partners,
+                completeEventEntity.Performers);
+            return CreatedAtAction(nameof(GetEventById), new { id = result }, result);
+        }
+
+        public class CompleteEvent
+        {
+            public EventViewModel Event { get; set; }
+            public EventLocationViewModel EventLocation { get; set; }
+            public PartnerViewModel Partners { get; set; }
+            public PerformerViewModel Performers { get; set; }
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using eventplus.models.Domain.Tickets;
-using EventPlus.Server.Application.Tickets.Handler;
-using EventPlus.Server.Application.Tickets.ViewModel;
+using EventPlus.Server.Application.IHandlers;
+using EventPlus.Server.Application.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlus.Server.Controllers
