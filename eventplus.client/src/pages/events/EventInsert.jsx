@@ -1,563 +1,584 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { createEvent } from '../../services/eventService';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createEvent } from "../../services/eventService";
 import {
-  Container,
-  Typography,
-  Button,
-  Box,
-  Alert,
-  Grid,
-  Card,
-  CardContent,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Stack,
-  Snackbar,
-  Paper,
-  Divider,
-  IconButton,
-  Chip,
-  CircularProgress
+	Container,
+	Typography,
+	Button,
+	Box,
+	Alert,
+	Card,
+	CardContent,
+	TextField,
+	FormControl,
+	InputLabel,
+	Select,
+	MenuItem,
+	Snackbar,
+	Tabs,
+	Tab,
+	CircularProgress,
 } from "@mui/material";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { 
-  Add as AddIcon, 
-  Save as SaveIcon, 
-  ArrowBack as ArrowBackIcon,
-  Event as EventIcon,
-  Description as DescriptionIcon,
-  Category as CategoryIcon,
-  ConfirmationNumber as TicketIcon,
-  CalendarMonth as CalendarIcon
+import {
+	ArrowBack as ArrowBackIcon,
+	Save as SaveIcon,
 } from "@mui/icons-material";
-
-// Category name mapping
-const getCategoryName = (categoryId) => {
-  const categories = {
-    1: 'Music',
-    2: 'Business',
-    // Add more mappings as needed
-    default: 'Event'
-  };
-  return categories[categoryId] || categories.default;
-};
-
-// Event category to image mapping
-const getCategoryImage = (category) => {
-  const images = {
-    1: 'https://source.unsplash.com/random/1200x400/?concert',
-    2: 'https://source.unsplash.com/random/1200x400/?conference',
-    // Add more mappings as needed
-    default: 'https://source.unsplash.com/random/1200x400/?event'
-  };
-  return images[category] || images.default;
-};
+import { fetchCategories } from "../../services/categoryService";
 
 function EventInsert() {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: 1, // Default category
-    startDate: new Date(),
-    endDate: new Date(new Date().getTime() + 2 * 60 * 60 * 1000),
-    maxTicketCount: 0,
-    fkEventLocationidEventLocation: 1, // TODO - FIX THIS, BECAUSE ITS HARD CODED
-    fkOrganiseridUser: 1, // TODO - FIX THIS, BECAUSE ITS HARD CODED
-  });
-  const [toast, setToast] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+	const navigate = useNavigate();
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState(null);
+	const [categories, setCategories] = useState([
+		{
+			idCategory: 1,
+			name: "SomeCategory",
+		},
+	]);
+	const [activeTab, setActiveTab] = useState(0);
+	const [formData, setFormData] = useState({
+		event: {
+			idEvent: 0,
+			name: "",
+			description: "",
+			startDate: new Date(),
+			endDate: new Date(new Date().getTime() + 2 * 60 * 60 * 1000),
+			maxTicketCount: 0,
+			category: 1,
+			fkEventLocationidEventLocation: 0,
+			fkOrganiseridUser: 1, // This would ideally come from auth context
+		},
+		eventLocation: {
+			name: "",
+			address: "",
+			city: "",
+			country: "",
+			capacity: 0,
+			contacts: "",
+			price: 0,
+			idEventLocation: 0,
+			idEquipment: 0,
+			sectorIds: [0],
+		},
+		partners: {
+			name: "",
+			description: "",
+			website: "",
+			idPartner: 0,
+		},
+		performers: {
+			name: "",
+			surname: "",
+			profession: "",
+			idPerformer: 0,
+		},
+	});
+	const [toast, setToast] = useState({
+		open: false,
+		message: "",
+		severity: "success",
+	});
 
-  const categories = [1, 2];
+	useEffect(() => {
+		const fetchCategory = async () => {
+			try {
+				const data = await fetchCategories();
+				setCategories(data);
+				if (data && data.length > 0) {
+					setFormData((prev) => ({
+						...prev,
+						event: {
+							...prev.event,
+							category: data[0].idCategory,
+						},
+					}));
+				}
+			} catch (error) {
+				console.error("Error fetching categories:", error);
+				setError("Failed to load categories. Please try again later.");
+			}
+		};
+		fetchCategory();
+	}, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+	const handleInputChange = (section, field, value) => {
+		setFormData((prev) => ({
+			...prev,
+			[section]: {
+				...prev[section],
+				[field]: value,
+			},
+		}));
+	};
 
-  const handleDateChange = (name) => (newDate) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: newDate,
-    }));
-  };
+	const handleDateChange = (section, field) => (newDate) => {
+		setFormData((prev) => ({
+			...prev,
+			[section]: {
+				...prev[section],
+				[field]: newDate,
+			},
+		}));
+	};
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      setLoading(true);
-      const eventToCreate = {
-        ...formData,
-        maxTicketCount: parseInt(formData.maxTicketCount, 10),
-        category: parseInt(formData.category, 10),
-      };
+	const handleTabChange = (event, newValue) => {
+		setActiveTab(newValue);
+	};
 
-      await createEvent(eventToCreate);
-      setToast({
-        open: true,
-        message: "Event created successfully!",
-        severity: "success",
-      });
-      setTimeout(() => {
-        navigate('/events');
-      }, 1500);
-    } catch (err) {
-      setError(err.message || "Failed to create event");
-      setToast({
-        open: true,
-        message: `Error: ${err.message || "Failed to create event"}`,
-        severity: "error",
-      });
-      console.error("Create error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+	const handleSubmit = async (e) => {
+		e.preventDefault();
 
-  const handleCloseToast = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setToast({ ...toast, open: false });
-  };
+		try {
+			setLoading(true);
+			const dataToSubmit = {
+				event: {
+					...formData.event,
+					startDate: formData.event.startDate.toISOString().split("T")[0],
+					endDate: formData.event.endDate.toISOString().split("T")[0],
+					maxTicketCount: parseInt(formData.event.maxTicketCount, 10),
+					category: parseInt(formData.event.category, 10),
+				},
+				eventLocation: {
+					...formData.eventLocation,
+					capacity: parseInt(formData.eventLocation.capacity, 10),
+					price: parseFloat(formData.eventLocation.price),
+					idEquipment: parseInt(
+						formData.eventLocation.idEquipment,
+						10
+					),
+				},
+				partners: formData.partners,
+				performers: formData.performers,
+			};
 
-  const categoryName = getCategoryName(formData.category);
-  const imageUrl = getCategoryImage(formData.category);
+      console.log("Submitting data:", JSON.stringify(dataToSubmit, null, 2));
+			await createEvent(dataToSubmit);
+			setToast({
+				open: true,
+				message: "Event created successfully!",
+				severity: "success",
+			});
+			setTimeout(() => {
+				navigate("/events");
+			}, 1500);
+		} catch (err) {
+			setError(err.message || "Failed to create event");
+			setToast({
+				open: true,
+				message: `Error: ${err.message || "Failed to create event"}`,
+				severity: "error",
+			});
+			console.error("Create error:", err);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-  return (
-    <>
-      {/* Hero Section */}
-      <Box 
-        sx={{
-          width: '100%',
-          position: 'relative',
-          height: { xs: '220px', md: '280px' },
-          overflow: 'hidden',
-          mt: 8,
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundImage: `url(${imageUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%)',
-              zIndex: 1
-            },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'radial-gradient(circle at center, rgba(106,17,203,0.3) 0%, rgba(37,117,252,0) 70%)',
-              zIndex: 1,
-            }
-          }}
-        />
-        <Container 
-          maxWidth="lg"
-          sx={{
-            position: 'relative',
-            zIndex: 2,
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-            pb: 4
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <IconButton 
-              onClick={() => navigate('/events')} 
-              sx={{ 
-                color: 'white', 
-                mr: 2,
-                bgcolor: 'rgba(255,255,255,0.1)',
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.2)'
-                }
-              }}
-            >
-              <ArrowBackIcon />
-            </IconButton>
-            <Chip 
-              icon={<EventIcon sx={{ color: 'white !important' }} />}
-              label="New Event" 
-              sx={{ 
-                color: 'white',
-                bgcolor: 'rgba(106,17,203,0.8)', 
-                fontWeight: 600,
-                px: 1
-              }} 
-            />
-          </Box>
+	const handleCloseToast = (event, reason) => {
+		if (reason === "clickaway") {
+			return;
+		}
+		setToast({ ...toast, open: false });
+	};
 
-          <Typography 
-            variant="h3" 
-            component="h1"
-            sx={{
-              color: 'white',
-              fontWeight: 700,
-              textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.5rem' },
-              lineHeight: 1.2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5
-            }}
-          >
-            <AddIcon sx={{ fontSize: { xs: 24, md: 30 } }} /> Create New Event
-          </Typography>
-          
-          <Typography 
-            variant="subtitle1" 
-            sx={{ 
-              color: 'rgba(255,255,255,0.8)', 
-              mt: 1,
-              maxWidth: '700px'
-            }}
-          >
-            Fill in the details below to create your event and share it with attendees
-          </Typography>
-        </Container>
-      </Box>
+	return (
+		<Container maxWidth="lg" sx={{ mt: 8, mb: 8 }}>
+			<Box sx={{ display: "flex", alignItems: "center", mb: 4, pt: 4 }}>
+				<Button
+					variant="outlined"
+					startIcon={<ArrowBackIcon />}
+					onClick={() => navigate("/events")}
+					sx={{ mr: 2 }}
+				>
+					Back to Events
+				</Button>
+				<Typography variant="h4" component="h1">
+					Create New Event
+				</Typography>
+			</Box>
 
-      <Container maxWidth="lg" sx={{ mt: { xs: -3, md: -5 }, mb: 8, position: 'relative', zIndex: 3 }}>
-        <Card 
-          sx={{
-            borderRadius: 3,
-            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-            overflow: 'hidden',
-            p: 0,
-            bgcolor: '#fcfcfc'
-          }}
-        >
-          <CardContent sx={{ p: { xs: 3, md: 5 } }}>
-            <form onSubmit={handleSubmit}>
-              <Grid container spacing={4}>
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                    <EventIcon sx={{ mt: 1.5, mr: 2, color: 'text.secondary' }} />
-                    <TextField
-                      fullWidth
-                      label="Event Name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      variant="standard"
-                      required
-                      placeholder="Give your event a clear, catchy name"
-                      sx={{
-                        '& .MuiInputBase-input': {
-                          fontSize: '1.5rem', 
-                          fontWeight: 600,
-                          lineHeight: 1.5
-                        },
-                      }}
-                    />
-                  </Box>
-                </Grid>
+			<Card sx={{ mb: 4 }}>
+				<CardContent>
+					<Tabs
+						value={activeTab}
+						onChange={handleTabChange}
+						sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}
+					>
+						<Tab label="Event Details" />
+						<Tab label="Location" />
+						<Tab label="Partner" />
+						<Tab label="Performer" />
+					</Tabs>
 
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                    <DescriptionIcon sx={{ mt: 1, mr: 2, color: 'text.secondary' }} />
-                    <Paper 
-                      elevation={0} 
-                      sx={{ 
-                        bgcolor: 'rgba(0,0,0,0.02)', 
-                        p: 2, 
-                        borderRadius: 2,
-                        border: '1px solid rgba(0,0,0,0.06)',
-                        width: '100%'
-                      }}
-                    >
-                      <Typography 
-                        variant="caption" 
-                        component="label" 
-                        sx={{ 
-                          display: 'block', 
-                          mb: 1, 
-                          color: 'text.secondary',
-                          fontSize: '0.85rem'
-                        }}
-                      >
-                        Description
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        name="description"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        variant="standard"
-                        multiline
-                        rows={4}
-                        required
-                        placeholder="Describe your event in detail - what can attendees expect?"
-                        InputProps={{
-                          disableUnderline: true,
-                        }}
-                        sx={{
-                          '& .MuiInputBase-root': {
-                            p: 0,
-                          },
-                          '& textarea': {
-                            lineHeight: 1.6,
-                          },
-                        }}
-                      />
-                    </Paper>
-                  </Box>
-                </Grid>
+					<form onSubmit={handleSubmit}>
+						{/* Event Details Tab */}
+						{activeTab === 0 && (
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+								<Box sx={{ width: "100%" }}>
+									<TextField
+										fullWidth
+										label="Event Name"
+										value={formData.event.name}
+										onChange={(e) =>
+											handleInputChange("event", "name", e.target.value)
+										}
+										required
+									/>
+								</Box>
+								<Box sx={{ width: "100%" }}>
+									<TextField
+										fullWidth
+										label="Description"
+										value={formData.event.description}
+										onChange={(e) =>
+											handleInputChange("event", "description", e.target.value)
+										}
+										multiline
+										rows={4}
+										required
+									/>
+								</Box>
+								<Box sx={{ display: 'flex', gap: 3 }}>
+									<Box sx={{ width: "50%" }}>
+										<FormControl fullWidth>
+											<InputLabel>Category</InputLabel>
+											<Select
+												value={formData.event.category}
+												onChange={(e) =>
+													handleInputChange("event", "category", e.target.value)
+												}
+												label="Category"
+												required
+											>
+												{categories.map((category) => (
+													<MenuItem
+														key={category.idCategory}
+														value={category.idCategory}
+													>
+														{category.name}
+													</MenuItem>
+												))}
+											</Select>
+										</FormControl>
+									</Box>
+									<Box sx={{ width: "50%" }}>
+										<TextField
+											fullWidth
+											type="number"
+											label="Max Ticket Count"
+											value={formData.event.maxTicketCount}
+											onChange={(e) =>
+												handleInputChange(
+													"event",
+													"maxTicketCount",
+													e.target.value
+												)
+											}
+											required
+										/>
+									</Box>
+								</Box>
+								<Box sx={{ display: 'flex', gap: 3 }}>
+									<Box sx={{ width: "50%" }}>
+										<LocalizationProvider dateAdapter={AdapterDateFns}>
+											<DatePicker
+												label="Start Date"
+												value={formData.event.startDate}
+												onChange={handleDateChange("event", "startDate")}
+												slotProps={{
+													textField: { fullWidth: true, required: true },
+												}}
+											/>
+										</LocalizationProvider>
+									</Box>
+									<Box sx={{ width: "50%" }}>
+										<LocalizationProvider dateAdapter={AdapterDateFns}>
+											<DatePicker
+												label="End Date"
+												value={formData.event.endDate}
+												onChange={handleDateChange("event", "endDate")}
+												minDate={formData.event.startDate}
+												slotProps={{
+													textField: { fullWidth: true, required: true },
+												}}
+											/>
+										</LocalizationProvider>
+									</Box>
+								</Box>
+							</Box>
+						)}
 
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 1 }}>
-                    <Chip 
-                      label="Event Details" 
-                      size="small"
-                      sx={{ 
-                        px: 2,
-                        background: 'linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)',
-                        color: 'white',
-                        fontWeight: 500
-                      }}
-                    />
-                  </Divider>
-                </Grid>
+						{/* Location Tab */}
+						{activeTab === 1 && (
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+								<Box sx={{ width: "100%" }}>
+									<TextField
+										fullWidth
+										label="Location Name"
+										value={formData.eventLocation.name}
+										onChange={(e) =>
+											handleInputChange("eventLocation", "name", e.target.value)
+										}
+										required
+									/>
+								</Box>
+								<Box sx={{ width: "100%" }}>
+									<TextField
+										fullWidth
+										label="Address"
+										value={formData.eventLocation.address}
+										onChange={(e) =>
+											handleInputChange(
+												"eventLocation",
+												"address",
+												e.target.value
+											)
+										}
+										required
+									/>
+								</Box>
+								<Box sx={{ display: 'flex', gap: 3 }}>
+									<Box sx={{ width: "50%" }}>
+										<TextField
+											fullWidth
+											label="City"
+											value={formData.eventLocation.city}
+											onChange={(e) =>
+												handleInputChange("eventLocation", "city", e.target.value)
+											}
+											required
+										/>
+									</Box>
+									<Box sx={{ width: "50%" }}>
+										<TextField
+											fullWidth
+											label="Country"
+											value={formData.eventLocation.country}
+											onChange={(e) =>
+												handleInputChange(
+													"eventLocation",
+													"country",
+													e.target.value
+												)
+											}
+											required
+										/>
+									</Box>
+								</Box>
+								<Box sx={{ display: 'flex', gap: 3 }}>
+									<Box sx={{ width: "33.33%" }}>
+										<TextField
+											fullWidth
+											type="number"
+											label="Capacity"
+											value={formData.eventLocation.capacity}
+											onChange={(e) =>
+												handleInputChange(
+													"eventLocation",
+													"capacity",
+													e.target.value
+												)
+											}
+											required
+										/>
+									</Box>
+									<Box sx={{ width: "33.33%" }}>
+										<TextField
+											fullWidth
+											type="number"
+											label="Price"
+											value={formData.eventLocation.price}
+											onChange={(e) =>
+												handleInputChange(
+													"eventLocation",
+													"price",
+													e.target.value
+												)
+											}
+											required
+										/>
+									</Box>
+									<Box sx={{ width: "33.33%" }}>
+										<TextField
+											fullWidth
+											type="number"
+											label="Equipment ID"
+											value={formData.eventLocation.idEquipment}
+											onChange={(e) =>
+												handleInputChange(
+													"eventLocation",
+													"idEquipment",
+													e.target.value
+												)
+											}
+										/>
+									</Box>
+								</Box>
+								<Box sx={{ width: "100%" }}>
+									<TextField
+										fullWidth
+										label="Contacts"
+										value={formData.eventLocation.contacts}
+										onChange={(e) =>
+											handleInputChange(
+												"eventLocation",
+												"contacts",
+												e.target.value
+											)
+										}
+									/>
+								</Box>
+							</Box>
+						)}
 
-                <Grid item xs={12} md={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <CategoryIcon sx={{ mr: 2, color: 'text.secondary' }} />
-                    <FormControl fullWidth variant="outlined">
-                      <InputLabel>Category</InputLabel>
-                      <Select
-                        name="category"
-                        value={formData.category}
-                        onChange={handleInputChange}
-                        label="Category"
-                        required
-                        sx={{
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(106, 17, 203, 0.2)',
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(106, 17, 203, 0.5)',
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#6a11cb',
-                          }
-                        }}
-                      >
-                        {categories.map((category) => (
-                          <MenuItem key={category} value={category}>
-                            {getCategoryName(category)}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
-                </Grid>
+						{/* Partners Tab */}
+						{activeTab === 2 && (
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+								<Box sx={{ width: "100%" }}>
+									<TextField
+										fullWidth
+										label="Partner Name"
+										value={formData.partners.name}
+										onChange={(e) =>
+											handleInputChange("partners", "name", e.target.value)
+										}
+									/>
+								</Box>
+								<Box sx={{ width: "100%" }}>
+									<TextField
+										fullWidth
+										label="Description"
+										value={formData.partners.description}
+										onChange={(e) =>
+											handleInputChange(
+												"partners",
+												"description",
+												e.target.value
+											)
+										}
+										multiline
+										rows={3}
+									/>
+								</Box>
+								<Box sx={{ width: "100%" }}>
+									<TextField
+										fullWidth
+										label="Website"
+										value={formData.partners.website}
+										onChange={(e) =>
+											handleInputChange("partners", "website", e.target.value)
+										}
+									/>
+								</Box>
+							</Box>
+						)}
 
-                <Grid item xs={12} md={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <TicketIcon sx={{ mr: 2, color: 'text.secondary' }} />
-                    <TextField
-                      fullWidth
-                      label="Available Tickets"
-                      name="maxTicketCount"
-                      value={formData.maxTicketCount}
-                      onChange={handleInputChange}
-                      type="number"
-                      variant="outlined"
-                      required
-                      placeholder="How many tickets are available?"
-                      InputProps={{
-                        sx: { 
-                          borderRadius: 2,
-                        }
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(106, 17, 203, 0.2)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(106, 17, 203, 0.5)',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#6a11cb',
-                        }
-                      }}
-                    />
-                  </Box>
-                </Grid>
+						{/* Performers Tab */}
+						{activeTab === 3 && (
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+								<Box sx={{ display: 'flex', gap: 3 }}>
+									<Box sx={{ width: "50%" }}>
+										<TextField
+											fullWidth
+											label="First Name"
+											value={formData.performers.name}
+											onChange={(e) =>
+												handleInputChange("performers", "name", e.target.value)
+											}
+										/>
+									</Box>
+									<Box sx={{ width: "50%" }}>
+										<TextField
+											fullWidth
+											label="Last Name"
+											value={formData.performers.surname}
+											onChange={(e) =>
+												handleInputChange("performers", "surname", e.target.value)
+											}
+										/>
+									</Box>
+								</Box>
+								<Box sx={{ width: "100%" }}>
+									<TextField
+										fullWidth
+										label="Profession"
+										value={formData.performers.profession}
+										onChange={(e) =>
+											handleInputChange(
+												"performers",
+												"profession",
+												e.target.value
+											)
+										}
+									/>
+								</Box>
+							</Box>
+						)}
 
-                <Grid item xs={12} md={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <CalendarIcon sx={{ mr: 2, color: 'text.secondary' }} />
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DateTimePicker
-                        label="Start Date"
-                        value={formData.startDate}
-                        onChange={handleDateChange("startDate")}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            required: true,
-                            sx: {
-                              '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: 'rgba(106, 17, 203, 0.2)',
-                                borderRadius: 2
-                              },
-                              '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: 'rgba(106, 17, 203, 0.5)',
-                              },
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#6a11cb',
-                              }
-                            }
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Box>
-                </Grid>
+						<Box
+							sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}
+						>
+							{activeTab > 0 ? (
+								<Button
+									variant="outlined"
+									onClick={() => setActiveTab(activeTab - 1)}
+								>
+									Previous
+								</Button>
+							) : (
+								<Box />
+							)}
 
-                <Grid item xs={12} md={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <CalendarIcon sx={{ mr: 2, color: 'text.secondary' }} />
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DateTimePicker
-                        label="End Date"
-                        value={formData.endDate}
-                        onChange={handleDateChange("endDate")}
-                        minDateTime={formData.startDate}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            required: true,
-                            sx: {
-                              '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: 'rgba(106, 17, 203, 0.2)',
-                                borderRadius: 2
-                              },
-                              '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: 'rgba(106, 17, 203, 0.5)',
-                              },
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#6a11cb',
-                              }
-                            }
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </Box>
-                </Grid>
+							{activeTab < 3 ? (
+								<Button
+									variant="contained"
+									onClick={() => setActiveTab(activeTab + 1)}
+								>
+									Next
+								</Button>
+							) : (
+								<Button
+									type="submit"
+									variant="contained"
+									color="primary"
+									disabled={loading}
+									startIcon={
+										loading ? (
+											<CircularProgress size={16} color="inherit" />
+										) : (
+											<SaveIcon />
+										)
+									}
+								>
+									{loading ? "Creating..." : "Create Event"}
+								</Button>
+							)}
+						</Box>
+					</form>
+				</CardContent>
+			</Card>
 
-                <Grid item xs={12}>
-                  <Box
-                    sx={{ 
-                      borderTop: "1px solid", 
-                      borderColor: "divider", 
-                      pt: 4,
-                      mt: 2,
-                      display: 'flex',
-                      justifyContent: 'space-between'
-                    }}
-                  >
-                    <Button
-                      variant="outlined"
-                      color="inherit"
-                      onClick={() => navigate('/events')}
-                      startIcon={<ArrowBackIcon />}
-                      sx={{ 
-                        borderColor: 'rgba(0,0,0,0.23)',
-                        color: 'text.secondary',
-                        '&:hover': {
-                          bgcolor: 'rgba(0,0,0,0.04)',
-                          borderColor: 'text.primary'
-                        },
-                        px: 3
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      disabled={loading}
-                      startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
-                      sx={{ 
-                        px: 4,
-                        py: 1.2,
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        boxShadow: '0 3px 5px rgba(0,0,0,0.1)',
-                        backgroundImage: 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)',
-                        '&:hover': {
-                          boxShadow: '0 6px 10px rgba(0,0,0,0.15)',
-                          transform: 'translateY(-1px)',
-                        },
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      {loading ? "Creating..." : "Create Event"}
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
-            </form>
-          </CardContent>
-        </Card>
-      </Container>
-
-      <Snackbar
-        open={toast.open}
-        autoHideDuration={3000}
-        onClose={handleCloseToast}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleCloseToast}
-          severity={toast.severity}
-          sx={{ width: "100%" }}
-          elevation={6}
-          variant="filled"
-        >
-          {toast.message}
-        </Alert>
-      </Snackbar>
-    </>
-  );
+			<Snackbar
+				open={toast.open}
+				autoHideDuration={3000}
+				onClose={handleCloseToast}
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}
+			>
+				<Alert
+					onClose={handleCloseToast}
+					severity={toast.severity}
+					sx={{ width: "100%" }}
+					elevation={6}
+					variant="filled"
+				>
+					{toast.message}
+				</Alert>
+			</Snackbar>
+		</Container>
+	);
 }
 
 export default EventInsert;

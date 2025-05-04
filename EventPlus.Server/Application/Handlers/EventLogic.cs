@@ -128,42 +128,35 @@ namespace EventPlus.Server.Application.Handlers
                 throw new ArgumentException("Invalid event data.");
             }
 
-            try
+            var locationCreated = await CreateEventLocation(eventLocation);
+            if (locationCreated == null)
             {
-                var locationCreated = await CreateEventLocation(eventLocation);
-                if (locationCreated == null)
-                {
-                    throw new Exception("Failed to create event location.");
-                }
-                eventViewModel.FkEventLocationidEventLocation = locationCreated.IdEventLocation;
-
-                var eventCreated = await CreateEventAsync(eventViewModel);
-
-                if (eventCreated <= 0)
-                {
-                    throw new Exception("Failed to create event.");
-                }
-
-                int eventId = eventCreated;
-
-                var partnerMapped = _mapper.Map<Partner>(partner);
-                await _unitOfWork.Partners.CreateAsync(partnerMapped);
-
-
-                var performerMapped = _mapper.Map<Performer>(performer);
-                await _unitOfWork.Performers.CreateAsync(performerMapped);
-
-                // Save all changes
-                await _unitOfWork.SaveAsync();
-
-                return eventId;
+                throw new Exception("Failed to create event location.");
             }
-            catch (Exception)
+            eventViewModel.FkEventLocationidEventLocation = locationCreated.IdEventLocation;
+
+            var eventCreated = await CreateEventAsync(eventViewModel);
+
+            if (eventCreated <= 0)
             {
-                // Handle any exceptions and return failure
-                return -1;
+                throw new Exception("Failed to create event.");
             }
+
+            int eventId = eventCreated;
+
+            var partnerMapped = _mapper.Map<Partner>(partner);
+            await _unitOfWork.Partners.CreateAsync(partnerMapped);
+
+
+            var performerMapped = _mapper.Map<Performer>(performer);
+            await _unitOfWork.Performers.CreateAsync(performerMapped);
+
+            // Save all changes
+            await _unitOfWork.SaveAsync();
+
+            return eventId;
         }
+
 
         public async Task<EventLocation> CreateEventLocation(EventLocationViewModel eventLocation)
         {
@@ -171,10 +164,16 @@ namespace EventPlus.Server.Application.Handlers
             {
                 throw new ArgumentNullException(nameof(eventLocation));
             }
+
             var eventLocationMapped = _mapper.Map<EventLocation>(eventLocation);
+
             await _unitOfWork.EventLocations.CreateAsync(eventLocationMapped);
+            
+            await _unitOfWork.SaveAsync();
+            
             return eventLocationMapped;
         }
+
 
         public async Task<Partner> CreatePartners(PartnerViewModel eventPartners)
         {

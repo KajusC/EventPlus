@@ -4,6 +4,8 @@ using eventplus.models.Domain.UserAnswers;
 using eventplus.models.Domain.UserLoyalties;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace eventplus.models.Domain.Users;
 
@@ -19,6 +21,8 @@ public partial class User
 
     public DateTime? LastLogin { get; set; }
 
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int IdUser { get; set; }
 
     public virtual ICollection<UserFeedback> UserFeedbacks { get; set; } = new List<UserFeedback>();

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace eventplus.models.Domain.Events;
 
@@ -11,5 +13,7 @@ public partial class Partner
 
     public string? Website { get; set; }
 
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int IdPartner { get; set; }
 }

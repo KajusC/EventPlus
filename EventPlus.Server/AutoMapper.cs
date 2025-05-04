@@ -32,6 +32,11 @@ namespace EventPlus.Server
                 .ForMember(dest => dest.IdPerformer, opt => opt.MapFrom(src => src.IdPerformer))
                 .ReverseMap();
 
+            CreateMap<Category, CategoryViewModel>()
+                .ForMember(dest => dest.IdCategory, opt => opt.MapFrom(src => src.IdCategory))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ReverseMap();
+
         }
     }
 }

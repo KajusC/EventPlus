@@ -3,6 +3,8 @@ using eventplus.models.Domain.Feedbacks;
 using eventplus.models.Domain.Users;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace eventplus.models.Domain.Feedbacks;
 
@@ -14,6 +16,8 @@ public partial class Feedback
 
     public int? Type { get; set; }
 
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int IdFeedback { get; set; }
 
     public int FkEventidEvent { get; set; }

@@ -18,6 +18,7 @@ namespace eventplus.models.Infrastructure.UnitOfWork
         private ISectorRepository? _sectors;
         private IFeedbackRepository? _feedbacks;
         private ITicketRepository? _tickets;
+        private ICategoryRepository? _categories;
 
         public UnitOfWork(EventPlusContext context)
         {
@@ -39,6 +40,8 @@ namespace eventplus.models.Infrastructure.UnitOfWork
         public IFeedbackRepository Feedbacks => _feedbacks ??= new FeedbackRepository(_context);
 
         public ITicketRepository Tickets => _tickets ??= new TicketRepository(_context);
+
+        public ICategoryRepository Categories => _categories ??= new CategoryRepository(_context);
 
         public async Task SaveAsync()
         {

@@ -3,6 +3,8 @@ using eventplus.models.Domain.Sectors;
 using eventplus.models.Domain.Users;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace eventplus.models.Domain.Tickets;
 
@@ -18,6 +20,8 @@ public partial class Ticket
 
     public int? Type { get; set; }
 
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int IdTicket { get; set; }
 
     public int FkEventidEvent { get; set; }

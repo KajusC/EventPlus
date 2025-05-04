@@ -101,7 +101,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("administrator", "models");
 
             entity.Property(e => e.IdUser)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_user");
             entity.Property(e => e.LastLogin)
                 .HasColumnType("timestamp without time zone")
@@ -196,7 +196,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("category", "models");
 
             entity.Property(e => e.IdCategory)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_category");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
@@ -210,7 +210,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("equipment", "models");
 
             entity.Property(e => e.IdEquipment)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_equipment");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
@@ -226,7 +226,7 @@ public partial class EventPlusContext : DbContext
             entity.HasIndex(e => e.FkEventLocationidEventLocation, "event_fk_event_locationid_event_location_key").IsUnique();
 
             entity.Property(e => e.IdEvent)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_event");
             entity.Property(e => e.Category).HasColumnName("category");
             entity.Property(e => e.Description)
@@ -263,7 +263,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("event_location", "models");
 
             entity.Property(e => e.IdEventLocation)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_event_location");
             entity.Property(e => e.Address)
                 .HasMaxLength(255)
@@ -296,7 +296,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("eventpartner", "models");
 
             entity.Property(e => e.FkEventidEvent)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("fk_eventid_event");
         });
 
@@ -307,7 +307,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("eventperformer", "models");
 
             entity.Property(e => e.FkEventidEvent)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("fk_eventid_event");
         });
 
@@ -318,7 +318,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("feedback", "models");
 
             entity.Property(e => e.IdFeedback)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_feedback");
             entity.Property(e => e.Comment)
                 .HasMaxLength(255)
@@ -344,7 +344,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("feedback_type", "models");
 
             entity.Property(e => e.IdFeedbackType)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_feedback_type");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
@@ -358,7 +358,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("loyalty", "models");
 
             entity.Property(e => e.IdLoyalty)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_loyalty");
             entity.Property(e => e.Date).HasColumnName("date");
             entity.Property(e => e.Points).HasColumnName("points");
@@ -371,7 +371,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("organiser", "models");
 
             entity.Property(e => e.IdUser)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_user");
             entity.Property(e => e.FollowerCount).HasColumnName("follower_count");
             entity.Property(e => e.LastLogin)
@@ -468,7 +468,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("partner", "models");
 
             entity.Property(e => e.IdPartner)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_partner");
             entity.Property(e => e.Description)
                 .HasMaxLength(255)
@@ -488,7 +488,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("performer", "models");
 
             entity.Property(e => e.IdPerformer)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_performer");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
@@ -508,7 +508,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("question", "models");
 
             entity.Property(e => e.IdQuestion)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_question");
             entity.Property(e => e.FkAdministratoridUser).HasColumnName("fk_administratorid_user");
             entity.Property(e => e.FormulatedQuestion)
@@ -527,7 +527,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("seating", "models");
 
             entity.Property(e => e.IdSeating)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_seating");
             entity.Property(e => e.FkSectoridSector).HasColumnName("fk_sectorid_sector");
             entity.Property(e => e.Place).HasColumnName("place");
@@ -545,7 +545,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("sector", "models");
 
             entity.Property(e => e.IdSector)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_sector");
             entity.Property(e => e.FkEventLocationidEventLocation).HasColumnName("fk_event_locationid_event_location");
             entity.Property(e => e.Name)
@@ -565,7 +565,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("sector_price", "models");
 
             entity.Property(e => e.IdSectorPrice)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_sector_price");
             entity.Property(e => e.FkEventidEvent).HasColumnName("fk_eventid_event");
             entity.Property(e => e.FkSectoridSector).HasColumnName("fk_sectorid_sector");
@@ -591,7 +591,7 @@ public partial class EventPlusContext : DbContext
             entity.HasIndex(e => e.FkSeatingidSeating, "ticket_fk_seatingid_seating_key").IsUnique();
 
             entity.Property(e => e.IdTicket)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_ticket");
             entity.Property(e => e.FkEventidEvent).HasColumnName("fk_eventid_event");
             entity.Property(e => e.FkSeatingidSeating).HasColumnName("fk_seatingid_seating");
@@ -631,7 +631,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("ticket_type", "models");
 
             entity.Property(e => e.IdTicketType)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_ticket_type");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
@@ -645,7 +645,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("ticketstatus", "models");
 
             entity.Property(e => e.IdStatus)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_status");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
@@ -659,7 +659,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("user", "models");
 
             entity.Property(e => e.IdUser)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_user");
             entity.Property(e => e.LastLogin)
                 .HasColumnType("timestamp without time zone")
@@ -731,7 +731,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("user_request_answer", "models");
 
             entity.Property(e => e.IdUserRequestAnswer)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_user_request_answer");
             entity.Property(e => e.Answer)
                 .HasMaxLength(255)
@@ -839,7 +839,7 @@ public partial class EventPlusContext : DbContext
             entity.ToTable("user_type", "models");
 
             entity.Property(e => e.IdUserType)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("id_user_type");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)

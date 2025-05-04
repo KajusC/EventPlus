@@ -4,6 +4,8 @@ using eventplus.models.Domain.Feedbacks;
 using System;
 using System.Collections.Generic;
 using eventplus.models.Domain.Sectors;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace eventplus.models.Domain.Events;
 
@@ -21,6 +23,8 @@ public partial class Event
 
     public int? Category { get; set; }
 
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int IdEvent { get; set; }
 
     public int FkEventLocationidEventLocation { get; set; }

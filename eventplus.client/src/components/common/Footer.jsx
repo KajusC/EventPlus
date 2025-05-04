@@ -17,7 +17,7 @@ function Footer() {
         >
             <Container maxWidth="lg">
                 <Grid container spacing={4}>
-                    <Grid item xs={12} md={4}>
+                    <Grid sx={{ width: { xs: '100%', md: '33.33%' } }}>
                         <Typography 
                             variant="h6" 
                             sx={{ 
@@ -51,7 +51,7 @@ function Footer() {
                         </Box>
                     </Grid>
                     
-                    <Grid item xs={6} sm={3} md={2}>
+                    <Grid sx={{ width: { xs: '50%', md: '16.66%' } }}>
                         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '1rem' }}>
                             Company
                         </Typography>
@@ -61,7 +61,7 @@ function Footer() {
                         <Link href="#" color="inherit" underline="hover" display="block" sx={{ mb: 1 }}>Contact</Link>
                     </Grid>
                     
-                    <Grid item xs={6} sm={3} md={2}>
+                    <Grid sx={{ width: { xs: '50%', md: '16.66%' } }}>
                         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '1rem' }}>
                             Support
                         </Typography>
@@ -70,7 +70,7 @@ function Footer() {
                         <Link href="#" color="inherit" underline="hover" display="block" sx={{ mb: 1 }}>Community</Link>
                     </Grid>
                     
-                    <Grid item xs={6} sm={3} md={2}>
+                    <Grid sx={{ width: { xs: '50%', md: '16.66%' } }}>
                         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '1rem' }}>
                             Legal
                         </Typography>
@@ -80,7 +80,7 @@ function Footer() {
                         <Link href="#" color="inherit" underline="hover" display="block" sx={{ mb: 1 }}>Licenses</Link>
                     </Grid>
                     
-                    <Grid item xs={6} sm={3} md={2}>
+                    <Grid sx={{ width: { xs: '50%', md: '16.66%' } }}>
                         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '1rem' }}>
                             Resources
                         </Typography>

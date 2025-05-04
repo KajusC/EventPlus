@@ -44,6 +44,7 @@ namespace EventPlus.Server
             builder.Services.AddScoped<IRepository<EventLocation>, EventLocationRepository>();
             builder.Services.AddScoped<IRepository<Partner>, PartnerRepository>();
             builder.Services.AddScoped<IRepository<Performer>, PerformerRepository>();
+            builder.Services.AddScoped<IRepository<Category>, CategoryRepository>();
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -52,6 +53,7 @@ namespace EventPlus.Server
             builder.Services.AddScoped<ITicketLogic, TicketLogic>();
             builder.Services.AddScoped<IFeedbackLogic, FeedbackLogic>();
             builder.Services.AddScoped<ISectorLogic, SectorLogic>();
+            builder.Services.AddScoped<ICategoryLogic, CategoryLogic>();
 
 
             // AutoMapper

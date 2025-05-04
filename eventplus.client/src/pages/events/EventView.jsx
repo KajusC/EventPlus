@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchEventById, deleteEvent } from '../../services/eventService';
+import { fetchCategories } from '../../services/categoryService';
 import {
     Container,
     Typography,
@@ -34,48 +35,40 @@ import {
     Share as ShareIcon
 } from '@mui/icons-material';
 
-// Category name mapping
-const getCategoryName = (categoryId) => {
-    const categories = {
-        1: 'Music',
-        2: 'Business',
-        // Add more mappings as needed
-        default: 'Event'
-    };
-    return categories[categoryId] || categories.default;
-};
-
-// Get category color
 const getCategoryColor = (categoryId) => {
     const colors = {
-        1: '#6a11cb', // Music - our primary purple
-        2: '#2575fc', // Business - our primary blue
+        1: '#6a11cb',
+        2: '#2575fc',
         default: '#6a11cb'
     };
     return colors[categoryId] || colors.default;
 };
 
-// Event category to image mapping
-const getCategoryImage = (category) => {
-    const images = {
-        1: 'https://source.unsplash.com/random/1200x500/?concert',
-        2: 'https://source.unsplash.com/random/1200x500/?conference',
-        // Add more mappings as needed
-        default: 'https://source.unsplash.com/random/1200x500/?event'
-    };
-    return images[category] || images.default;
-};
 
 function EventView() {
     const { id } = useParams();
     const navigate = useNavigate();
     
     const [event, setEvent] = useState(null);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [toast, setToast] = useState({ open: false, message: '', severity: 'info' });
+
+    useEffect(() => {
+        const fetchCategoriesData = async () => {
+            try {
+                const categoriesData = await fetchCategories();
+                setCategories(categoriesData);
+            } catch (err) {
+                console.error("Error fetching categories:", err);
+            }
+        };
+        
+        fetchCategoriesData();
+    }, []);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -93,6 +86,12 @@ function EventView() {
         
         fetchEvent();
     }, [id]);
+
+    const getCategoryName = (categoryId) => {
+        if (!categories || categories.length === 0) return "Event";
+        const category = categories.find(cat => cat.idCategory === categoryId);
+        return category ? category.name : "Event";
+    };
 
     const handleDeleteClick = () => {
         setDeleteDialogOpen(true);
@@ -168,7 +167,6 @@ function EventView() {
 
     const categoryName = getCategoryName(event.category);
     const categoryColor = getCategoryColor(event.category);
-    const imageUrl = getCategoryImage(event.category);
 
     return (
         <>
@@ -188,7 +186,6 @@ function EventView() {
                         left: 0,
                         width: '100%',
                         height: '100%',
-                        backgroundImage: `url(${imageUrl})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         '&::before': {
@@ -263,7 +260,7 @@ function EventView() {
                 </Container>
             </Box>
 
-            <Container maxWidth="lg" sx={{ mt: { xs: -3, md: -5 }, mb: 8, position: 'relative', zIndex: 3 }}>
+            <Container maxWidth="lg" sx={{ mt: { xs: -3, md: -5 }, mb: 8, position: 'relative', zIndex: 3, pt: 3 }}>
                 <Grid container spacing={4}>
                     {/* Main Content */}
                     <Grid item xs={12} md={8}>
@@ -375,64 +372,6 @@ function EventView() {
                                 </Box>
                             </CardContent>
                         </Card>
-
-                        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>
-                            <Button 
-                                variant="outlined"
-                                color="inherit"
-                                startIcon={<ArrowBackIcon />}
-                                onClick={() => navigate('/events')}
-                                sx={{ 
-                                    borderColor: 'rgba(250, 250, 250, 0.23)',
-                                    color: 'white',
-                                    '&:hover': {
-                                        bgcolor: 'rgba(0,0,0,0.04)',
-                                        borderColor: 'text.primary'
-                                    }
-                                }}
-                            >
-                                Back to Events
-                            </Button>
-
-                            <Box>
-                                <IconButton 
-                                    aria-label="share event"
-                                    sx={{ 
-                                        mr: 1,
-                                        color: 'text.secondary',
-                                        '&:hover': { color: '#2575fc' }
-                                    }}
-                                >
-                                    <ShareIcon />
-                                </IconButton>
-                                <Button
-                                    component={Link}
-                                    to={`/eventedit/${event.idEvent}`}
-                                    variant="outlined"
-                                    color="primary"
-                                    startIcon={<EditIcon />}
-                                    sx={{ 
-                                        mr: 1,
-                                        borderColor: '#6a11cb',
-                                        color: '#6a11cb',
-                                        '&:hover': {
-                                            borderColor: '#2575fc',
-                                            bgcolor: 'rgba(106, 17, 203, 0.04)'
-                                        }
-                                    }}
-                                >
-                                    Edit
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    color="error"
-                                    startIcon={<DeleteIcon />}
-                                    onClick={handleDeleteClick}
-                                >
-                                    Delete
-                                </Button>
-                            </Box>
-                        </Box>
                     </Grid>
 
                     {/* Ticket Info */}

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using eventplus.models.Infrastructure.context;
@@ -11,9 +12,11 @@ using eventplus.models.Infrastructure.context;
 namespace eventplus.models.Migrations
 {
     [DbContext(typeof(EventPlusContext))]
-    partial class EventPlusContextModelSnapshot : ModelSnapshot
+    [Migration("20250504185816_initial")]
+    partial class initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,11 +28,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Events.Category", b =>
                 {
                     b.Property<int>("IdCategory")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_category");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdCategory"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -73,11 +73,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Events.Equipment", b =>
                 {
                     b.Property<int>("IdEquipment")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_equipment");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdEquipment"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -116,11 +113,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Events.Event", b =>
                 {
                     b.Property<int>("IdEvent")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_event");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdEvent"));
 
                     b.Property<int?>("Category")
                         .HasColumnType("integer")
@@ -254,11 +248,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Events.Eventpartner", b =>
                 {
                     b.Property<int>("FkEventidEvent")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("fk_eventid_event");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FkEventidEvent"));
 
                     b.HasKey("FkEventidEvent")
                         .HasName("eventpartner_pkey");
@@ -269,11 +260,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Events.Eventperformer", b =>
                 {
                     b.Property<int>("FkEventidEvent")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("fk_eventid_event");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FkEventidEvent"));
 
                     b.HasKey("FkEventidEvent")
                         .HasName("eventperformer_pkey");
@@ -284,11 +272,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Events.Partner", b =>
                 {
                     b.Property<int>("IdPartner")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_partner");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdPartner"));
 
                     b.Property<string>("Description")
                         .HasMaxLength(255)
@@ -314,11 +299,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Events.Performer", b =>
                 {
                     b.Property<int>("IdPerformer")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_performer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdPerformer"));
 
                     b.Property<string>("Name")
                         .HasMaxLength(255)
@@ -363,11 +345,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Feedbacks.Feedback", b =>
                 {
                     b.Property<int>("IdFeedback")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_feedback");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdFeedback"));
 
                     b.Property<string>("Comment")
                         .HasMaxLength(255)
@@ -399,11 +378,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Feedbacks.FeedbackType", b =>
                 {
                     b.Property<int>("IdFeedbackType")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_feedback_type");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdFeedbackType"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -451,11 +427,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Sectors.Seating", b =>
                 {
                     b.Property<int>("IdSeating")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_seating");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdSeating"));
 
                     b.Property<int?>("FkSectoridSector")
                         .HasColumnType("integer")
@@ -480,11 +453,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Sectors.Sector", b =>
                 {
                     b.Property<int>("IdSector")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_sector");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdSector"));
 
                     b.Property<int>("FkEventLocationidEventLocation")
                         .HasColumnType("integer")
@@ -520,11 +490,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Sectors.SectorPrice", b =>
                 {
                     b.Property<int>("IdSectorPrice")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_sector_price");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdSectorPrice"));
 
                     b.Property<int>("FkEventidEvent")
                         .HasColumnType("integer")
@@ -586,11 +553,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Tickets.Ticket", b =>
                 {
                     b.Property<int>("IdTicket")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_ticket");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdTicket"));
 
                     b.Property<int>("FkEventidEvent")
                         .HasColumnType("integer")
@@ -645,11 +609,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Tickets.TicketType", b =>
                 {
                     b.Property<int>("IdTicketType")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_ticket_type");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdTicketType"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -683,11 +644,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Tickets.Ticketstatus", b =>
                 {
                     b.Property<int>("IdStatus")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_status");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdStatus"));
 
                     b.Property<string>("Name")
                         .HasMaxLength(255)
@@ -739,11 +697,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.UserAnswers.Question", b =>
                 {
                     b.Property<int>("IdQuestion")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_question");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdQuestion"));
 
                     b.Property<int?>("FkAdministratoridUser")
                         .HasColumnType("integer")
@@ -765,11 +720,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.UserAnswers.UserRequestAnswer", b =>
                 {
                     b.Property<int>("IdUserRequestAnswer")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_user_request_answer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdUserRequestAnswer"));
 
                     b.Property<string>("Answer")
                         .HasMaxLength(255)
@@ -876,11 +828,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.UserLoyalties.Loyalty", b =>
                 {
                     b.Property<int>("IdLoyalty")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_loyalty");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdLoyalty"));
 
                     b.Property<DateOnly?>("Date")
                         .ValueGeneratedOnAdd()
@@ -952,11 +901,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Users.Administrator", b =>
                 {
                     b.Property<int>("IdUser")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_user");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdUser"));
 
                     b.Property<DateTime?>("LastLogin")
                         .ValueGeneratedOnAdd()
@@ -993,11 +939,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Users.Organiser", b =>
                 {
                     b.Property<int>("IdUser")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_user");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdUser"));
 
                     b.Property<int?>("FollowerCount")
                         .HasColumnType("integer")
@@ -1088,11 +1031,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Users.User", b =>
                 {
                     b.Property<int>("IdUser")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_user");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdUser"));
 
                     b.Property<DateTime?>("LastLogin")
                         .ValueGeneratedOnAdd()
@@ -1139,11 +1079,8 @@ namespace eventplus.models.Migrations
             modelBuilder.Entity("eventplus.models.Domain.Users.UserType", b =>
                 {
                     b.Property<int>("IdUserType")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("id_user_type");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdUserType"));
 
                     b.Property<string>("Name")
                         .IsRequired()

@@ -15,6 +15,7 @@ namespace eventplus.models.Infrastructure.UnitOfWork
         ISectorRepository Sectors { get; }
         IFeedbackRepository Feedbacks { get; }
         ITicketRepository Tickets { get; }
+        ICategoryRepository Categories { get; }
         Task SaveAsync();
     }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { fetchEventById, updateEvent } from "../../services/eventService";
 import {
@@ -37,33 +37,18 @@ import {
   ConfirmationNumber as TicketIcon,
   CalendarMonth as CalendarIcon
 } from "@mui/icons-material";
-
-// Category name mapping
-const getCategoryName = (categoryId) => {
-  const categories = {
-    1: 'Music',
-    2: 'Business',
-    // Add more mappings as needed
-    default: 'Event'
-  };
-  return categories[categoryId] || categories.default;
-};
-
-// Event category to image mapping
-const getCategoryImage = (category) => {
-  const images = {
-    1: 'https://source.unsplash.com/random/1200x400/?concert',
-    2: 'https://source.unsplash.com/random/1200x400/?conference',
-    // Add more mappings as needed
-    default: 'https://source.unsplash.com/random/1200x400/?event'
-  };
-  return images[category] || images.default;
-};
+import { fetchCategories, getCategoryNameById } from "../../services/categoryService";
 
 function EventEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const [categories, setCategories] = useState([
+    {
+      idCategory: 0,
+      name: "Select a category",
+    }
+  ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -81,8 +66,24 @@ function EventEdit() {
     severity: "success",
   });
 
-  // Categories options
-  const categories = [1, 2];
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+        if (data && data.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            category: data[0].idCategory,
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setError("Failed to load categories. Please try again later.");
+      }
+    };
+    fetchCategory();
+  }, []);
 
   useEffect(() => {
     const fetchEventData = async () => {
@@ -187,9 +188,6 @@ function EventEdit() {
     );
   }
 
-  const categoryName = getCategoryName(formData.category);
-  const imageUrl = getCategoryImage(formData.category);
-
   return (
     <>
       {/* Hero Section */}
@@ -209,7 +207,6 @@ function EventEdit() {
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundImage: `url(${imageUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             '&::before': {
@@ -262,7 +259,7 @@ function EventEdit() {
               <ArrowBackIcon />
             </IconButton>
             <Chip 
-              label={categoryName} 
+              label={getCategoryNameById(categories, formData.category)} 
               sx={{ 
                 color: 'white',
                 bgcolor: 'rgba(106,17,203,0.8)', 
@@ -360,7 +357,7 @@ function EventEdit() {
                         rows={4}
                         required
                         placeholder="Write a description for your event..."
-                        InputProps={{
+                        slotProps={{
                           disableUnderline: true,
                         }}
                         sx={{
@@ -404,8 +401,8 @@ function EventEdit() {
                         }}
                       >
                         {categories.map((category) => (
-                          <MenuItem key={category} value={category}>
-                            {getCategoryName(category)}
+                          <MenuItem key={category.idCategory} value={category.idCategory}>
+                            {category.name}
                           </MenuItem>
                         ))}
                       </Select>

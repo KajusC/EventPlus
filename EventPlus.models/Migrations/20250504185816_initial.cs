@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -240,7 +241,8 @@ namespace eventplus.models.Migrations
                 schema: "models",
                 columns: table => new
                 {
-                    id_event_location = table.Column<int>(type: "integer", nullable: false),
+                    id_event_location = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     address = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     city = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),

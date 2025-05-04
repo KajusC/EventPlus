@@ -2,6 +2,8 @@
 using eventplus.models.Domain.Sectors;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace eventplus.models.Domain.Events;
 
@@ -23,6 +25,8 @@ public partial class EventLocation
 
     public int? HoldingEquipment { get; set; }
 
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int IdEventLocation { get; set; }
 
     public virtual Event? Event { get; set; }
