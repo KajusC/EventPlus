@@ -1,5 +1,5 @@
-﻿using EventPlus.Server.DTO;
-using EventPlus.Server.Logic.Interface;
+﻿using EventPlus.Server.Application.IHandlers;
+using EventPlus.Server.Application.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlus.Server.Controllers
@@ -21,14 +21,14 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<EventDTO>>> GetAllEvents()
+        public async Task<ActionResult<List<EventViewModel>>> GetAllEvents()
         {
             var events = await _eventLogic.GetAllEventsAsync();
             return Ok(events);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<EventDTO>> GetEventById(int id)
+        public async Task<ActionResult<EventViewModel>> GetEventById(int id)
         {
             var eventEntity = await _eventLogic.GetEventByIdAsync(id);
             if (eventEntity == null)
@@ -39,7 +39,7 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<bool>> CreateEvent([FromBody] EventDTO eventEntity)
+        public async Task<ActionResult<bool>> CreateEvent([FromBody] EventViewModel eventEntity)
         {
             if (eventEntity == null)
             {
@@ -50,7 +50,7 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpPut]
-        public async Task<ActionResult<bool>> UpdateEvent([FromBody] EventDTO eventEntity)
+        public async Task<ActionResult<bool>> UpdateEvent([FromBody] EventViewModel eventEntity)
         {
             if (eventEntity == null)
             {
@@ -85,7 +85,29 @@ namespace EventPlus.Server.Controllers
                 return NotFound();
             }
             return NoContent();
+        }
 
+        [HttpPost("CreateFullEvent")]
+        public async Task<ActionResult<bool>> CreateFullEvent([FromBody] CompleteEvent completeEventEntity)
+        {
+            if (completeEventEntity == null)
+            {
+                return BadRequest("Eventcannot be null");
+            }
+
+            var result = await _eventLogic.CreateFullEvent(completeEventEntity.Event,
+                completeEventEntity.EventLocation,
+                completeEventEntity.Partners,
+                completeEventEntity.Performers);
+            return CreatedAtAction(nameof(GetEventById), new { id = result }, result);
+        }
+
+        public class CompleteEvent
+        {
+            public EventViewModel Event { get; set; }
+            public EventLocationViewModel EventLocation { get; set; }
+            public PartnerViewModel Partners { get; set; }
+            public PerformerViewModel Performers { get; set; }
         }
     }
 }

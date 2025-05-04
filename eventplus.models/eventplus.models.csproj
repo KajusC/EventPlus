@@ -26,6 +26,7 @@
   
 
   <ItemGroup>
+    <Folder Include="Infrastructure\context\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
 
