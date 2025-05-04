@@ -139,7 +139,7 @@ namespace EventPlus.Server.Application.Handlers
 
                 var eventCreated = await CreateEventAsync(eventViewModel);
 
-                if (eventCreated > 0)
+                if (eventCreated <= 0)
                 {
                     throw new Exception("Failed to create event.");
                 }
