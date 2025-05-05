@@ -10,29 +10,22 @@ import {
 	Chip,
 	useTheme,
 	CardMedia,
-    Dialog,
-	DialogActions,
-	DialogContent,
-	DialogContentText,
-	DialogTitle,
-	Snackbar,
-    Alert,
-    CircularProgress
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { NavLink, Link } from "react-router-dom";
 import {
 	CalendarMonth,
 	ConfirmationNumber,
-} from "@mui/icons-material";
-
-import {
     Edit as EditIcon,
     DeleteOutline as DeleteIcon,
-} from '@mui/icons-material';
-import { fetchCategories, fetchCategoryById } from "../../services/categoryService";
+} from "@mui/icons-material";
 
+import { fetchCategoryById } from "../../services/categoryService";
 import { deleteEvent } from "../../services/eventService";
+
+// Import shared components
+import ToastNotification from "../shared/ToastNotification";
+import ConfirmationDialog from "../shared/ConfirmationDialog";
 
 const StyledCard = styled(Card)(({ theme }) => ({
 	height: "100%",
@@ -95,57 +88,21 @@ const formatTime = (dateString) => {
 	return date.toLocaleString(undefined, options);
 };
 
-
 function EventCard({ event }) {
 	const navigate = useNavigate();
-
 	const theme = useTheme();
-	const [categoryName, setCategoryName] = useState("SomeCategoryName");
-	const [events, setEvents] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-	const [deleteLoading, setDeleteLoading] = useState(false);
+	
+	// Simplified state 
+	const [categoryName, setCategoryName] = useState("Loading...");
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [toast, setToast] = useState({
 		open: false,
 		message: "",
 		severity: "info",
 	});
 
-	const handleDeleteClick = () => {
-		setDeleteDialogOpen(true);
-	};
-
-	const handleDeleteCancel = () => {
-		setDeleteDialogOpen(false);
-	};
-
-	const handleDeleteConfirm = async () => {
-		try {
-			setDeleteLoading(true);
-			await deleteEvent(event.idEvent);
-			setToast({
-				open: true,
-				message: "Event deleted successfully.",
-				severity: "success",
-			});
-			setTimeout(() => {
-				navigate("/events");
-			}, 1500);
-		} catch (err) {
-			setError(err.message || "Failed to delete event");
-			setToast({
-				open: true,
-				message: `Error: ${err.message || "Failed to delete event"}`,
-				severity: "error",
-			});
-		} finally {
-			setDeleteLoading(false);
-			setDeleteDialogOpen(false);
-		}
-	};
-
+	// Fetch category name
 	useEffect(() => {
 		const getCategoryName = async () => {
 		  try {
@@ -156,12 +113,35 @@ function EventCard({ event }) {
 		  }
 		};
 		getCategoryName();
-	  }, [event.category]);
+	}, [event.category]);
 				
-
-	const handleCloseToast = (event, reason) => {
-		if (reason === "clickaway") return;
+	// Toast notification handler
+	const handleCloseToast = () => {
 		setToast({ ...toast, open: false });
+	};
+
+	// Delete handlers
+	const handleDeleteConfirm = async () => {
+		setIsDeleting(true);
+		try {
+			await deleteEvent(event.idEvent);
+			setToast({
+				open: true,
+				message: "Event deleted successfully",
+				severity: "success"
+			});
+			// Reload the page after a delay to show updated list
+			setTimeout(() => window.location.reload(), 1500);
+		} catch (err) {
+			setToast({
+				open: true,
+				message: `Error: ${err.message || 'Failed to delete event'}`,
+				severity: "error"
+			});
+		} finally {
+			setIsDeleting(false);
+			setShowDeleteDialog(false);
+		}
 	};
 
 	return (
@@ -286,73 +266,33 @@ function EventCard({ event }) {
 						variant="outlined"
 						color="error"
 						startIcon={<DeleteIcon />}
-						onClick={handleDeleteClick}
+						onClick={() => setShowDeleteDialog(true)}
 					>
 						Delete
 					</Button>
 				</Box>
 			</StyledCard>
 
-			<Box sx={{ display: "flex", justifyContent: "space-between", p: 2 }}>
-				<Dialog
-					open={deleteDialogOpen}
-					onClose={handleDeleteCancel}
-					aria-labelledby="alert-dialog-title"
-					aria-describedby="alert-dialog-description"
-				>
-					<DialogTitle id="alert-dialog-title">
-						{"Confirm Event Deletion"}
-					</DialogTitle>
-					<DialogContent>
-						<DialogContentText id="alert-dialog-description">
-							Are you sure you want to delete this event? This action cannot
-							be undone.
-						</DialogContentText>
-					</DialogContent>
-					<DialogActions sx={{ px: 3, pb: 3 }}>
-						<Button
-							onClick={handleDeleteCancel}
-							color="inherit"
-							variant="outlined"
-							disabled={deleteLoading}
-						>
-							Cancel
-						</Button>
-						<Button
-							onClick={handleDeleteConfirm}
-							color="error"
-							variant="contained"
-							autoFocus
-							disabled={deleteLoading}
-							startIcon={
-								deleteLoading ? (
-									<CircularProgress size={16} color="inherit" />
-								) : null
-							}
-						>
-							{deleteLoading ? "Deleting..." : "Delete Event"}
-						</Button>
-					</DialogActions>
-				</Dialog>
-			</Box>
+			{/* Using shared ConfirmationDialog component */}
+			<ConfirmationDialog
+				open={showDeleteDialog}
+				title="Confirm Event Deletion"
+				message="Are you sure you want to delete this event? This action cannot be undone."
+				confirmLabel="Delete Event"
+				cancelLabel="Cancel"
+				onConfirm={handleDeleteConfirm}
+				onCancel={() => setShowDeleteDialog(false)}
+				loading={isDeleting}
+				isDestructive={true}
+			/>
 
-			{/* Snackbar for notifications */}
-			<Snackbar
+			{/* Using shared ToastNotification component */}
+			<ToastNotification
 				open={toast.open}
-				autoHideDuration={3000}
+				message={toast.message}
+				severity={toast.severity}
 				onClose={handleCloseToast}
-				anchorOrigin={{ vertical: "top", horizontal: "center" }}
-			>
-				<Alert
-					onClose={handleCloseToast}
-					severity={toast.severity}
-					sx={{ width: "100%", mb: 2, mt: 10 }}
-					elevation={6}
-					variant="filled"
-				>
-					{toast.message}
-				</Alert>
-			</Snackbar>
+			/>
 		</>
 	);
 }

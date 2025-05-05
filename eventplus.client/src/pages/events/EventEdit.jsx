@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { fetchEventById, updateEvent } from "../../services/eventService";
 import {
@@ -6,8 +6,6 @@ import {
   Typography,
   Button,
   Box,
-  CircularProgress,
-  Alert,
   Grid,
   Card,
   CardContent,
@@ -16,9 +14,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Stack,
-  Snackbar,
-  Alert as MuiAlert,
   Paper,
   IconButton,
   Divider,
@@ -37,21 +32,19 @@ import {
   ConfirmationNumber as TicketIcon,
   CalendarMonth as CalendarIcon
 } from "@mui/icons-material";
-import { fetchCategories, getCategoryNameById } from "../../services/categoryService";
+import { fetchCategories } from "../../services/categoryService";
+
+// Import shared components
+import LoadingSpinner from "../../components/shared/LoadingSpinner";
+import ErrorDisplay from "../../components/shared/ErrorDisplay";
+import ToastNotification from "../../components/shared/ToastNotification";
 
 function EventEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [categories, setCategories] = useState([
-    {
-      idCategory: 0,
-      name: "Select a category",
-    }
-  ]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [submitLoading, setSubmitLoading] = useState(false);
+  // App data state
+  const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -60,50 +53,54 @@ function EventEdit() {
     endDate: new Date(),
     maxTicketCount: 0,
   });
+  
+  // UI state - simplified
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({
     open: false,
     message: "",
     severity: "success",
   });
 
+  // Fetch categories
   useEffect(() => {
-    const fetchCategory = async () => {
+    const fetchCategoryData = async () => {
       try {
         const data = await fetchCategories();
         setCategories(data);
-        if (data && data.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            category: data[0].idCategory,
-          }));
-        }
       } catch (error) {
         console.error("Error fetching categories:", error);
         setError("Failed to load categories. Please try again later.");
       }
     };
-    fetchCategory();
+    fetchCategoryData();
   }, []);
 
+  // Fetch event data
   useEffect(() => {
     const fetchEventData = async () => {
       try {
+        setIsLoading(true);
         const data = await fetchEventById(id);
         setFormData({
           ...data,
           startDate: new Date(data.startDate),
           endDate: new Date(data.endDate),
         });
+        setError(null);
       } catch (err) {
         setError(err.message || "Failed to load event");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchEventData();
   }, [id]);
 
+  // Form input handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -119,11 +116,12 @@ function EventEdit() {
     }));
   };
 
+  // Submit form handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      setSubmitLoading(true);
+      setIsSubmitting(true);
       const updatedData = {
         ...formData,
         maxTicketCount: parseInt(formData.maxTicketCount, 10),
@@ -156,37 +154,25 @@ function EventEdit() {
       });
       console.error("Update error:", err);
     } finally {
-      setSubmitLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleCloseToast = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
+  // Toast notification handler
+  const handleCloseToast = () => {
     setToast({ ...toast, open: false });
   };
 
-  if (loading && !formData.name) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-      >
-        <CircularProgress sx={{ color: '#6a11cb' }} />
-      </Box>
-    );
-  }
+  // Helper function to get category name
+  const getCategoryName = (categoryId) => {
+    if (!categories || categories.length === 0) return "Event";
+    const category = categories.find(cat => cat.idCategory === categoryId);
+    return category ? category.name : "Event";
+  };
 
-  if (error) {
-    return (
-      <Container maxWidth="md" sx={{ mt: 12, mb: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
-    );
-  }
+  // Early return for loading and error states using shared components
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <ErrorDisplay error={error} />;
 
   return (
     <>
@@ -259,7 +245,7 @@ function EventEdit() {
               <ArrowBackIcon />
             </IconButton>
             <Chip 
-              label={getCategoryNameById(categories, formData.category)} 
+              label={getCategoryName(formData.category)} 
               sx={{ 
                 color: 'white',
                 bgcolor: 'rgba(106,17,203,0.8)', 
@@ -357,7 +343,7 @@ function EventEdit() {
                         rows={4}
                         required
                         placeholder="Write a description for your event..."
-                        slotProps={{
+                        InputProps={{
                           disableUnderline: true,
                         }}
                         sx={{
@@ -536,8 +522,8 @@ function EventEdit() {
                     <Button
                       type="submit"
                       variant="contained"
-                      disabled={submitLoading}
-                      startIcon={submitLoading ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+                      disabled={isSubmitting}
+                      startIcon={isSubmitting ? <LoadingSpinner size={16} /> : <SaveIcon />}
                       sx={{ 
                         px: 4,
                         py: 1.2,
@@ -553,7 +539,7 @@ function EventEdit() {
                         transition: 'all 0.2s ease'
                       }}
                     >
-                      {submitLoading ? "Saving..." : "Save Changes"}
+                      {isSubmitting ? "Saving..." : "Save Changes"}
                     </Button>
                   </Box>
                 </Grid>
@@ -563,22 +549,13 @@ function EventEdit() {
         </Card>
       </Container>
 
-      <Snackbar
+      {/* Using shared toast component */}
+      <ToastNotification
         open={toast.open}
-        autoHideDuration={3000}
+        message={toast.message}
+        severity={toast.severity}
         onClose={handleCloseToast}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <MuiAlert
-          onClose={handleCloseToast}
-          severity={toast.severity}
-          sx={{ width: "100%" }}
-          elevation={6}
-          variant="filled"
-        >
-          {toast.message}
-        </MuiAlert>
-      </Snackbar>
+      />
     </>
   );
 }

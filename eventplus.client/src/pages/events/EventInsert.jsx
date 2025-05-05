@@ -6,7 +6,6 @@ import {
 	Typography,
 	Button,
 	Box,
-	Alert,
 	Card,
 	CardContent,
 	TextField,
@@ -14,10 +13,9 @@ import {
 	InputLabel,
 	Select,
 	MenuItem,
-	Snackbar,
 	Tabs,
 	Tab,
-	CircularProgress,
+	IconButton,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -28,17 +26,27 @@ import {
 } from "@mui/icons-material";
 import { fetchCategories } from "../../services/categoryService";
 
+// Import shared components
+import LoadingSpinner from "../../components/shared/LoadingSpinner";
+import ErrorDisplay from "../../components/shared/ErrorDisplay";
+import ToastNotification from "../../components/shared/ToastNotification";
+
 function EventInsert() {
 	const navigate = useNavigate();
-	const [loading, setLoading] = useState(false);
+	
+	// Simplified state management
+	const [isLoading, setIsLoading] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState(null);
-	const [categories, setCategories] = useState([
-		{
-			idCategory: 1,
-			name: "SomeCategory",
-		},
-	]);
+	const [categories, setCategories] = useState([]);
 	const [activeTab, setActiveTab] = useState(0);
+	const [toast, setToast] = useState({
+		open: false,
+		message: "",
+		severity: "info"
+	});
+	
+	// Form data state
 	const [formData, setFormData] = useState({
 		event: {
 			idEvent: 0,
@@ -76,15 +84,12 @@ function EventInsert() {
 			idPerformer: 0,
 		},
 	});
-	const [toast, setToast] = useState({
-		open: false,
-		message: "",
-		severity: "success",
-	});
 
+	// Load categories
 	useEffect(() => {
 		const fetchCategory = async () => {
 			try {
+				setIsLoading(true);
 				const data = await fetchCategories();
 				setCategories(data);
 				if (data && data.length > 0) {
@@ -96,14 +101,18 @@ function EventInsert() {
 						},
 					}));
 				}
+				setError(null);
 			} catch (error) {
 				console.error("Error fetching categories:", error);
 				setError("Failed to load categories. Please try again later.");
+			} finally {
+				setIsLoading(false);
 			}
 		};
 		fetchCategory();
 	}, []);
 
+	// Form input handlers
 	const handleInputChange = (section, field, value) => {
 		setFormData((prev) => ({
 			...prev,
@@ -128,11 +137,12 @@ function EventInsert() {
 		setActiveTab(newValue);
 	};
 
+	// Form submission
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 
 		try {
-			setLoading(true);
+			setIsSubmitting(true);
 			const dataToSubmit = {
 				event: {
 					...formData.event,
@@ -154,53 +164,58 @@ function EventInsert() {
 				performers: formData.performers,
 			};
 
-      console.log("Submitting data:", JSON.stringify(dataToSubmit, null, 2));
+			console.log("Submitting data:", JSON.stringify(dataToSubmit, null, 2));
 			await createEvent(dataToSubmit);
+			
 			setToast({
 				open: true,
 				message: "Event created successfully!",
-				severity: "success",
+				severity: "success"
 			});
+			
 			setTimeout(() => {
 				navigate("/events");
 			}, 1500);
 		} catch (err) {
 			setError(err.message || "Failed to create event");
+			
 			setToast({
 				open: true,
 				message: `Error: ${err.message || "Failed to create event"}`,
-				severity: "error",
+				severity: "error"
 			});
+			
 			console.error("Create error:", err);
 		} finally {
-			setLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
-	const handleCloseToast = (event, reason) => {
-		if (reason === "clickaway") {
-			return;
-		}
+	// Handle toast close
+	const handleCloseToast = () => {
 		setToast({ ...toast, open: false });
 	};
+
+	// Early return for loading and error states
+	if (isLoading) return <LoadingSpinner />;
+	if (error && !toast.open) return <ErrorDisplay error={error} />;
 
 	return (
 		<Container maxWidth="lg" sx={{ mt: 8, mb: 8 }}>
 			<Box sx={{ display: "flex", alignItems: "center", mb: 4, pt: 4 }}>
-				<Button
-					variant="outlined"
-					startIcon={<ArrowBackIcon />}
+				<IconButton
 					onClick={() => navigate("/events")}
-					sx={{ mr: 2 }}
+					sx={{ mr: 2, color: 'primary.main' }}
+					aria-label="go back"
 				>
-					Back to Events
-				</Button>
+					<ArrowBackIcon />
+				</IconButton>
 				<Typography variant="h4" component="h1">
 					Create New Event
 				</Typography>
 			</Box>
 
-			<Card sx={{ mb: 4 }}>
+			<Card sx={{ mb: 4, borderRadius: 2, boxShadow: '0 8px 40px rgba(0,0,0,0.12)' }}>
 				<CardContent>
 					<Tabs
 						value={activeTab}
@@ -544,16 +559,10 @@ function EventInsert() {
 									type="submit"
 									variant="contained"
 									color="primary"
-									disabled={loading}
-									startIcon={
-										loading ? (
-											<CircularProgress size={16} color="inherit" />
-										) : (
-											<SaveIcon />
-										)
-									}
+									disabled={isSubmitting}
+									startIcon={isSubmitting ? <LoadingSpinner size={16} /> : <SaveIcon />}
 								>
-									{loading ? "Creating..." : "Create Event"}
+									{isSubmitting ? "Creating..." : "Create Event"}
 								</Button>
 							)}
 						</Box>
@@ -561,22 +570,13 @@ function EventInsert() {
 				</CardContent>
 			</Card>
 
-			<Snackbar
+			{/* Using our shared toast component */}
+			<ToastNotification
 				open={toast.open}
-				autoHideDuration={3000}
+				message={toast.message}
+				severity={toast.severity}
 				onClose={handleCloseToast}
-				anchorOrigin={{ vertical: "top", horizontal: "center" }}
-			>
-				<Alert
-					onClose={handleCloseToast}
-					severity={toast.severity}
-					sx={{ width: "100%" }}
-					elevation={6}
-					variant="filled"
-				>
-					{toast.message}
-				</Alert>
-			</Snackbar>
+			/>
 		</Container>
 	);
 }

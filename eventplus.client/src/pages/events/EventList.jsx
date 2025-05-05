@@ -5,37 +5,13 @@ import {
 	Typography,
 	Box,
 	Button,
-	CircularProgress,
-	Alert,
 	Paper,
 	InputBase,
 	IconButton,
 	Divider,
 	Chip,
-	Card,
-	CardContent,
-	Stack,
-	Dialog,
-	DialogActions,
-	DialogContent,
-	DialogContentText,
-	DialogTitle,
-	Snackbar,
 } from "@mui/material";
 
-import {
-	CalendarMonth as CalendarIcon,
-	LocationOn as LocationIcon,
-	Category as CategoryIcon,
-	Description as DescriptionIcon,
-	ConfirmationNumber as TicketIcon,
-	Edit as EditIcon,
-	DeleteOutline as DeleteIcon,
-	ArrowBack as ArrowBackIcon,
-	Share as ShareIcon,
-} from "@mui/icons-material";
-import EventCard from "../../components/events/EventCard";
-import { fetchEvents } from "../../services/eventService";
 import {
 	Search as SearchIcon,
 	Add as AddIcon,
@@ -43,23 +19,26 @@ import {
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 
+// Import components
+import EventCard from "../../components/events/EventCard";
+import { fetchEvents } from "../../services/eventService";
+
+// Import shared components
+import LoadingSpinner from "../../components/shared/LoadingSpinner";
+import ErrorDisplay from "../../components/shared/ErrorDisplay";
+
 function EventList() {
+	// Simplified state with only what's needed
 	const [events, setEvents] = useState([]);
-	const [loading, setLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
-	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-	const [deleteLoading, setDeleteLoading] = useState(false);
-	const [toast, setToast] = useState({
-		open: false,
-		message: "",
-		severity: "info",
-	});
 
 	useEffect(() => {
+		// Fetch events with clean error handling
 		const getEvents = async () => {
 			try {
-				setLoading(true);
+				setIsLoading(true);
 				const data = await fetchEvents();
 				setEvents(data);
 				setError(null);
@@ -67,13 +46,14 @@ function EventList() {
 				console.error("Error fetching events:", error);
 				setError("Failed to load events. Please try again later.");
 			} finally {
-				setLoading(false);
+				setIsLoading(false);
 			}
 		};
 
 		getEvents();
 	}, []);
 
+	// Filter events based on search term
 	const filteredEvents = searchTerm
 		? events.filter((event) =>
 				event.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -245,7 +225,7 @@ function EventList() {
 							fontWeight={700}
 							color="text.primary"
 						>
-							{filteredEvents.length === 0 && !loading
+							{filteredEvents.length === 0 && !isLoading
 								? "No events found"
 								: "Upcoming Events"}
 						</Typography>
@@ -270,19 +250,15 @@ function EventList() {
 						</Button>
 					</Box>
 
-					{loading ? (
-						<Box
-							display="flex"
-							justifyContent="center"
-							alignItems="center"
-							minHeight="200px"
-						>
-							<CircularProgress sx={{ color: "#6a11cb" }} />
-						</Box>
+					{/* Use shared components for loading and error states */}
+					{isLoading ? (
+						<LoadingSpinner fullHeight={false} />
 					) : error ? (
-						<Alert severity="error" sx={{ mb: 4 }}>
-							{error}
-						</Alert>
+						<ErrorDisplay 
+							error={error} 
+							marginTop={2} 
+							marginBottom={4}
+						/>
 					) : (
 						<Grid container spacing={3}>
 							{filteredEvents.map((event) => (
@@ -293,7 +269,8 @@ function EventList() {
 						</Grid>
 					)}
 
-					{!loading && filteredEvents.length === 0 && (
+					{/* No events found message */}
+					{!isLoading && filteredEvents.length === 0 && (
 						<Box textAlign="center" py={8}>
 							<Typography variant="h6" color="text.secondary" mb={2}>
 								No events found matching your search.
@@ -316,7 +293,6 @@ function EventList() {
 					)}
 				</Container>
 			</Box>
-			
 		</>
 	);
 }

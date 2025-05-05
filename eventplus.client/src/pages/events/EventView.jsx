@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { fetchEventById, deleteEvent } from '../../services/eventService';
 import { fetchCategories } from '../../services/categoryService';
 import {
@@ -8,32 +8,30 @@ import {
     Button,
     Box,
     Chip,
-    CircularProgress,
-    Alert,
     Grid,
     Divider,
     Card,
     CardContent,
-    Stack,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Snackbar,
     IconButton
 } from '@mui/material';
 import {
     CalendarMonth as CalendarIcon,
     LocationOn as LocationIcon,
     Category as CategoryIcon,
-    Description as DescriptionIcon,
     ConfirmationNumber as TicketIcon,
-    Edit as EditIcon,
-    DeleteOutline as DeleteIcon,
     ArrowBack as ArrowBackIcon,
-    Share as ShareIcon
+    DeleteOutline as DeleteIcon,
+    Edit as EditIcon
 } from '@mui/icons-material';
+
+// Import shared components
+import LoadingSpinner from '../../components/shared/LoadingSpinner';
+import ErrorDisplay from '../../components/shared/ErrorDisplay';
+import ToastNotification from '../../components/shared/ToastNotification';
+import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
+
+// Import utilities
+import { formatDate, formatTime } from '../../utils/dateFormatter';
 
 const getCategoryColor = (categoryId) => {
     const colors = {
@@ -44,47 +42,46 @@ const getCategoryColor = (categoryId) => {
     return colors[categoryId] || colors.default;
 };
 
-
 function EventView() {
     const { id } = useParams();
     const navigate = useNavigate();
     
+    // Simple state - only what this component needs to track
     const [event, setEvent] = useState(null);
     const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [deleteLoading, setDeleteLoading] = useState(false);
-    const [toast, setToast] = useState({ open: false, message: '', severity: 'info' });
+    
+    // UI interaction states
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [toast, setToast] = useState({
+        open: false,
+        message: '',
+        severity: 'info'
+    });
 
+    // Load categories
     useEffect(() => {
-        const fetchCategoriesData = async () => {
-            try {
-                const categoriesData = await fetchCategories();
-                setCategories(categoriesData);
-            } catch (err) {
-                console.error("Error fetching categories:", err);
-            }
-        };
-        
-        fetchCategoriesData();
+        fetchCategories()
+            .then(data => setCategories(data))
+            .catch(err => console.error("Error fetching categories:", err));
     }, []);
 
+    // Load event data
     useEffect(() => {
-        const fetchEvent = async () => {
-            try {
-                setLoading(true);
-                const data = await fetchEventById(id);
+        setIsLoading(true);
+        fetchEventById(id)
+            .then(data => {
                 setEvent(data);
                 setError(null);
-            } catch (err) {
+            })
+            .catch(err => {
                 setError(err.message || 'Failed to load event');
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        fetchEvent();
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     }, [id]);
 
     const getCategoryName = (categoryId) => {
@@ -93,90 +90,49 @@ function EventView() {
         return category ? category.name : "Event";
     };
 
-    const handleDeleteClick = () => {
-        setDeleteDialogOpen(true);
-    };
-
-    const handleDeleteCancel = () => {
-        setDeleteDialogOpen(false);
-    };
-
-    const handleDeleteConfirm = async () => {
+    // Delete event handler
+    const handleDeleteEvent = async () => {
+        setIsDeleting(true);
         try {
-            setDeleteLoading(true);
             await deleteEvent(id);
             setToast({
                 open: true,
-                message: 'Event deleted successfully.',
+                message: 'Event deleted successfully',
                 severity: 'success'
             });
-            setTimeout(() => {
-                navigate('/events');
-            }, 1500);
+            // Redirect after short delay to show the success message
+            setTimeout(() => navigate('/events'), 1500);
         } catch (err) {
-            setError(err.message || 'Failed to delete event');
             setToast({
                 open: true,
                 message: `Error: ${err.message || 'Failed to delete event'}`,
                 severity: 'error'
             });
         } finally {
-            setDeleteLoading(false);
-            setDeleteDialogOpen(false);
+            setIsDeleting(false);
+            setShowDeleteDialog(false);
         }
     };
 
-    const handleCloseToast = (event, reason) => {
-        if (reason === 'clickaway') return;
-        setToast({ ...toast, open: false });
-    };
+    // Early returns for loading and error states
+    if (isLoading) return <LoadingSpinner />;
+    if (error) return <ErrorDisplay error={error} />;
+    if (!event) return <ErrorDisplay error="Event not found" />;
 
-    function formatDate(dateString) {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString(undefined, options);
-    }
-
-    function formatTime(dateString) {
-        const options = { hour: '2-digit', minute: '2-digit' };
-        return new Date(dateString).toLocaleTimeString(undefined, options);
-    }
-
-    if (loading) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-                <CircularProgress sx={{ color: '#6a11cb' }} />
-            </Box>
-        );
-    }
-
-    if (error) {
-        return (
-            <Container maxWidth="md" sx={{ mt: 12, mb: 4 }}>
-                <Alert severity="error">{error}</Alert>
-            </Container>
-        );
-    }
-
-    if (!event) {
-        return (
-            <Container maxWidth="md" sx={{ mt: 12, mb: 4 }}>
-                <Alert severity="info">Event not found</Alert>
-            </Container>
-        );
-    }
-
+    // Event found, display the data
     const categoryName = getCategoryName(event.category);
     const categoryColor = getCategoryColor(event.category);
 
     return (
         <>
+            {/* Event Header/Banner */}
             <Box 
                 sx={{
                     width: '100%',
                     position: 'relative',
                     height: { xs: '300px', md: '400px' },
                     overflow: 'hidden',
-                    mt: 8,
+                    mt: 8
                 }}
             >
                 <Box
@@ -237,19 +193,44 @@ function EventView() {
                         />
                     </Box>
 
-                    <Typography 
-                        variant="h2" 
-                        component="h1"
-                        sx={{
-                            color: 'white',
-                            fontWeight: 800,
-                            textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                            fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-                            lineHeight: 1.2
-                        }}
-                    >
-                        {event.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                        <Typography 
+                            variant="h2" 
+                            component="h1"
+                            sx={{
+                                color: 'white',
+                                fontWeight: 800,
+                                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                                fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+                                lineHeight: 1.2
+                            }}
+                        >
+                            {event.name}
+                        </Typography>
+                        
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                            <IconButton
+                                onClick={() => navigate(`/eventedit/${id}`)}
+                                sx={{ 
+                                    color: 'white',
+                                    bgcolor: 'rgba(255,255,255,0.1)',
+                                    '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
+                                }}
+                            >
+                                <EditIcon />
+                            </IconButton>
+                            <IconButton
+                                onClick={() => setShowDeleteDialog(true)}
+                                sx={{ 
+                                    color: 'white',
+                                    bgcolor: 'rgba(255,255,255,0.1)',
+                                    '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
+                                }}
+                            >
+                                <DeleteIcon />
+                            </IconButton>
+                        </Box>
+                    </Box>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
                         <CalendarIcon sx={{ color: 'white', mr: 1, fontSize: 20 }} />
@@ -260,6 +241,7 @@ function EventView() {
                 </Container>
             </Box>
 
+            {/* Event Details Content */}
             <Container maxWidth="lg" sx={{ mt: { xs: -3, md: -5 }, mb: 8, position: 'relative', zIndex: 3, pt: 3 }}>
                 <Grid container spacing={4}>
                     {/* Main Content */}
@@ -270,6 +252,7 @@ function EventView() {
                             boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
                         }}>
                             <CardContent sx={{ p: 4 }}>
+                                {/* About This Event section */}
                                 <Box sx={{ mb: 4 }}>
                                     <Typography variant="h5" component="h2" sx={{ mb: 3, fontWeight: 600 }}>
                                         About This Event
@@ -281,12 +264,14 @@ function EventView() {
 
                                 <Divider sx={{ my: 4 }} />
 
+                                {/* Event Details section */}
                                 <Box>
                                     <Typography variant="h5" component="h2" sx={{ mb: 3, fontWeight: 600 }}>
                                         Event Details
                                     </Typography>
                                     
                                     <Grid container spacing={3}>
+                                        {/* Start Date & Time */}
                                         <Grid item xs={12} sm={6}>
                                             <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
                                                 <CalendarIcon sx={{ 
@@ -307,6 +292,7 @@ function EventView() {
                                             </Box>
                                         </Grid>
 
+                                        {/* End Date & Time */}
                                         <Grid item xs={12} sm={6}>
                                             <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
                                                 <CalendarIcon sx={{ 
@@ -327,6 +313,7 @@ function EventView() {
                                             </Box>
                                         </Grid>
 
+                                        {/* Category */}
                                         <Grid item xs={12} sm={6}>
                                             <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
                                                 <CategoryIcon sx={{ 
@@ -351,6 +338,7 @@ function EventView() {
                                             </Box>
                                         </Grid>
 
+                                        {/* Location */}
                                         <Grid item xs={12} sm={6}>
                                             <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
                                                 <LocationIcon sx={{ 
@@ -454,60 +442,26 @@ function EventView() {
                 </Grid>
             </Container>
 
-            {/* Delete Dialog */}
-            <Dialog
-                open={deleteDialogOpen}
-                onClose={handleDeleteCancel}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-            >
-                <DialogTitle id="alert-dialog-title">
-                    {"Confirm Event Deletion"}
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                        Are you sure you want to delete this event? This action cannot be undone.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 3 }}>
-                    <Button 
-                        onClick={handleDeleteCancel} 
-                        color="inherit"
-                        variant="outlined"
-                        disabled={deleteLoading}
-                    >
-                        Cancel
-                    </Button>
-                    <Button 
-                        onClick={handleDeleteConfirm} 
-                        color="error" 
-                        variant="contained"
-                        autoFocus
-                        disabled={deleteLoading}
-                        startIcon={deleteLoading ? <CircularProgress size={16} color="inherit" /> : null}
-                    >
-                        {deleteLoading ? 'Deleting...' : 'Delete Event'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            {/* Delete confirmation dialog */}
+            <ConfirmationDialog
+                open={showDeleteDialog}
+                title="Confirm Event Deletion"
+                message="Are you sure you want to delete this event? This action cannot be undone."
+                confirmLabel="Delete Event"
+                cancelLabel="Cancel"
+                onConfirm={handleDeleteEvent}
+                onCancel={() => setShowDeleteDialog(false)}
+                loading={isDeleting}
+                isDestructive={true}
+            />
 
-            {/* Snackbar for notifications */}
-            <Snackbar
+            {/* Toast notifications */}
+            <ToastNotification
                 open={toast.open}
-                autoHideDuration={3000}
-                onClose={handleCloseToast}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                <Alert 
-                    onClose={handleCloseToast} 
-                    severity={toast.severity} 
-                    sx={{ width: '100%' }}
-                    elevation={6}
-                    variant="filled"
-                >
-                    {toast.message}
-                </Alert>
-            </Snackbar>
+                message={toast.message}
+                severity={toast.severity}
+                onClose={() => setToast({...toast, open: false})}
+            />
         </>
     );
 }
