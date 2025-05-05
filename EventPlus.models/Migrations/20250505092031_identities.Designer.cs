@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using eventplus.models.Infrastructure.context;
@@ -11,9 +12,11 @@ using eventplus.models.Infrastructure.context;
 namespace eventplus.models.Migrations
 {
     [DbContext(typeof(EventPlusContext))]
-    partial class EventPlusContextModelSnapshot : ModelSnapshot
+    [Migration("20250505092031_identities")]
+    partial class identities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -620,7 +623,7 @@ namespace eventplus.models.Migrations
                         .HasColumnName("qr_code");
 
                     b.Property<DateTime?>("ScannedDate")
-                        .HasColumnType("timestamp without time zone")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("scanned_date");
 
                     b.Property<int?>("Type")

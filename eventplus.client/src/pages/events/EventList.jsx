@@ -26,6 +26,7 @@ import { fetchEvents } from "../../services/eventService";
 // Import shared components
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorDisplay from "../../components/shared/ErrorDisplay";
+import { useAuth } from "../../context/AuthContext";
 
 function EventList() {
 	// Simplified state with only what's needed
@@ -33,6 +34,7 @@ function EventList() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
+	const { isAdmin, isOrganizer } = useAuth();
 
 	useEffect(() => {
 		// Fetch events with clean error handling
@@ -207,58 +209,57 @@ function EventList() {
 					maxWidth="lg"
 					sx={{ mt: -5, position: "relative", zIndex: 3 }}
 				>
-					<Box
-						sx={{
-							display: "flex",
-							justifyContent: "space-between",
-							alignItems: "center",
-							mb: 4,
-							backgroundColor: "white",
-							borderRadius: 3,
-							p: 3,
-							boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-						}}
-					>
-						<Typography
-							variant="h5"
-							component="h2"
-							fontWeight={700}
-							color="text.primary"
-						>
-							{filteredEvents.length === 0 && !isLoading
-								? "No events found"
-								: "Upcoming Events"}
-						</Typography>
-						<Button
-							component={Link}
-							to="/eventinsert"
-							variant="contained"
-							startIcon={<AddIcon />}
-							sx={{
-								background: "linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)",
-								boxShadow: "0 3px 5px 2px rgba(106, 17, 203, .3)",
-								color: "white",
-								fontWeight: 600,
-								borderRadius: 2,
-								px: 3,
-								"&:hover": {
-									boxShadow: "0 5px 8px 2px rgba(106, 17, 203, .35)",
-								},
-							}}
-						>
-							Create Event
-						</Button>
-					</Box>
+					{(isAdmin() || isOrganizer()) && (
+											<Box
+											sx={{
+												display: "flex",
+												justifyContent: "space-between",
+												alignItems: "center",
+												mb: 4,
+												backgroundColor: "white",
+												borderRadius: 3,
+												p: 3,
+												boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+											}}
+										>
+											<Typography
+												variant="h5"
+												component="h2"
+												fontWeight={700}
+												color="text.primary"
+											>
+												{filteredEvents.length === 0 && !isLoading
+													? "No events found"
+													: "Upcoming Events"}
+											</Typography>
+											<Button
+												component={Link}
+												to="/eventinsert"
+												variant="contained"
+												startIcon={<AddIcon />}
+												sx={{
+													background: "linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)",
+													boxShadow: "0 3px 5px 2px rgba(106, 17, 203, .3)",
+													color: "white",
+													fontWeight: 600,
+													borderRadius: 2,
+													px: 3,
+													"&:hover": {
+														boxShadow: "0 5px 8px 2px rgba(106, 17, 203, .35)",
+													},
+												}}
+											>
+												Create Event
+											</Button>
+										</Box>
+						)}
+
 
 					{/* Use shared components for loading and error states */}
 					{isLoading ? (
 						<LoadingSpinner fullHeight={false} />
 					) : error ? (
-						<ErrorDisplay 
-							error={error} 
-							marginTop={2} 
-							marginBottom={4}
-						/>
+						<ErrorDisplay error={error} marginTop={2} marginBottom={4} />
 					) : (
 						<Grid container spacing={3}>
 							{filteredEvents.map((event) => (

@@ -19,6 +19,7 @@ public partial class User
 
     public string? Username { get; set; }
 
+    [Column(TypeName = "timestamp without time zone")]
     public DateTime? LastLogin { get; set; }
 
     [Key]

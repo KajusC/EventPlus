@@ -1,30 +1,28 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 
-const API_URL = 'https://localhost:7244/api/Event';
+const API_ENDPOINT = '/Event';
 
 export const fetchEvents = async () => {
-    const response = await axios.get(API_URL);
-    return response.data;
+  const response = await apiClient.get(API_ENDPOINT);
+  return response.data;
 };
 
 export const fetchEventById = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}`);
-    return response.data;
+  const response = await apiClient.get(`${API_ENDPOINT}/${id}`);
+  return response.data;
 };
 
 export const createEvent = async (eventData) => {
-    const response = await axios.post(`${API_URL}/CreateFullEvent`, eventData);
-    return response.data;
+  const response = await apiClient.post(`${API_ENDPOINT}/CreateFullEvent`, eventData);
+  return response.data;
 };
 
 export const updateEvent = async (id, eventData) => {
-    const response = await axios.put(`${API_URL}`, eventData);
-    console.log(response);
-    return response.data;
+  const response = await apiClient.put(API_ENDPOINT, eventData);
+  return response.data;
 };
 
 export const deleteEvent = async (id) => {
-    const response = await axios.delete(`${API_URL}/${id}`);
-    console.log(response.data);
-    return response.data;
+  const response = await apiClient.delete(`${API_ENDPOINT}/${id}`);
+  return response.data;
 };

@@ -952,8 +952,8 @@ public partial class EventPlusContext : DbContext
         });
 
         modelBuilder.Entity<Loyalty>().HasData(
-    new Loyalty { IdLoyalty = 1, Points = 0 }
-);
+            new Loyalty { IdLoyalty = 1, Points = 0 }
+        );
 
         modelBuilder.Entity<User>().HasData(
             new User
@@ -962,7 +962,7 @@ public partial class EventPlusContext : DbContext
                 Name = "Event",
                 Surname = "Organizer",
                 Username = "organizer",
-                Password = "password123",
+                Password = "password123"
             }
         );
 
@@ -986,7 +986,7 @@ public partial class EventPlusContext : DbContext
                 Capacity = 500,
                 Contacts = "contact@venue.com",
                 Price = 1000.0,
-                HoldingEquipment = 2 // Projector
+                HoldingEquipment = 2
             }
         );
 
@@ -999,12 +999,11 @@ public partial class EventPlusContext : DbContext
                 StartDate = new DateOnly(2025, 6, 15),
                 EndDate = new DateOnly(2025, 6, 17),
                 MaxTicketCount = 500,
-                Category = 2, // Conference
+                Category = 2,
                 FkEventLocationidEventLocation = 1,
                 FkOrganiseridUser = 1
             }
         );
-
 
         modelBuilder.Entity<Sector>().HasData(
             new Sector

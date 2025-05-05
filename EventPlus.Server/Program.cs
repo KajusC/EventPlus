@@ -5,12 +5,18 @@ using eventplus.models.Infrastructure.Persistance;
 using eventplus.models.Infrastructure.Persistance.IRepositories;
 using eventplus.models.Infrastructure.Persistance.Repositories;
 using eventplus.models.Infrastructure.UnitOfWork;
+using EventPlus.Server.Application.Authentication;
 using EventPlus.Server.Application.Handlers;
 using EventPlus.Server.Application.IHandlers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace EventPlus.Server
 {
@@ -23,7 +29,35 @@ namespace EventPlus.Server
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "EventPlus API", Version = "v1" });
+
+                // Add JWT Authentication to Swagger
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
+                    }
+                });
+            });
 
             builder.Services.AddCors(options =>
             {
@@ -31,6 +65,29 @@ namespace EventPlus.Server
                     builder => builder.WithOrigins("https://localhost:5173")
                                       .AllowAnyHeader()
                                       .AllowAnyMethod());
+            });
+
+            // Configure JWT Authentication
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = false, // Temporarily disable for debugging
+                    ValidateAudience = false, // Temporarily disable for debugging
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"] ?? "DefaultSecretKeyWith32Characters1234")),
+                    NameClaimType = ClaimTypes.Name,
+                    RoleClaimType = ClaimTypes.Role
+                };
             });
 
             builder.Services.AddDbContext<EventPlusContext>(options =>
@@ -45,6 +102,11 @@ namespace EventPlus.Server
             builder.Services.AddScoped<IRepository<Partner>, PartnerRepository>();
             builder.Services.AddScoped<IRepository<Performer>, PerformerRepository>();
             builder.Services.AddScoped<IRepository<Category>, CategoryRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+            // Register the new repositories for role-based authentication
+            builder.Services.AddScoped<IAdministratorRepository, AdministratorRepository>();
+            builder.Services.AddScoped<IOrganiserRepository, OrganiserRepository>();
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -55,6 +117,8 @@ namespace EventPlus.Server
             builder.Services.AddScoped<ISectorLogic, SectorLogic>();
             builder.Services.AddScoped<ICategoryLogic, CategoryLogic>();
 
+            // Authentication - Use role-based auth service
+            builder.Services.AddScoped<IRoleBasedAuthService, RoleBasedAuthService>();
 
             // AutoMapper
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -72,6 +136,9 @@ namespace EventPlus.Server
             }
 
             app.UseHttpsRedirection();
+
+            // Add authentication middleware
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseCors("AllowSpecificOrigin");
