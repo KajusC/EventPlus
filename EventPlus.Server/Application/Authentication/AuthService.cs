@@ -121,7 +121,5 @@ namespace EventPlus.Server.Application.Authentication
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-
-        public bool RemoveUserSession()
     }
 }
