@@ -1,5 +1,6 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
     AppBar,
     Toolbar,
@@ -16,26 +17,75 @@ import {
     ListItemButton,
     ListItemIcon,
     ListItemText,
+    Avatar,
+    Menu,
+    MenuItem,
 } from '@mui/material';
 import {
     Menu as MenuIcon,
     Event as EventIcon,
     Add as AddIcon,
     Home as HomeIcon,
-    ConfirmationNumber as TicketIcon
+    Person as PersonIcon,
+    Logout as LogoutIcon,
+    Login as LoginIcon,
+    PersonAdd as PersonAddIcon,
+    Dashboard as DashboardIcon,
+    EditCalendar as EditCalendarIcon
 } from '@mui/icons-material';
 
 function Navigation() {
     const location = useLocation();
+    const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [drawerOpen, setDrawerOpen] = React.useState(false);
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const { currentUser, logout, isAuthenticated, isAdmin, isOrganizer } = useAuth();
+
+    const handleOpenMenu = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleCloseMenu = () => {
+        setAnchorEl(null);
+    };
+
+    const handleLogout = () => {
+        logout();
+        handleCloseMenu();
+        navigate('/');
+    };
+
+    const handleProfileClick = () => {
+        handleCloseMenu();
+        navigate('/profile');
+    };
 
     const navItems = [
-        { title: 'Home', path: '/', icon: <HomeIcon /> },
-        { title: 'Events', path: '/events', icon: <EventIcon /> },
-        { title: 'Add Event', path: '/eventinsert', icon: <AddIcon /> },
+        { title: 'Home', path: '/', icon: <HomeIcon />, public: true },
+        { title: 'Events', path: '/events', icon: <EventIcon />, public: true },
+        { title: 'Create Event', path: '/eventinsert', icon: <AddIcon />, public: false, adminOnly: false, organizerOnly: true },
+        { title: 'Manage Events', path: '/myevents', icon: <EditCalendarIcon />, public: false, adminOnly: false, organizerOnly: true },
     ];
+
+    if (isAdmin()) {
+        navItems.push({ 
+            title: 'Admin Dashboard', 
+            path: '/admin', 
+            icon: <DashboardIcon />, 
+            public: false, 
+            adminOnly: true 
+        });
+    }
+
+    const filteredNavItems = navItems.filter(item => {
+        if (item.public) return true;
+        if (!isAuthenticated()) return false;
+        if (item.adminOnly && !isAdmin()) return false;
+        if (item.organizerOnly && !isOrganizer() && !isAdmin()) return false;
+        return true;
+    });
 
     const isActive = (path) => {
         return location.pathname === path;
@@ -53,7 +103,7 @@ function Navigation() {
                 </Typography>
             </Box>
             <List sx={{ pt: 2 }}>
-                {navItems.map((item) => (
+                {filteredNavItems.map((item) => (
                     <ListItem key={item.title} disablePadding>
                         <ListItemButton
                             component={NavLink}
@@ -84,6 +134,104 @@ function Navigation() {
                         </ListItemButton>
                     </ListItem>
                 ))}
+                {!isAuthenticated() && (
+                    <>
+                        <ListItem disablePadding>
+                            <ListItemButton
+                                component={NavLink}
+                                to="/login"
+                                sx={{
+                                    textAlign: 'left',
+                                    py: 1.5,
+                                    color: 'white',
+                                    '&.active': {
+                                        background: 'linear-gradient(90deg, rgba(106,17,203,0.15) 0%, rgba(37,117,252,0.1) 100%)',
+                                        borderLeft: '4px solid #6a11cb',
+                                    },
+                                    '&:hover': {
+                                        background: 'rgba(255,255,255,0.05)',
+                                    }
+                                }}
+                                className={isActive('/login') ? 'active' : ''}
+                            >
+                                <ListItemIcon sx={{ color: 'inherit', minWidth: '40px' }}>
+                                    <LoginIcon />
+                                </ListItemIcon>
+                                <ListItemText primary="Log In" />
+                            </ListItemButton>
+                        </ListItem>
+                        <ListItem disablePadding>
+                            <ListItemButton
+                                component={NavLink}
+                                to="/register"
+                                sx={{
+                                    textAlign: 'left',
+                                    py: 1.5,
+                                    color: 'white',
+                                    '&.active': {
+                                        background: 'linear-gradient(90deg, rgba(106,17,203,0.15) 0%, rgba(37,117,252,0.1) 100%)',
+                                        borderLeft: '4px solid #6a11cb',
+                                    },
+                                    '&:hover': {
+                                        background: 'rgba(255,255,255,0.05)',
+                                    }
+                                }}
+                                className={isActive('/register') ? 'active' : ''}
+                            >
+                                <ListItemIcon sx={{ color: 'inherit', minWidth: '40px' }}>
+                                    <PersonAddIcon />
+                                </ListItemIcon>
+                                <ListItemText primary="Sign Up" />
+                            </ListItemButton>
+                        </ListItem>
+                    </>
+                )}
+                {isAuthenticated() && (
+                    <>
+                        <ListItem disablePadding>
+                            <ListItemButton
+                                component={NavLink}
+                                to="/profile"
+                                sx={{
+                                    textAlign: 'left',
+                                    py: 1.5,
+                                    color: 'white',
+                                    '&.active': {
+                                        background: 'linear-gradient(90deg, rgba(106,17,203,0.15) 0%, rgba(37,117,252,0.1) 100%)',
+                                        borderLeft: '4px solid #6a11cb',
+                                    },
+                                    '&:hover': {
+                                        background: 'rgba(255,255,255,0.05)',
+                                    }
+                                }}
+                                className={isActive('/profile') ? 'active' : ''}
+                            >
+                                <ListItemIcon sx={{ color: 'inherit', minWidth: '40px' }}>
+                                    <PersonIcon />
+                                </ListItemIcon>
+                                <ListItemText primary="Profile" />
+                            </ListItemButton>
+                        </ListItem>
+                        <ListItem disablePadding>
+                            <ListItemButton
+                                onClick={handleLogout}
+                                sx={{
+                                    textAlign: 'left',
+                                    py: 1.5,
+                                    color: 'white',
+                                    '&:hover': {
+                                        background: 'rgba(255,255,255,0.05)',
+                                    }
+                                }}
+                            >
+                                <ListItemIcon sx={{ color: 'inherit', minWidth: '40px' }}>
+                                    <LogoutIcon />
+                                </ListItemIcon>
+                                <ListItemText primary="Logout" />
+                            </ListItemButton>
+                        </ListItem>
+                    </>
+                )}
             </List>
         </Box>
     );
@@ -137,7 +285,7 @@ function Navigation() {
                     
                     <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'center' }}>
                         {!isMobile &&
-                            navItems.map((item) => (
+                            filteredNavItems.map((item) => (
                                 <Button
                                     key={item.title}
                                     component={NavLink}
@@ -166,35 +314,107 @@ function Navigation() {
                     </Box>
                     
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Button 
-                            variant="outlined"
-                            sx={{ 
-                                mr: 2, 
-                                color: 'white', 
-                                fontWeight: 600,
-                                borderColor: 'rgba(255,255,255,0.3)',
-                                '&:hover': {
-                                    borderColor: 'white',
-                                    background: 'rgba(255,255,255,0.05)'
-                                }
-                            }}
-                        >
-                            Log In
-                        </Button>
-                        <Button 
-                            variant="contained"
-                            sx={{ 
-                                color: 'white', 
-                                fontWeight: 600,
-                                background: 'linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)',
-                                boxShadow: '0 3px 5px 2px rgba(106, 17, 203, .3)',
-                                '&:hover': {
-                                    boxShadow: '0 5px 8px 2px rgba(106, 17, 203, .35)',
-                                }
-                            }}
-                        >
-                            Sign Up
-                        </Button>
+                        {!isAuthenticated() ? (
+                            <>
+                                <Button 
+                                    variant="outlined"
+                                    component={NavLink}
+                                    to="/login"
+                                    startIcon={<LoginIcon />}
+                                    sx={{ 
+                                        mr: 2, 
+                                        color: 'white', 
+                                        fontWeight: 600,
+                                        borderColor: 'rgba(255,255,255,0.3)',
+                                        '&:hover': {
+                                            borderColor: 'white',
+                                            background: 'rgba(255,255,255,0.05)'
+                                        }
+                                    }}
+                                >
+                                    Log In
+                                </Button>
+                                <Button 
+                                    variant="contained"
+                                    component={NavLink}
+                                    to="/register"
+                                    startIcon={<PersonAddIcon />}
+                                    sx={{ 
+                                        color: 'white', 
+                                        fontWeight: 600,
+                                        background: 'linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)',
+                                        boxShadow: '0 3px 5px 2px rgba(106, 17, 203, .3)',
+                                        '&:hover': {
+                                            boxShadow: '0 5px 8px 2px rgba(106, 17, 203, .35)',
+                                        }
+                                    }}
+                                >
+                                    Sign Up
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <IconButton
+                                    onClick={handleOpenMenu}
+                                    sx={{ 
+                                        p: 0,
+                                        border: '2px solid rgba(255,255,255,0.2)',
+                                        '&:hover': {
+                                            border: '2px solid rgba(255,255,255,0.3)',
+                                        }
+                                    }}
+                                >
+                                    <Avatar sx={{ bgcolor: 'primary.main' }}>
+                                        {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                                    </Avatar>
+                                </IconButton>
+                                <Menu
+                                    id="menu-appbar"
+                                    anchorEl={anchorEl}
+                                    anchorOrigin={{
+                                        vertical: 'bottom',
+                                        horizontal: 'right',
+                                    }}
+                                    keepMounted
+                                    transformOrigin={{
+                                        vertical: 'top',
+                                        horizontal: 'right',
+                                    }}
+                                    open={Boolean(anchorEl)}
+                                    onClose={handleCloseMenu}
+                                    sx={{
+                                        mt: 1,
+                                        '& .MuiPaper-root': {
+                                            backgroundColor: '#1a1a2e',
+                                            color: 'white',
+                                            borderRadius: '8px',
+                                            boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+                                        }
+                                    }}
+                                >
+                                    <Box sx={{ p: 2, textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                            {currentUser.name} {currentUser.surname}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                                            {currentUser.role}
+                                        </Typography>
+                                    </Box>
+                                    <MenuItem onClick={handleProfileClick} sx={{ py: 1.5 }}>
+                                        <ListItemIcon sx={{ color: 'white' }}>
+                                            <PersonIcon fontSize="small" />
+                                        </ListItemIcon>
+                                        <Typography>Profile</Typography>
+                                    </MenuItem>
+                                    <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
+                                        <ListItemIcon sx={{ color: 'white' }}>
+                                            <LogoutIcon fontSize="small" />
+                                        </ListItemIcon>
+                                        <Typography>Logout</Typography>
+                                    </MenuItem>
+                                </Menu>
+                            </>
+                        )}
                     </Box>
                 </Toolbar>
             </Container>

@@ -1,11 +1,11 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 
-const API_URL = 'https://localhost:7244/api/Category';
+const API_ENDPOINT = '/Category';
 
 // Fetch all categories
 export const fetchCategories = async () => {
   try {
-    const response = await axios.get(API_URL);
+    const response = await apiClient.get(API_ENDPOINT);
     return response.data;
   } catch (error) {
     console.error("Error fetching categories:", error);
@@ -19,7 +19,7 @@ export const fetchCategoryById = async (id) => {
     if (!id || isNaN(parseInt(id))) {
       return { name: "Unknown Category" }; // Fallback for invalid IDs
     }
-    const response = await axios.get(`${API_URL}/${id}`);
+    const response = await apiClient.get(`${API_ENDPOINT}/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching category with ID ${id}:`, error);

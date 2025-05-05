@@ -1,5 +1,6 @@
 ﻿using EventPlus.Server.Application.IHandlers;
 using EventPlus.Server.Application.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlus.Server.Controllers
@@ -39,6 +40,7 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Administrator, Organiser")]
         public async Task<ActionResult<bool>> CreateEvent([FromBody] EventViewModel eventEntity)
         {
             if (eventEntity == null)
@@ -50,6 +52,7 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Administrator, Organiser")]
         public async Task<ActionResult<bool>> UpdateEvent([FromBody] EventViewModel eventEntity)
         {
             if (eventEntity == null)
@@ -61,6 +64,7 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrator")]
         public async Task<ActionResult<bool>> DeleteEvent(int id)
         {
 
@@ -88,6 +92,7 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpPost("CreateFullEvent")]
+        [Authorize(Roles = "Administrator, Organiser")]
         public async Task<ActionResult<bool>> CreateFullEvent([FromBody] CompleteEvent completeEventEntity)
         {
             if (completeEventEntity == null)

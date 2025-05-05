@@ -14,6 +14,7 @@ public partial class Ticket
 
     public DateOnly? GenerationDate { get; set; }
 
+    [Column(TypeName = "timestamp without time zone")]
     public DateTime? ScannedDate { get; set; }
 
     public string? QrCode { get; set; }

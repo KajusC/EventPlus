@@ -19,7 +19,7 @@ import {
   Divider,
   Chip
 } from "@mui/material";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { 
@@ -38,6 +38,11 @@ import { fetchCategories } from "../../services/categoryService";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorDisplay from "../../components/shared/ErrorDisplay";
 import ToastNotification from "../../components/shared/ToastNotification";
+
+// Helper function to format date for API without time component
+const formatDateForApi = (date) => {
+  return date.toISOString().split('T')[0];
+};
 
 function EventEdit() {
   const { id } = useParams();
@@ -84,10 +89,15 @@ function EventEdit() {
       try {
         setIsLoading(true);
         const data = await fetchEventById(id);
+        
+        // Convert ISO date strings to Date objects without time component
+        const startDate = new Date(data.startDate.split('T')[0]);
+        const endDate = new Date(data.endDate.split('T')[0]);
+        
         setFormData({
           ...data,
-          startDate: new Date(data.startDate),
-          endDate: new Date(data.endDate),
+          startDate,
+          endDate,
         });
         setError(null);
       } catch (err) {
@@ -126,6 +136,9 @@ function EventEdit() {
         ...formData,
         maxTicketCount: parseInt(formData.maxTicketCount, 10),
         category: parseInt(formData.category, 10),
+        // Format dates for API without time component
+        startDate: formatDateForApi(formData.startDate),
+        endDate: formatDateForApi(formData.endDate),
       };
 
       const response = await updateEvent(id, updatedData);
@@ -432,7 +445,7 @@ function EventEdit() {
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <CalendarIcon sx={{ mr: 2, color: 'text.secondary' }} />
                     <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DateTimePicker
+                      <DatePicker
                         label="Start Date"
                         value={formData.startDate}
                         onChange={handleDateChange("startDate")}
@@ -454,6 +467,8 @@ function EventEdit() {
                             }
                           },
                         }}
+                        // Disable time selection and only allow date selection
+                        views={['year', 'month', 'day']}
                       />
                     </LocalizationProvider>
                   </Box>
@@ -463,7 +478,7 @@ function EventEdit() {
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <CalendarIcon sx={{ mr: 2, color: 'text.secondary' }} />
                     <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DateTimePicker
+                      <DatePicker
                         label="End Date"
                         value={formData.endDate}
                         onChange={handleDateChange("endDate")}
@@ -486,6 +501,8 @@ function EventEdit() {
                             }
                           },
                         }}
+                        // Disable time selection and only allow date selection
+                        views={['year', 'month', 'day']}
                       />
                     </LocalizationProvider>
                   </Box>

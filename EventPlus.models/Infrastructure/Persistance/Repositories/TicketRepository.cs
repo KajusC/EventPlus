@@ -18,7 +18,7 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
             {
                 throw new ArgumentNullException(nameof(ticket));
             }
-            ticket.ScannedDate = DateTime.MinValue;
+            ticket.ScannedDate = DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Unspecified);
             _dbSet.Add(ticket);
             await _context.SaveChangesAsync();
             return true;
@@ -49,7 +49,7 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
             {
                 return false;
             }
-            ticket.ScannedDate = DateTime.UtcNow;
+            ticket.ScannedDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
             return await _context.SaveChangesAsync() > 0;
         }
     }

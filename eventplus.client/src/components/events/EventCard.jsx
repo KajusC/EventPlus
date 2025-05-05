@@ -27,6 +27,8 @@ import { deleteEvent } from "../../services/eventService";
 import ToastNotification from "../shared/ToastNotification";
 import ConfirmationDialog from "../shared/ConfirmationDialog";
 
+import { useAuth } from '../../context/AuthContext';
+
 const StyledCard = styled(Card)(({ theme }) => ({
 	height: "100%",
 	display: "flex",
@@ -101,6 +103,7 @@ function EventCard({ event }) {
 		message: "",
 		severity: "info",
 	});
+	const { isAdmin, isOrganizer } = useAuth();
 
 	// Fetch category name
 	useEffect(() => {
@@ -244,33 +247,37 @@ function EventCard({ event }) {
 						View Details
 					</Button>
 				</StyledCardActions>
-				<Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, p: 2 }}>
-					<Button
-						component={Link}
-						to={`/eventedit/${event.idEvent}`}
-						variant="outlined"
-						color="primary"
-						startIcon={<EditIcon />}
-						sx={{
-							borderColor: "#6a11cb",
-							color: "#6a11cb",
-							"&:hover": {
-								borderColor: "#2575fc",
-								bgcolor: "rgba(106, 17, 203, 0.04)",
-							},
-						}}
+				{(isAdmin() || isOrganizer()) && (
+					<Box
+						sx={{ display: "flex", justifyContent: "flex-end", gap: 1, p: 2 }}
 					>
-						Edit
-					</Button>
-					<Button
-						variant="outlined"
-						color="error"
-						startIcon={<DeleteIcon />}
-						onClick={() => setShowDeleteDialog(true)}
-					>
-						Delete
-					</Button>
-				</Box>
+						<Button
+							component={Link}
+							to={`/eventedit/${event.idEvent}`}
+							variant="outlined"
+							color="primary"
+							startIcon={<EditIcon />}
+							sx={{
+								borderColor: "#6a11cb",
+								color: "#6a11cb",
+								"&:hover": {
+									borderColor: "#2575fc",
+									bgcolor: "rgba(106, 17, 203, 0.04)",
+								},
+							}}
+						>
+							Edit
+						</Button>
+						<Button
+							variant="outlined"
+							color="error"
+							startIcon={<DeleteIcon />}
+							onClick={() => setShowDeleteDialog(true)}
+						>
+							Delete
+						</Button>
+					</Box>
+				)}
 			</StyledCard>
 
 			{/* Using shared ConfirmationDialog component */}

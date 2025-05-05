@@ -30,6 +30,7 @@ import { fetchCategories } from "../../services/categoryService";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorDisplay from "../../components/shared/ErrorDisplay";
 import ToastNotification from "../../components/shared/ToastNotification";
+import { useAuth } from "../../context/AuthContext";
 
 function EventInsert() {
 	const navigate = useNavigate();
@@ -45,6 +46,8 @@ function EventInsert() {
 		message: "",
 		severity: "info"
 	});
+	const { currentUser } = useAuth();
+
 	
 	// Form data state
 	const [formData, setFormData] = useState({
@@ -57,7 +60,7 @@ function EventInsert() {
 			maxTicketCount: 0,
 			category: 1,
 			fkEventLocationidEventLocation: 0,
-			fkOrganiseridUser: 1, // This would ideally come from auth context
+			fkOrganiseridUser: currentUser.id,
 		},
 		eventLocation: {
 			name: "",

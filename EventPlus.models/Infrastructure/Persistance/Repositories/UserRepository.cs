@@ -84,7 +84,7 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
             {
                 return false;
             }
-            user.LastLogin = DateTime.UtcNow;
+            user.LastLogin = DateTime.Now;
             _dbSet.Update(user);
             return await _context.SaveChangesAsync() > 0;
         }
