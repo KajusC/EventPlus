@@ -12,5 +12,12 @@ namespace EventPlus.Server.Application.Authentication
         Task<AuthResult> RegisterAdministratorAsync(AdministratorViewModel administratorViewModel);
         Task<bool> ChangePasswordAsync(int userId, string userType, string currentPassword, string newPassword);
         Task<bool> UpdateLastLoginAsync(int userId, string userType);
+        Task<SignOutResult> SignOutAsync(int userId);
+    }
+
+    public class SignOutResult
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; }
     }
 }

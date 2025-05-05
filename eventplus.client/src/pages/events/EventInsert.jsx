@@ -26,7 +26,6 @@ import {
 } from "@mui/icons-material";
 import { fetchCategories } from "../../services/categoryService";
 
-// Import shared components
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorDisplay from "../../components/shared/ErrorDisplay";
 import ToastNotification from "../../components/shared/ToastNotification";
@@ -35,7 +34,6 @@ import { useAuth } from "../../context/AuthContext";
 function EventInsert() {
 	const navigate = useNavigate();
 	
-	// Simplified state management
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState(null);
@@ -49,7 +47,6 @@ function EventInsert() {
 	const { currentUser } = useAuth();
 
 	
-	// Form data state
 	const [formData, setFormData] = useState({
 		event: {
 			idEvent: 0,
@@ -88,7 +85,6 @@ function EventInsert() {
 		},
 	});
 
-	// Load categories
 	useEffect(() => {
 		const fetchCategory = async () => {
 			try {
@@ -115,7 +111,6 @@ function EventInsert() {
 		fetchCategory();
 	}, []);
 
-	// Form input handlers
 	const handleInputChange = (section, field, value) => {
 		setFormData((prev) => ({
 			...prev,
@@ -140,7 +135,6 @@ function EventInsert() {
 		setActiveTab(newValue);
 	};
 
-	// Form submission
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 
@@ -194,12 +188,10 @@ function EventInsert() {
 		}
 	};
 
-	// Handle toast close
 	const handleCloseToast = () => {
 		setToast({ ...toast, open: false });
 	};
 
-	// Early return for loading and error states
 	if (isLoading) return <LoadingSpinner />;
 	if (error && !toast.open) return <ErrorDisplay error={error} />;
 

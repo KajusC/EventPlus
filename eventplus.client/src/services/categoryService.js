@@ -2,7 +2,6 @@ import apiClient from './apiClient';
 
 const API_ENDPOINT = '/Category';
 
-// Fetch all categories
 export const fetchCategories = async () => {
   try {
     const response = await apiClient.get(API_ENDPOINT);
@@ -13,21 +12,19 @@ export const fetchCategories = async () => {
   }
 };
 
-// Fetch category by ID (numeric ID)
 export const fetchCategoryById = async (id) => {
   try {
     if (!id || isNaN(parseInt(id))) {
-      return { name: "Unknown Category" }; // Fallback for invalid IDs
+      return { name: "Unknown Category" };
     }
     const response = await apiClient.get(`${API_ENDPOINT}/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching category with ID ${id}:`, error);
-    return { name: "Unknown Category" }; // Fallback on error
+    return { name: "Unknown Category" };
   }
 };
 
-// Find category name from local categories array
 export const getCategoryNameById = (categories, categoryId) => {
   if (!categories || !categoryId) return "Unknown Category";
   

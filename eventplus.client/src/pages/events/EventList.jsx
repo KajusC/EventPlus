@@ -19,17 +19,14 @@ import {
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 
-// Import components
 import EventCard from "../../components/events/EventCard";
 import { fetchEvents } from "../../services/eventService";
 
-// Import shared components
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorDisplay from "../../components/shared/ErrorDisplay";
 import { useAuth } from "../../context/AuthContext";
 
 function EventList() {
-	// Simplified state with only what's needed
 	const [events, setEvents] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
@@ -37,7 +34,6 @@ function EventList() {
 	const { isAdmin, isOrganizer } = useAuth();
 
 	useEffect(() => {
-		// Fetch events with clean error handling
 		const getEvents = async () => {
 			try {
 				setIsLoading(true);
@@ -55,7 +51,6 @@ function EventList() {
 		getEvents();
 	}, []);
 
-	// Filter events based on search term
 	const filteredEvents = searchTerm
 		? events.filter((event) =>
 				event.name.toLowerCase().includes(searchTerm.toLowerCase())

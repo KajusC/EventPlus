@@ -24,13 +24,11 @@ import {
     Edit as EditIcon
 } from '@mui/icons-material';
 
-// Import shared components
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import ErrorDisplay from '../../components/shared/ErrorDisplay';
 import ToastNotification from '../../components/shared/ToastNotification';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 
-// Import utilities
 import { formatDate, formatTime } from '../../utils/dateFormatter';
 
 const getCategoryColor = (categoryId) => {
@@ -46,13 +44,11 @@ function EventView() {
     const { id } = useParams();
     const navigate = useNavigate();
     
-    // Simple state - only what this component needs to track
     const [event, setEvent] = useState(null);
     const [categories, setCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    // UI interaction states
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [toast, setToast] = useState({
@@ -61,14 +57,12 @@ function EventView() {
         severity: 'info'
     });
 
-    // Load categories
     useEffect(() => {
         fetchCategories()
             .then(data => setCategories(data))
             .catch(err => console.error("Error fetching categories:", err));
     }, []);
 
-    // Load event data
     useEffect(() => {
         setIsLoading(true);
         fetchEventById(id)
@@ -90,7 +84,6 @@ function EventView() {
         return category ? category.name : "Event";
     };
 
-    // Delete event handler
     const handleDeleteEvent = async () => {
         setIsDeleting(true);
         try {
@@ -100,7 +93,6 @@ function EventView() {
                 message: 'Event deleted successfully',
                 severity: 'success'
             });
-            // Redirect after short delay to show the success message
             setTimeout(() => navigate('/events'), 1500);
         } catch (err) {
             setToast({
@@ -114,12 +106,10 @@ function EventView() {
         }
     };
 
-    // Early returns for loading and error states
     if (isLoading) return <LoadingSpinner />;
     if (error) return <ErrorDisplay error={error} />;
     if (!event) return <ErrorDisplay error="Event not found" />;
 
-    // Event found, display the data
     const categoryName = getCategoryName(event.category);
     const categoryColor = getCategoryColor(event.category);
 

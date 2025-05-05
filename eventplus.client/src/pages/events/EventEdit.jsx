@@ -34,12 +34,10 @@ import {
 } from "@mui/icons-material";
 import { fetchCategories } from "../../services/categoryService";
 
-// Import shared components
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorDisplay from "../../components/shared/ErrorDisplay";
 import ToastNotification from "../../components/shared/ToastNotification";
 
-// Helper function to format date for API without time component
 const formatDateForApi = (date) => {
   return date.toISOString().split('T')[0];
 };
@@ -48,7 +46,6 @@ function EventEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // App data state
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -59,7 +56,7 @@ function EventEdit() {
     maxTicketCount: 0,
   });
   
-  // UI state - simplified
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,7 +66,6 @@ function EventEdit() {
     severity: "success",
   });
 
-  // Fetch categories
   useEffect(() => {
     const fetchCategoryData = async () => {
       try {
@@ -83,14 +79,12 @@ function EventEdit() {
     fetchCategoryData();
   }, []);
 
-  // Fetch event data
   useEffect(() => {
     const fetchEventData = async () => {
       try {
         setIsLoading(true);
         const data = await fetchEventById(id);
         
-        // Convert ISO date strings to Date objects without time component
         const startDate = new Date(data.startDate.split('T')[0]);
         const endDate = new Date(data.endDate.split('T')[0]);
         
@@ -110,7 +104,7 @@ function EventEdit() {
     fetchEventData();
   }, [id]);
 
-  // Form input handlers
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -126,7 +120,6 @@ function EventEdit() {
     }));
   };
 
-  // Submit form handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -136,7 +129,6 @@ function EventEdit() {
         ...formData,
         maxTicketCount: parseInt(formData.maxTicketCount, 10),
         category: parseInt(formData.category, 10),
-        // Format dates for API without time component
         startDate: formatDateForApi(formData.startDate),
         endDate: formatDateForApi(formData.endDate),
       };
@@ -171,19 +163,16 @@ function EventEdit() {
     }
   };
 
-  // Toast notification handler
   const handleCloseToast = () => {
     setToast({ ...toast, open: false });
   };
 
-  // Helper function to get category name
   const getCategoryName = (categoryId) => {
     if (!categories || categories.length === 0) return "Event";
     const category = categories.find(cat => cat.idCategory === categoryId);
     return category ? category.name : "Event";
   };
 
-  // Early return for loading and error states using shared components
   if (isLoading) return <LoadingSpinner />;
   if (error) return <ErrorDisplay error={error} />;
 
@@ -467,7 +456,6 @@ function EventEdit() {
                             }
                           },
                         }}
-                        // Disable time selection and only allow date selection
                         views={['year', 'month', 'day']}
                       />
                     </LocalizationProvider>
@@ -501,7 +489,6 @@ function EventEdit() {
                             }
                           },
                         }}
-                        // Disable time selection and only allow date selection
                         views={['year', 'month', 'day']}
                       />
                     </LocalizationProvider>

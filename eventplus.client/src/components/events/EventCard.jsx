@@ -23,7 +23,6 @@ import {
 import { fetchCategoryById } from "../../services/categoryService";
 import { deleteEvent } from "../../services/eventService";
 
-// Import shared components
 import ToastNotification from "../shared/ToastNotification";
 import ConfirmationDialog from "../shared/ConfirmationDialog";
 
@@ -94,7 +93,6 @@ function EventCard({ event }) {
 	const navigate = useNavigate();
 	const theme = useTheme();
 	
-	// Simplified state 
 	const [categoryName, setCategoryName] = useState("Loading...");
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -105,7 +103,6 @@ function EventCard({ event }) {
 	});
 	const { isAdmin, isOrganizer } = useAuth();
 
-	// Fetch category name
 	useEffect(() => {
 		const getCategoryName = async () => {
 		  try {
@@ -118,12 +115,10 @@ function EventCard({ event }) {
 		getCategoryName();
 	}, [event.category]);
 				
-	// Toast notification handler
 	const handleCloseToast = () => {
 		setToast({ ...toast, open: false });
 	};
 
-	// Delete handlers
 	const handleDeleteConfirm = async () => {
 		setIsDeleting(true);
 		try {
@@ -133,7 +128,6 @@ function EventCard({ event }) {
 				message: "Event deleted successfully",
 				severity: "success"
 			});
-			// Reload the page after a delay to show updated list
 			setTimeout(() => window.location.reload(), 1500);
 		} catch (err) {
 			setToast({

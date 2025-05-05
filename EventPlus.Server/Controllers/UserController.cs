@@ -141,30 +141,24 @@ namespace EventPlus.Server.Controllers
             return Ok(new { message = "Password changed successfully" });
         }
 
-        [HttpGet("check-auth")]
+        [HttpPost("signout")]
         [Authorize]
-        public IActionResult CheckAuth()
+        public async Task<IActionResult> SignOut()
         {
+            int userId;
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            var usernameClaim = User.FindFirst(ClaimTypes.Name);
-            var roleClaim = User.FindFirst(ClaimTypes.Role);
-            var isAdmin = User.IsInRole("Administrator");
-            
-            return Ok(new
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out userId))
             {
-                UserId = userIdClaim?.Value,
-                Username = usernameClaim?.Value,
-                Role = roleClaim?.Value,
-                Claims = User.Claims.Select(c => new { Type = c.Type, Value = c.Value }),
-                IsAdmin = isAdmin
-            });
-        }
+                return Unauthorized();
+            }
 
-        [HttpGet("simple-auth-test")]
-        [Authorize]
-        public IActionResult SimpleAuthTest()
-        {
-            return Ok(new { message = "If you see this, you are authenticated!" });
+            var result = await _authService.SignOutAsync(userId);
+            if (!result.Success)
+            {
+                return BadRequest(new { message = result.Message });
+            }
+
+            return Ok(new { message = "User signed out successfully" });
         }
     }
 }

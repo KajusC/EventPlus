@@ -13,12 +13,9 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if token is expired
     if (token && isTokenExpired(token)) {
-      // If token is expired, clear auth state
       logout();
     } else if (token) {
-      // Token is valid, load user data
       const userData = localStorage.getItem('user');
       if (userData) {
         setCurrentUser(JSON.parse(userData));
@@ -27,7 +24,6 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, [token]);
 
-  // Store token in localStorage when it changes
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
@@ -64,9 +60,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const refreshToken = async () => {
-    // Implement token refresh logic here if your API supports it
-    // This would typically call an endpoint like /refreshToken
-    // For now we'll just handle token expiration
     if (token && isTokenExpired(token)) {
       logout();
       return false;
