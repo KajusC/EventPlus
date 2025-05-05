@@ -32,7 +32,7 @@ namespace EventPlus.Server
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "EventPlus API", Version = "v1" });
-                
+
                 // Add JWT Authentication to Swagger
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
@@ -88,43 +88,6 @@ namespace EventPlus.Server
                     NameClaimType = ClaimTypes.Name,
                     RoleClaimType = ClaimTypes.Role
                 };
-                
-                // Enhanced debugging events
-                options.Events = new JwtBearerEvents
-                {
-                    OnAuthenticationFailed = context =>
-                    {
-                        Console.WriteLine($"Authentication failed: {context.Exception.Message}");
-                        Console.WriteLine($"Exception details: {context.Exception}");
-                        return Task.CompletedTask;
-                    },
-                    OnTokenValidated = context =>
-                    {
-                        Console.WriteLine("Token validated successfully");
-                        foreach (var claim in context.Principal.Claims)
-                        {
-                            Console.WriteLine($"Claim: {claim.Type} = {claim.Value}");
-                        }
-                        return Task.CompletedTask;
-                    },
-                    OnChallenge = context =>
-                    {
-                        Console.WriteLine($"Authentication challenge issued: {context.Error}, {context.ErrorDescription}");
-                        return Task.CompletedTask;
-                    },
-                    OnMessageReceived = context =>
-                    {
-                        var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                        Console.WriteLine($"Received token: {(token != null ? "Yes" : "No")}");
-                        if (token != null)
-                        {
-                            Console.WriteLine($"Token length: {token.Length}");
-                            // Only log a portion for security reasons
-                            Console.WriteLine($"Token start: {token.Substring(0, Math.Min(20, token.Length))}...");
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
             });
 
             builder.Services.AddDbContext<EventPlusContext>(options =>
@@ -140,7 +103,7 @@ namespace EventPlus.Server
             builder.Services.AddScoped<IRepository<Performer>, PerformerRepository>();
             builder.Services.AddScoped<IRepository<Category>, CategoryRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
-            
+
             // Register the new repositories for role-based authentication
             builder.Services.AddScoped<IAdministratorRepository, AdministratorRepository>();
             builder.Services.AddScoped<IOrganiserRepository, OrganiserRepository>();
@@ -173,7 +136,7 @@ namespace EventPlus.Server
             }
 
             app.UseHttpsRedirection();
-            
+
             // Add authentication middleware
             app.UseAuthentication();
             app.UseAuthorization();
