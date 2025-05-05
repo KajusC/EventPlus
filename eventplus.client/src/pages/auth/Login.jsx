@@ -14,11 +14,9 @@ const Login = () => {
   const { login: authLogin } = useAuth();
   const { showSuccess, showError } = useNotification();
 
-  // Check for messages passed via location state (e.g. after registration)
   useEffect(() => {
     if (location.state?.message) {
       showSuccess(location.state.message);
-      // Clear the location state after showing the message
       window.history.replaceState({}, document.title);
     }
   }, [location, showSuccess]);
@@ -32,7 +30,6 @@ const Login = () => {
       authLogin(userData);
       showSuccess('Login successful!');
       
-      // Redirect to the page they tried to access or to home
       const redirectTo = location.state?.from?.pathname || '/';
       navigate(redirectTo);
     } catch (err) {

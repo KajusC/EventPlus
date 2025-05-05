@@ -34,10 +34,8 @@ namespace EventPlus.Server.Application.Authentication
                 };
             }
 
-            // Update last login time
             await _userRepository.UpdateLastLoginAsync(user.IdUser);
 
-            // Generate JWT token
             var token = GenerateJwtToken(user);
 
             return new AuthResult
@@ -51,7 +49,6 @@ namespace EventPlus.Server.Application.Authentication
 
         public async Task<AuthResult> RegisterAsync(UserViewModel userViewModel)
         {
-            // Check if username is already taken
             var isUnique = await _userRepository.IsUsernameUniqueAsync(userViewModel.Username);
             if (!isUnique)
             {
@@ -74,7 +71,6 @@ namespace EventPlus.Server.Application.Authentication
 
             await _userRepository.CreateAsync(user);
 
-            // Generate JWT token
             var token = GenerateJwtToken(user);
 
             return new AuthResult
@@ -94,7 +90,7 @@ namespace EventPlus.Server.Application.Authentication
                 return false;
             }
 
-            user.Password = newPassword; // In production, password should be hashed
+            user.Password = newPassword;
             await _userRepository.UpdateAsync(user);
             return true;
         }
@@ -125,5 +121,7 @@ namespace EventPlus.Server.Application.Authentication
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
+        public bool RemoveUserSession()
     }
 }

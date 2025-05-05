@@ -19,12 +19,10 @@ export const useAuthenticatedApi = (apiFunction, dependencies = [], initialData 
     setError(null);
 
     try {
-      // Check authentication status before making request
       if (apiFunction.requiresAuth && !isAuthenticated()) {
         throw new Error('Authentication required');
       }
 
-      // Optional: refresh the token if needed
       if (apiFunction.requiresAuth) {
         await refreshToken();
       }
@@ -42,20 +40,15 @@ export const useAuthenticatedApi = (apiFunction, dependencies = [], initialData 
   };
 
   useEffect(() => {
-    // Only run the effect if we have arguments to pass to the API function
     if (dependencies.length > 0) {
       fetchData(...dependencies).catch(err => {
-        // Already handled in fetchData
       });
     } else {
-      // If no dependencies, just call the function with no args
       fetchData().catch(err => {
-        // Already handled in fetchData
       });
     }
   }, [isAuthenticated, ...dependencies]);
 
-  // Return a refetch function that can be called manually
   const refetch = async (...args) => {
     return fetchData(...args);
   };

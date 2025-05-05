@@ -15,10 +15,11 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
 
         public async Task<User?> AuthenticateAsync(string username, string password)
         {
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            if (!ValidateUser(username, password))
             {
                 return null;
             }
+
             var user = await _dbSet.FirstOrDefaultAsync(u => u.Username == username && u.Password == password);
             return user;
         }
@@ -87,6 +88,15 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
             user.LastLogin = DateTime.Now;
             _dbSet.Update(user);
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        private bool ValidateUser(string username, string password)
+        {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

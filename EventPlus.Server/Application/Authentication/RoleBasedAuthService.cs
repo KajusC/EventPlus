@@ -66,14 +66,10 @@ namespace EventPlus.Server.Application.Authentication
 
         public async Task<AuthResult> RegisterUserAsync(UserViewModel userViewModel)
         {
-            // Check username uniqueness across all user types
-            if (!await IsUsernameUniqueAcrossAllUserTypesAsync(userViewModel.Username))
+            var AuthStatus = await ValidateFormData(userViewModel.Username, userViewModel.Password);
+            if (!AuthStatus.Success)
             {
-                return new AuthResult
-                {
-                    Success = false,
-                    Message = "Username is already taken"
-                };
+                return AuthStatus;
             }
 
             var user = new User
@@ -81,7 +77,7 @@ namespace EventPlus.Server.Application.Authentication
                 Name = userViewModel.Name,
                 Surname = userViewModel.Surname,
                 Username = userViewModel.Username,
-                Password = userViewModel.Password, // In production, password should be hashed
+                Password = userViewModel.Password, // unhashed
                 LastLogin = DateTime.Now
             };
 
@@ -92,14 +88,10 @@ namespace EventPlus.Server.Application.Authentication
 
         public async Task<AuthResult> RegisterOrganiserAsync(OrganiserViewModel organiserViewModel)
         {
-            // Check username uniqueness across all user types
-            if (!await IsUsernameUniqueAcrossAllUserTypesAsync(organiserViewModel.Username))
+            var AuthStatus = await ValidateFormData(organiserViewModel.Username, organiserViewModel.Password);
+            if (!AuthStatus.Success)
             {
-                return new AuthResult
-                {
-                    Success = false,
-                    Message = "Username is already taken"
-                };
+                return AuthStatus;
             }
 
             var organiser = new Organiser
@@ -107,7 +99,7 @@ namespace EventPlus.Server.Application.Authentication
                 Name = organiserViewModel.Name,
                 Surname = organiserViewModel.Surname,
                 Username = organiserViewModel.Username,
-                Password = organiserViewModel.Password, // In production, password should be hashed
+                Password = organiserViewModel.Password, // unshased
                 LastLogin = DateTime.Now,
                 FollowerCount = organiserViewModel.FollowerCount,
                 Rating = organiserViewModel.Rating
@@ -120,14 +112,10 @@ namespace EventPlus.Server.Application.Authentication
 
         public async Task<AuthResult> RegisterAdministratorAsync(AdministratorViewModel administratorViewModel)
         {
-            // Check username uniqueness across all user types
-            if (!await IsUsernameUniqueAcrossAllUserTypesAsync(administratorViewModel.Username))
+            var AuthStatus = await ValidateFormData(administratorViewModel.Username, administratorViewModel.Password);
+            if (!AuthStatus.Success)
             {
-                return new AuthResult
-                {
-                    Success = false,
-                    Message = "Username is already taken"
-                };
+                return AuthStatus;
             }
 
             var administrator = new Administrator
@@ -135,7 +123,7 @@ namespace EventPlus.Server.Application.Authentication
                 Name = administratorViewModel.Name,
                 Surname = administratorViewModel.Surname,
                 Username = administratorViewModel.Username,
-                Password = administratorViewModel.Password, // In production, password should be hashed
+                Password = administratorViewModel.Password, // unahased
                 LastLogin = DateTime.Now
             };
 
@@ -198,25 +186,43 @@ namespace EventPlus.Server.Application.Authentication
             }
         }
 
-        private async Task<bool> IsUsernameUniqueAcrossAllUserTypesAsync(string username)
+        private async Task<AuthResult> ValidateFormData(string username, string password)
         {
-            // Check uniqueness across all user types
+            var authResult = new AuthResult
+            {
+                Success = false,
+                Message = "Username is already taken"
+            };
+
             if (!await _userRepository.IsUsernameUniqueAsync(username))
             {
-                return false;
+                return authResult;
             }
 
             if (!await _organiserRepository.IsUsernameUniqueAsync(username))
             {
-                return false;
+                return authResult;
             }
 
             if (!await _administratorRepository.IsUsernameUniqueAsync(username))
             {
-                return false;
+                return authResult;
             }
 
-            return true;
+            if (password != null && password.Length < 6)
+            {
+                return new AuthResult
+                {
+                    Success = false,
+                    Message = "Password must be at least 6 characters long"
+                };
+            }
+
+            return new AuthResult
+            {
+                Success = true,
+                Message = "User is unique and valid"
+            };
         }
 
         private AuthResult CreateSuccessResult(int userId, string username, string name, string surname, string role)
@@ -257,6 +263,15 @@ namespace EventPlus.Server.Application.Authentication
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
+        }
+
+        public Task<SignOutResult> SignOutAsync(int userId)
+        {
+            return Task.FromResult(new SignOutResult
+            {
+                Success = true,
+                Message = "User signed out successfully"
+            });
         }
     }
 }

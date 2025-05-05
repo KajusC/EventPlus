@@ -1,9 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
-// Create context for notifications
 const NotificationContext = createContext();
 
-// Types of notifications
 export const NOTIFICATION_TYPES = {
   SUCCESS: 'success',
   ERROR: 'error',
@@ -11,11 +9,9 @@ export const NOTIFICATION_TYPES = {
   WARNING: 'warning',
 };
 
-// Provider component for notifications
 export const NotificationProvider = ({ children }) => {
   const [notification, setNotification] = useState(null);
 
-  // Show a notification
   const showNotification = useCallback((message, type = NOTIFICATION_TYPES.INFO, timeout = 5000) => {
     setNotification({ message, type });
     
@@ -26,12 +22,10 @@ export const NotificationProvider = ({ children }) => {
     }
   }, []);
 
-  // Hide the notification
   const hideNotification = useCallback(() => {
     setNotification(null);
   }, []);
 
-  // Helper methods for different notification types
   const showSuccess = useCallback((message, timeout) => {
     showNotification(message, NOTIFICATION_TYPES.SUCCESS, timeout);
   }, [showNotification]);
@@ -48,7 +42,6 @@ export const NotificationProvider = ({ children }) => {
     showNotification(message, NOTIFICATION_TYPES.WARNING, timeout);
   }, [showNotification]);
 
-  // Value to provide through the context
   const value = {
     notification,
     showNotification,
@@ -67,7 +60,6 @@ export const NotificationProvider = ({ children }) => {
   );
 };
 
-// Hook to use notifications
 export const useNotification = () => {
   const context = useContext(NotificationContext);
   if (!context) {
@@ -76,11 +68,9 @@ export const useNotification = () => {
   return context;
 };
 
-// Component to display notifications
 const NotificationDisplay = ({ notification, onClose }) => {
   const { message, type } = notification;
 
-  // Define styles based on type
   const getBackgroundColor = () => {
     switch (type) {
       case NOTIFICATION_TYPES.SUCCESS:

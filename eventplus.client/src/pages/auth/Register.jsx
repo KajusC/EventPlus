@@ -27,7 +27,6 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate password match
     if (formData.password !== formData.confirmPassword) {
       showError('Passwords do not match');
       return;
@@ -36,11 +35,9 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // Remove confirmPassword before sending to API
       const { confirmPassword, ...registrationData } = formData;
       await register(registrationData);
       
-      // Navigate to login with a success message in state
       navigate('/login', { 
         state: { message: 'Registration successful! Please log in.' } 
       });
