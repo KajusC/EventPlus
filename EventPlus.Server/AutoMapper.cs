@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using eventplus.models.Domain.Events;
+using eventplus.models.Domain.Sectors;
 using eventplus.models.Domain.Tickets;
 using EventPlus.Server.Application.ViewModels;
 
@@ -37,6 +38,26 @@ namespace EventPlus.Server
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ReverseMap();
 
-        }
+            CreateMap<SectorViewModel, Sector>()
+                .ForMember(dest => dest.IdSector, opt => opt.MapFrom(src => src.IdSector))
+                .ForMember(dest => dest.FkEventLocationidEventLocation, opt => opt.MapFrom(src => src.FkEventLocationidEventLocation))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ReverseMap();
+
+			CreateMap<SectorPriceViewModel, SectorPrice>()
+                .ForMember(dest => dest.IdSectorPrice, opt => opt.Ignore())
+	            .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+	            .ForMember(dest => dest.FkSectoridSector, opt => opt.MapFrom(src => src.SectorId))
+				.ForMember(dest => dest.FkEventidEvent, opt => opt.MapFrom(src => src.EventId))
+				.ReverseMap();
+
+			CreateMap<SeatingViewModel, Seating>()
+	            .ForMember(dest => dest.IdSeating, opt => opt.MapFrom(src => src.IdSeating))
+	            .ForMember(dest => dest.Row, opt => opt.MapFrom(src => src.Row))
+	            .ForMember(dest => dest.FkSectoridSector, opt => opt.MapFrom(src => src.SectorId))
+	            .ForMember(dest => dest.Place, opt => opt.MapFrom(src => src.Place))
+	            .ReverseMap();
+
+		}
     }
 }

@@ -103,9 +103,11 @@ namespace EventPlus.Server
             builder.Services.AddScoped<IRepository<Performer>, PerformerRepository>();
             builder.Services.AddScoped<IRepository<Category>, CategoryRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+			builder.Services.AddScoped<ISectorPriceRepository, SectorPriceRepository>();
+			builder.Services.AddScoped<ISeatingRepository, SeatingRepository>();
 
-            // Register the new repositories for role-based authentication
-            builder.Services.AddScoped<IAdministratorRepository, AdministratorRepository>();
+			// Register the new repositories for role-based authentication
+			builder.Services.AddScoped<IAdministratorRepository, AdministratorRepository>();
             builder.Services.AddScoped<IOrganiserRepository, OrganiserRepository>();
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -116,6 +118,8 @@ namespace EventPlus.Server
             builder.Services.AddScoped<IFeedbackLogic, FeedbackLogic>();
             builder.Services.AddScoped<ISectorLogic, SectorLogic>();
             builder.Services.AddScoped<ICategoryLogic, CategoryLogic>();
+            builder.Services.AddScoped<ISectorPriceLogic, SectorPriceLogic>();
+            builder.Services.AddScoped<ISeatingLogic, SeatingLogic>();
 
             // Authentication - Use role-based auth service
             builder.Services.AddScoped<IRoleBasedAuthService, RoleBasedAuthService>();
