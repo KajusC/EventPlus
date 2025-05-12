@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using eventplus.models.Domain.Events;
+using eventplus.models.Domain.Feedbacks;
 using eventplus.models.Domain.Sectors;
 using eventplus.models.Domain.Tickets;
 using EventPlus.Server.Application.ViewModels;
@@ -57,7 +58,13 @@ namespace EventPlus.Server
 	            .ForMember(dest => dest.FkSectoridSector, opt => opt.MapFrom(src => src.SectorId))
 	            .ForMember(dest => dest.Place, opt => opt.MapFrom(src => src.Place))
 	            .ReverseMap();
-
-		}
+            CreateMap<Feedback, FeedbackViewModel>()
+                .ForMember(dest => dest.IdFeedback, opt => opt.MapFrom(src => src.IdFeedback))
+                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.Comment))
+                .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Score))
+                .ForMember(dest => dest.FkEventidEvent, opt => opt.MapFrom(src => src.FkEventidEvent))
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
+                .ReverseMap();
+        }
     }
 }

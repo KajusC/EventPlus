@@ -17,6 +17,16 @@ namespace EventPlus.Server.Application.Handlers
         }
         public async Task<bool> CreateFeedbackAsync(FeedbackViewModel feedback)
         {
+            if (string.IsNullOrWhiteSpace(feedback.Comment))
+            {
+                throw new ArgumentException("Comment cannot be empty.");
+            }
+
+            if (feedback.Rating < 1 || feedback.Rating > 10)
+            {
+                throw new ArgumentOutOfRangeException(nameof(feedback.Rating), "Rating must be between 1 and 10.");
+            }
+
             if (feedback == null)
             {
                 throw new ArgumentNullException(nameof(feedback));
@@ -57,6 +67,16 @@ namespace EventPlus.Server.Application.Handlers
             }
             var feedbackEntity = await _feedbackRepository.GetFeedbackByIdAsync(id);
             return _mapper.Map<FeedbackViewModel>(feedbackEntity);
+        }
+        public async Task<List<FeedbackViewModel>> GetFeedbacksByEventIdAsync(int eventId)
+        {
+            if (eventId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(eventId), "Event ID must be greater than zero.");
+            }
+
+            var feedbacks = await _feedbackRepository.GetAllFeedbacksByEventIdAsync(eventId);
+            return _mapper.Map<List<FeedbackViewModel>>(feedbacks);
         }
 
         public async Task<bool> UpdateFeedbackAsync(FeedbackViewModel feedback)

@@ -66,7 +66,16 @@ namespace EventPlus.Server
                                       .AllowAnyHeader()
                                       .AllowAnyMethod());
             });
-
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend",
+                    policy =>
+                    {
+                        policy.WithOrigins("https://localhost:5173")
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+            });
             // Configure JWT Authentication
             builder.Services.AddAuthentication(options =>
             {
@@ -128,7 +137,7 @@ namespace EventPlus.Server
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             var app = builder.Build();
-
+            app.UseCors("AllowFrontend");
             if (builder.Environment.IsDevelopment())
             {
                 app.UseSwagger();

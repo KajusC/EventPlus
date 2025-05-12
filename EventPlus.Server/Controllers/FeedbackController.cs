@@ -1,5 +1,6 @@
 ﻿using EventPlus.Server.Application.IHandlers;
 using EventPlus.Server.Application.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,6 +34,16 @@ namespace EventPlus.Server.Controllers
             }
             return Ok(feedback);
         }
+        [HttpGet("event/{eventId}")]
+        public async Task<IActionResult> GetFeedbacksByEventId(int eventId)
+        {
+            var feedbacks = await _feedbackLogic.GetFeedbacksByEventIdAsync(eventId);
+            if (feedbacks == null || !feedbacks.Any())
+            {
+                return NotFound("No feedbacks found for this event.");
+            }
+            return Ok(feedbacks);
+        }
 
         [HttpPost]
         public async Task<IActionResult> CreateFeedback([FromBody] FeedbackViewModel feedback)
@@ -49,7 +60,24 @@ namespace EventPlus.Server.Controllers
             return BadRequest("Failed to create feedback.");
         }
 
+        [HttpPut]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> UpdateFeedback([FromBody] FeedbackViewModel feedback)
+        {
+            if (feedback == null)
+            {
+                return BadRequest("Feedback cannot be null.");
+            }
+            var result = await _feedbackLogic.UpdateFeedbackAsync(feedback);
+            if (result)
+            {
+                return NoContent();
+            }
+            return NotFound();
+        }
+
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> DeleteFeedback(int id)
         {
             var result = await _feedbackLogic.DeleteFeedbackAsync(id);
@@ -61,24 +89,10 @@ namespace EventPlus.Server.Controllers
         }
 
         [HttpDelete("event/{eventId}")]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> DeleteEventFeedbacks(int eventId)
         {
             var result = await _feedbackLogic.DeleteEventFeedbacks(eventId);
-            if (result)
-            {
-                return NoContent();
-            }
-            return NotFound();
-        }
-
-        [HttpPut]
-        public async Task<IActionResult> UpdateFeedback([FromBody] FeedbackViewModel feedback)
-        {
-            if (feedback == null)
-            {
-                return BadRequest("Feedback cannot be null.");
-            }
-            var result = await _feedbackLogic.UpdateFeedbackAsync(feedback);
             if (result)
             {
                 return NoContent();
