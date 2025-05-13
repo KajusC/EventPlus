@@ -83,7 +83,7 @@ function Navigation() {
         if (item.public) return true;
         if (!isAuthenticated()) return false;
         if (item.adminOnly && !isAdmin()) return false;
-        if (item.organizerOnly && !isOrganizer() && !isAdmin()) return false;
+        if (item.organizerOnly && !isOrganizer()) return false;
         return true;
     });
 

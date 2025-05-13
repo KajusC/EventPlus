@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { fetchEventById, deleteEvent } from '../../services/eventService';
 import { fetchCategories } from '../../services/categoryService';
 import { fetchFeedbacksByEventId, createFeedback, updateFeedback, deleteFeedback } from '../../services/feedbackService';
+import { useAuth } from '../../context/AuthContext';
 import {
     Container,
     Typography,
@@ -76,6 +77,7 @@ function EventView() {
     const [feedbackToDelete, setFeedbackToDelete] = useState(null);
     const [isFeedbackUpdating, setIsFeedbackUpdating] = useState(false);
     const [isFeedbackDeleting, setIsFeedbackDeleting] = useState(false);
+    const { isAdmin, isOrganizer } = useAuth();
     useEffect(() => {
         fetchCategories()
             .then(data => setCategories(data))
@@ -664,8 +666,9 @@ function EventView() {
                                     flexDirection: 'column',
                                 }}
                             >
+                                
                                 <CardContent sx={{ p: 3 }}>
-                                    {editingFeedback === feedback.idFeedback ? (
+                                    {editingFeedback === feedback.idFeedback && (isAdmin || isOrganizer) ? (
                                         <form onSubmit={handleEditFeedbackSubmit}>
                                             <TextField
                                                 label="Comment"
@@ -741,22 +744,26 @@ function EventView() {
                                                 </Typography>
                                             )}
                                             <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                                                <Tooltip title="Edit Feedback">
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => handleEditFeedbackClick(feedback)}
-                                                    >
-                                                        <EditIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Delete Feedback">
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => handleDeleteFeedbackClick(feedback)}
-                                                    >
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
+                                                {(isAdmin || isOrganizer) && (
+                                                    <>
+                                                        <Tooltip title="Edit Feedback">
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => handleEditFeedbackClick(feedback)}
+                                                            >
+                                                                <EditIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Delete Feedback">
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => handleDeleteFeedbackClick(feedback)}
+                                                            >
+                                                                <DeleteIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </>
+                                                )}
                                             </Box>
                                         </>
                                     )}

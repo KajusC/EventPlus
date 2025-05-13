@@ -1,17 +1,10 @@
-import axios from 'axios';
-import { getToken } from './authService';
+import apiClient from './apiClient';
 
-const BASE_URL = 'https://localhost:7244';
-
-const getAuthHeaders = () => {
-    const token = getToken(); // implement this to get your JWT
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
+const API_ENDPOINT = '/Feedback';
 
 export const fetchFeedbacksByEventId = async (eventId) => {
     try {
-        const response = await axios.get(`${BASE_URL}/api/Feedback/event/${eventId}`);
-        console.log("API Response:", response); // Debugging
+        const response = await apiClient.get(`${API_ENDPOINT}/event/${eventId}`);
         return response.data;
     } catch (error) {
         console.error('Error fetching feedbacks:', error);
@@ -21,21 +14,17 @@ export const fetchFeedbacksByEventId = async (eventId) => {
 
 export const createFeedback = async (feedbackData) => {
     try {
-        const response = await axios.post(`${BASE_URL}/api/Feedback`, feedbackData);
+        const response = await apiClient.post(API_ENDPOINT, feedbackData);
         return response.data;
     } catch (error) {
         console.error('Error creating feedback:', error);
         throw error;
     }
-}
+};
 
 export const updateFeedback = async (feedback) => {
     try {
-        const response = await axios.put(
-            `${BASE_URL}/api/Feedback`,
-            feedback,
-            { headers: { ...getAuthHeaders() } }
-        );
+        const response = await apiClient.put(API_ENDPOINT, feedback);
         return response.data;
     } catch (error) {
         console.error('Error updating feedback:', error);
@@ -45,10 +34,7 @@ export const updateFeedback = async (feedback) => {
 
 export const deleteFeedback = async (id) => {
     try {
-        const response = await axios.delete(
-            `${BASE_URL}/api/Feedback/${id}`,
-            { headers: { ...getAuthHeaders() } }
-        );
+        const response = await apiClient.delete(`${API_ENDPOINT}/${id}`);
         return response.data;
     } catch (error) {
         console.error('Error deleting feedback:', error);

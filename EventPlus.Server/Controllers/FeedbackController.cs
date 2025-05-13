@@ -8,6 +8,7 @@ namespace EventPlus.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "User, Administrator, Organiser")]
     public class FeedbackController : ControllerBase
     {
         private readonly IFeedbackLogic _feedbackLogic;

@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
 
   const isOrganizer = () => {
     if (!currentUser || !token || isTokenExpired(token)) return false;
-    return currentUser.role === 'Organiser';
+    return currentUser.role === 'Organiser' || currentUser.role === 'Admin';
   };
 
   const refreshToken = async () => {
