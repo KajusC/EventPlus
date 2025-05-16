@@ -3,6 +3,7 @@ using eventplus.models.Domain.Feedbacks;
 using eventplus.models.Infrastructure.Persistance.IRepositories;
 using EventPlus.Server.Application.IHandlers;
 using EventPlus.Server.Application.ViewModels;
+using System.Data;
 
 namespace EventPlus.Server.Application.Handlers
 {
@@ -15,7 +16,7 @@ namespace EventPlus.Server.Application.Handlers
             _feedbackRepository = feedbackRepository;
             _mapper = mapper;
         }
-        public async Task<bool> CreateFeedbackAsync(FeedbackViewModel feedback)
+        public async Task<bool> CreateFeedbackAsync(FeedbackViewModel feedback, int userId, string role)
         {
             if (string.IsNullOrWhiteSpace(feedback.Comment))
             {
@@ -32,7 +33,7 @@ namespace EventPlus.Server.Application.Handlers
                 throw new ArgumentNullException(nameof(feedback));
             }
             var feedbackEntity = _mapper.Map<Feedback>(feedback);
-            return await _feedbackRepository.CreateFeedbackAsync(feedbackEntity);
+            return await _feedbackRepository.CreateFeedbackAsync(feedbackEntity, userId, role);
         }
 
         public Task<bool> DeleteEventFeedbacks(int eventId)

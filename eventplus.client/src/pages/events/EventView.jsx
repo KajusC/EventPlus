@@ -139,7 +139,7 @@ function EventView() {
         setEditingFeedback(feedback.idFeedback);
         setEditFeedbackData({
             comment: feedback.comment,
-            isPositive: feedback.isPositive !== undefined ? feedback.isPositive : true,
+            isPositive: feedback.type ? feedback.type === 1 : true,
             rating: feedback.rating,
         });
     };
@@ -157,7 +157,7 @@ function EventView() {
         try {
             await createFeedback({
                 comment: newFeedback.comment,
-                isPositive: newFeedback.isPositive,
+                type: newFeedback.isPositive ? 1 : 2,
                 rating: parseFloat(newFeedback.rating),
                 fkEventidEvent: id,
             });
@@ -167,7 +167,7 @@ function EventView() {
                 severity: 'success',
             });
             setNewFeedback({ comment: '', isPositive: true, rating: '' });
-            fetchFeedbacksByEventId(id).then((data) => setFeedbacks(data)); // Refresh feedbacks
+            fetchFeedbacksByEventId(id).then((data) => setFeedbacks(data));
         } catch (err) {
             setToast({
                 open: true,
@@ -222,6 +222,7 @@ function EventView() {
         try {
             await updateFeedback({
                 ...editFeedbackData,
+                type: editFeedbackData.isPositive ? 1 : 2,
                 idFeedback: editingFeedback,
                 fkEventidEvent: id,
             });
@@ -242,6 +243,7 @@ function EventView() {
             setIsFeedbackUpdating(false);
         }
     };
+
 
     if (isLoading) return <LoadingSpinner />;
     if (error) return <ErrorDisplay error={error} />;

@@ -50,14 +50,26 @@ namespace EventPlus.Server.Controllers
         public async Task<IActionResult> CreateFeedback([FromBody] FeedbackViewModel feedback)
         {
             if (feedback == null)
-            {
                 return BadRequest("Feedback cannot be null.");
-            }
-            var result = await _feedbackLogic.CreateFeedbackAsync(feedback);
+
+            var userIdClaim = User.Claims.FirstOrDefault(c =>
+                c.Type == "sub" ||
+                c.Type == "userId" ||
+                c.Type == "nameid" ||
+                c.Type == System.Security.Claims.ClaimTypes.NameIdentifier
+            );
+            var roleClaim = User.Claims.FirstOrDefault(c =>
+                c.Type == "role" ||
+                c.Type == System.Security.Claims.ClaimTypes.Role
+            );
+
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId) || roleClaim == null)
+                return Unauthorized("User ID or role not found in token.");
+
+            var result = await _feedbackLogic.CreateFeedbackAsync(feedback, userId, roleClaim.Value);
             if (result)
-            {
                 return CreatedAtAction(nameof(GetFeedbackById), new { id = feedback.IdFeedback }, feedback);
-            }
+
             return BadRequest("Failed to create feedback.");
         }
 
