@@ -10,7 +10,7 @@ public partial class UserTicket
 
     public int FkTicketidTicket { get; set; }
 
-    public virtual Ticket FkTicketidTicketNavigation { get; set; } = null!;
+    public virtual Ticket? FkTicketidTicketNavigation { get; set; } = null!;
 
-    public virtual User FkUseridUserNavigation { get; set; } = null!;
+    public virtual User? FkUseridUserNavigation { get; set; } = null!;
 }

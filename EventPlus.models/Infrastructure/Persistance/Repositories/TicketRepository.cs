@@ -28,7 +28,8 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
             return await _dbSet.Include(t => t.FkEventidEventNavigation)
                 .Include(t => t.UserTicket)
                 .Include(t => t.FkSeatingidSeatingNavigation)
-                .Include(t => t.TypeNavigation)
+				.Include(t => t.FkTicketstatusNavigation)
+				.Include(t => t.TypeNavigation)
                 .ToListAsync();
         }
         public override async Task<Ticket> GetByIdAsync(int id)
@@ -37,6 +38,7 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
                 .Include(t => t.FkEventidEventNavigation)
                 .Include(t => t.UserTicket)
                 .Include(t => t.FkSeatingidSeatingNavigation)
+                .Include(t => t.FkTicketstatusNavigation)
                 .Include(t => t.TypeNavigation)
                 .FirstOrDefaultAsync(t => t.IdTicket == id);
             return ticket;

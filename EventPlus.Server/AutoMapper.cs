@@ -16,8 +16,9 @@ namespace EventPlus.Server
                 .ReverseMap();
 
             CreateMap<Ticket, TicketViewModel>()
-                .ForMember(dest => dest.SeatingId, opt => opt.MapFrom(src => src.FkSeatingidSeatingNavigation != null ? src.FkSeatingidSeatingNavigation.IdSeating : (int?)null))
-                .ForMember(dest => dest.TicketStatusId, opt => opt.MapFrom(src => src.FkTicketstatusNavigation != null ? src.FkTicketstatusNavigation.IdStatus : (int?)null))
+				.ForMember(dest => dest.IdTicket, opt => opt.MapFrom(src => src.IdTicket))
+				.ForMember(dest => dest.SeatingId, opt => opt.MapFrom(src => src.FkSeatingidSeating))
+				.ForMember(dest => dest.TicketStatusId, opt => opt.MapFrom(src => src.FkTicketstatus))
                 .ReverseMap();
 
             CreateMap<EventLocation, EventLocationViewModel>()

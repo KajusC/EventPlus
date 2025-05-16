@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchEventById, deleteEvent } from '../../services/eventService';
 import { fetchCategories } from '../../services/categoryService';
+import { fetchTickets } from '../../services/ticketService';
 import {
     Container,
     Typography,
@@ -12,7 +13,8 @@ import {
     Divider,
     Card,
     CardContent,
-    IconButton
+    IconButton,
+    Tooltip
 } from '@mui/material';
 import {
     CalendarMonth as CalendarIcon,
@@ -21,7 +23,8 @@ import {
     ConfirmationNumber as TicketIcon,
     ArrowBack as ArrowBackIcon,
     DeleteOutline as DeleteIcon,
-    Edit as EditIcon
+    Edit as EditIcon,
+    Info as InfoIcon
 } from '@mui/icons-material';
 
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
@@ -56,6 +59,11 @@ function EventView() {
         message: '',
         severity: 'info'
     });
+    
+    // New state for tickets
+    const [tickets, setTickets] = useState([]);
+    const [availableTickets, setAvailableTickets] = useState(0);
+    const [isLoadingTickets, setIsLoadingTickets] = useState(true);
 
     useEffect(() => {
         fetchCategories()
@@ -77,6 +85,34 @@ function EventView() {
                 setIsLoading(false);
             });
     }, [id]);
+
+    // Fetch tickets for the event to calculate available tickets
+    useEffect(() => {
+        setIsLoadingTickets(true);
+        if (event) {
+            fetchTickets()
+                .then(ticketsData => {
+                    // Filter tickets for this specific event
+                    const eventTickets = ticketsData.filter(ticket => 
+                        ticket.fkEventidEvent === parseInt(id)
+                    );
+                    setTickets(eventTickets);
+                    
+                    // Calculate available tickets
+                    const soldCount = eventTickets.length;
+                    const available = Math.max(0, event.maxTicketCount - soldCount);
+                    setAvailableTickets(available);
+                })
+                .catch(err => {
+                    console.error("Error fetching tickets:", err);
+                    // If we can't get tickets, assume all are available to avoid blocking sales
+                    setAvailableTickets(event.maxTicketCount);
+                })
+                .finally(() => {
+                    setIsLoadingTickets(false);
+                });
+        }
+    }, [event, id]);
 
     const getCategoryName = (categoryId) => {
         if (!categories || categories.length === 0) return "Event";
@@ -112,6 +148,7 @@ function EventView() {
 
     const categoryName = getCategoryName(event.category);
     const categoryColor = getCategoryColor(event.category);
+    const isSoldOut = availableTickets <= 0;
 
     return (
         <>
@@ -370,7 +407,9 @@ function EventView() {
                                     Tickets
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    Secure your spot at this amazing event
+                                    {isSoldOut 
+                                        ? "Sorry, this event is sold out" 
+                                        : "Secure your spot at this amazing event"}
                                 </Typography>
                             </Box>
                             
@@ -381,18 +420,31 @@ function EventView() {
                                         <Typography variant="subtitle1" fontWeight={500}>
                                             Available Tickets
                                         </Typography>
+                                        {isLoadingTickets && (
+                                            <Typography 
+                                                variant="caption" 
+                                                color="text.secondary" 
+                                                sx={{ ml: 1, fontStyle: 'italic' }}
+                                            >
+                                                (Loading...)
+                                            </Typography>
+                                        )}
+                                        <Tooltip title="Tickets are claimed on a first-come, first-served basis">
+                                            <InfoIcon sx={{ fontSize: 16, ml: 1, color: 'text.secondary' }} />
+                                        </Tooltip>
                                     </Box>
                                     <Typography 
                                         variant="h4" 
-                                        color="primary" 
                                         fontWeight={700}
                                         sx={{ 
-                                            background: 'linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)',
+                                            background: isSoldOut 
+                                                ? 'linear-gradient(45deg, #ff3366 30%, #ff5555 90%)' 
+                                                : 'linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)',
                                             WebkitBackgroundClip: 'text',
                                             WebkitTextFillColor: 'transparent'
                                         }}
                                     >
-                                        {event.maxTicketCount}
+                                        {isLoadingTickets ? "-" : availableTickets}
                                     </Typography>
                                 </Box>
 
@@ -405,27 +457,65 @@ function EventView() {
                                     </Typography>
                                 </Box>
 
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    size="large"
-                                    sx={{
-                                        py: 1.5,
-                                        fontWeight: 600,
-                                        fontSize: '1rem',
-                                        borderRadius: 2,
-                                        textTransform: 'none',
-                                        background: 'linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)',
-                                        boxShadow: '0 5px 15px rgba(106, 17, 203, 0.3)',
-                                        '&:hover': {
-                                            boxShadow: '0 8px 25px rgba(106, 17, 203, 0.4)',
-                                            transform: 'translateY(-2px)'
-                                        },
-                                        transition: 'all 0.3s ease'
-                                    }}
-                                >
-                                    Purchase Tickets
-                                </Button>
+                                {isSoldOut ? (
+                                    <Button
+                                        disabled
+                                        variant="contained"
+                                        fullWidth
+                                        size="large"
+                                        sx={{
+                                            py: 1.5,
+                                            fontWeight: 600,
+                                            fontSize: '1rem',
+                                            borderRadius: 2,
+                                            textTransform: 'none',
+                                            background: 'rgba(106, 17, 203, 0.3)',
+                                            boxShadow: 'none',
+                                        }}
+                                    >
+                                        Sold Out
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() => navigate(`../tickets/TicketPurchasePage/${id}`)} 
+                                        variant="contained"
+                                        fullWidth
+                                        size="large"
+                                        disabled={isLoadingTickets}
+                                        sx={{
+                                            py: 1.5,
+                                            fontWeight: 600,
+                                            fontSize: '1rem',
+                                            borderRadius: 2,
+                                            textTransform: 'none',
+                                            background: 'linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)',
+                                            boxShadow: '0 5px 15px rgba(106, 17, 203, 0.3)',
+                                            '&:hover': {
+                                                boxShadow: '0 8px 25px rgba(106, 17, 203, 0.4)',
+                                                transform: 'translateY(-2px)'
+                                            },
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        {isLoadingTickets ? "Loading..." : "Purchase Tickets"}
+                                    </Button>
+                                )}
+                                
+                                {/* Show a warning when tickets are low */}
+                                {!isLoadingTickets && availableTickets > 0 && availableTickets < 10 && (
+                                    <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                            display: 'block', 
+                                            textAlign: 'center', 
+                                            mt: 2, 
+                                            color: 'warning.main',
+                                            fontWeight: 500
+                                        }}
+                                    >
+                                        Only {availableTickets} {availableTickets === 1 ? 'ticket' : 'tickets'} left! Get yours before they sell out.
+                                    </Typography>
+                                )}
                             </CardContent>
                         </Card>
                     </Grid>

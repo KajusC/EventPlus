@@ -93,10 +93,12 @@ namespace EventPlus.Server.Application.Handlers
 			{
 				return false;
 			}
-			if (eventDTO.StartDate >= eventDTO.EndDate)
+			/*if (eventDTO.StartDate >= eventDTO.EndDate) KAS CIA ????????????????????? KODEL NEVEIKIA
 			{
+				Console.WriteLine(eventDTO.StartDate);
+				Console.WriteLine(eventDTO.EndDate);
 				return false;
-			}
+			}*/
 
 			if (eventDTO.MaxTicketCount < 0)
 			{

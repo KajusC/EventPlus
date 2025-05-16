@@ -8,7 +8,7 @@
 
         public DateOnly? GenerationDate { get; set; }
 
-        public DateOnly? ScannedDate { get; set; }
+        public DateTime? ScannedDate { get; set; }
 
         public string? QrCode { get; set; }
 

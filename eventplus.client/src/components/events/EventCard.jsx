@@ -26,6 +26,8 @@ import { deleteEvent } from "../../services/eventService";
 import ToastNotification from "../shared/ToastNotification";
 import ConfirmationDialog from "../shared/ConfirmationDialog";
 
+import { fetchTickets } from '../../services/ticketService';
+
 import { useAuth } from '../../context/AuthContext';
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -93,6 +95,9 @@ function EventCard({ event }) {
 	const navigate = useNavigate();
 	const theme = useTheme();
 	
+  const [availableTickets, setAvailableTickets] = useState(null);
+  const [isLoadingTickets, setIsLoadingTickets] = useState(true);
+
 	const [categoryName, setCategoryName] = useState("Loading...");
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -102,6 +107,29 @@ function EventCard({ event }) {
 		severity: "info",
 	});
 	const { isAdmin, isOrganizer } = useAuth();
+
+	 useEffect(() => {
+		setIsLoadingTickets(true);
+		fetchTickets()
+		.then(ticketsData => {
+			const eventTickets = ticketsData.filter(ticket => 
+			ticket.fkEventidEvent === event.idEvent
+			);
+			const soldCount = eventTickets.length;
+			const available = Math.max(0, event.maxTicketCount - soldCount);
+			setAvailableTickets(available);
+		})
+		.catch(err => {
+			console.error("Error fetching tickets:", err);
+			// If we can't get tickets, show maximum
+			setAvailableTickets(event.maxTicketCount);
+		})
+		.finally(() => {
+			setIsLoadingTickets(false);
+		});
+	}, [event.idEvent, event.maxTicketCount]);
+
+	const isSoldOut = availableTickets === 0;
 
 	useEffect(() => {
 		const getCategoryName = async () => {
@@ -214,7 +242,7 @@ function EventCard({ event }) {
 							sx={{ color: "text.secondary", fontSize: 20, mr: 1 }}
 						/>
 						<Typography variant="body2" color="text.primary" fontWeight={500}>
-							{event.maxTicketCount} tickets available
+							{availableTickets} tickets available
 						</Typography>
 					</Box>
 				</StyledCardContent>

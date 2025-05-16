@@ -31,7 +31,8 @@ import {
     Login as LoginIcon,
     PersonAdd as PersonAddIcon,
     Dashboard as DashboardIcon,
-    EditCalendar as EditCalendarIcon
+    EditCalendar as EditCalendarIcon,
+    LocalActivity as TicketIcon,
 } from '@mui/icons-material';
 
 function Navigation() {
@@ -67,6 +68,7 @@ function Navigation() {
         { title: 'Events', path: '/events', icon: <EventIcon />, public: true },
         { title: 'Create Event', path: '/eventinsert', icon: <AddIcon />, public: false, adminOnly: false, organizerOnly: true },
         { title: 'Manage Events', path: '/myevents', icon: <EditCalendarIcon />, public: false, adminOnly: false, organizerOnly: true },
+        { title: 'Your Tickets', path: '/tickets', icon: <TicketIcon />, public: true},
     ];
 
     if (isAdmin()) {
