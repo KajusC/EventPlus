@@ -3,6 +3,7 @@ using eventplus.models.Domain.Events;
 using eventplus.models.Domain.Feedbacks;
 using eventplus.models.Domain.Sectors;
 using eventplus.models.Domain.Tickets;
+using eventplus.models.Domain.UserAnswers;
 using eventplus.models.Domain.Users;
 using EventPlus.Server.Application.ViewModels;
 
@@ -49,19 +50,19 @@ namespace EventPlus.Server
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ReverseMap();
 
-			CreateMap<SectorPriceViewModel, SectorPrice>()
+            CreateMap<SectorPriceViewModel, SectorPrice>()
                 .ForMember(dest => dest.IdSectorPrice, opt => opt.Ignore())
-	            .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
-	            .ForMember(dest => dest.FkSectoridSector, opt => opt.MapFrom(src => src.SectorId))
-				.ForMember(dest => dest.FkEventidEvent, opt => opt.MapFrom(src => src.EventId))
-				.ReverseMap();
+                .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
+                .ForMember(dest => dest.FkSectoridSector, opt => opt.MapFrom(src => src.SectorId))
+                .ForMember(dest => dest.FkEventidEvent, opt => opt.MapFrom(src => src.EventId))
+                .ReverseMap();
 
-			CreateMap<SeatingViewModel, Seating>()
-	            .ForMember(dest => dest.IdSeating, opt => opt.MapFrom(src => src.IdSeating))
-	            .ForMember(dest => dest.Row, opt => opt.MapFrom(src => src.Row))
-	            .ForMember(dest => dest.FkSectoridSector, opt => opt.MapFrom(src => src.SectorId))
-	            .ForMember(dest => dest.Place, opt => opt.MapFrom(src => src.Place))
-	            .ReverseMap();
+            CreateMap<SeatingViewModel, Seating>()
+                .ForMember(dest => dest.IdSeating, opt => opt.MapFrom(src => src.IdSeating))
+                .ForMember(dest => dest.Row, opt => opt.MapFrom(src => src.Row))
+                .ForMember(dest => dest.FkSectoridSector, opt => opt.MapFrom(src => src.SectorId))
+                .ForMember(dest => dest.Place, opt => opt.MapFrom(src => src.Place))
+                .ReverseMap();
             CreateMap<Feedback, FeedbackViewModel>()
                 .ForMember(dest => dest.IdFeedback, opt => opt.MapFrom(src => src.IdFeedback))
                 .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.Comment))
@@ -75,6 +76,17 @@ namespace EventPlus.Server
 	            .ForMember(dest => dest.FollowerCount, opt => opt.MapFrom(src => src.FollowerCount))
 	            .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Rating))
 	            .ReverseMap();
+            CreateMap<UserRequestAnswer, UserRequestAnswerViewModel>()
+                .ForMember(dest => dest.IdUserRequestAnswer, opt => opt.MapFrom(src => src.IdUserRequestAnswer))
+                .ForMember(dest => dest.Answer, opt => opt.MapFrom(src => src.Answer))
+                .ForMember(dest => dest.FkQuestionidQuestion, opt => opt.MapFrom(src => src.FkQuestionidQuestion))
+                .ReverseMap();
+            CreateMap<Question, QuestionViewModel>()
+                .ForMember(dest => dest.IdQuestion, opt => opt.MapFrom(src => src.IdQuestion))
+                .ForMember(dest => dest.FormulatedQuestion, opt => opt.MapFrom(src => src.FormulatedQuestion))
+                .ForMember(dest => dest.FkAdministratoridUser, opt => opt.MapFrom(src => src.FkAdministratoridUser))
+                .ForMember(dest => dest.AdministratorName, opt => opt.MapFrom(src => src.FkAdministratoridUserNavigation != null ? $"{src.FkAdministratoridUserNavigation.Name} {src.FkAdministratoridUserNavigation.Surname}" : null))
+                .ReverseMap();
 
 		}
     }

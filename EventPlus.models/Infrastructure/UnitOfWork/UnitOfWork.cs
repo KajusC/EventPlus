@@ -23,6 +23,8 @@ namespace eventplus.models.Infrastructure.UnitOfWork
 		private ISectorPriceRepository? _sectorPrices;
 		private ISeatingRepository? _seatings;
 		private IOrganiserRepository? _organisers;
+		private IUserRequestAnswerRepository? _UserRequestAnswersAnswers;
+		private IQuestionRepository _questions;
 
 		public UnitOfWork(EventPlusContext context)
 		{
@@ -41,6 +43,8 @@ namespace eventplus.models.Infrastructure.UnitOfWork
 		public ISectorPriceRepository SectorPrices => _sectorPrices ??= new SectorPriceRepository(_context);
 		public ISeatingRepository Seatings => _seatings ??= new SeatingRepository(_context);
 		public IOrganiserRepository Organisers => _organisers ??= new OrganiserRepository(_context);
+		public IUserRequestAnswerRepository UserRequestAnswers => _UserRequestAnswersAnswers ??= new UserRequestAnswerRepository(_context);
+		public IQuestionRepository Questions => _questions ??= new QuestionRepository(_context);
 
 		public async Task SaveAsync()
 		{

@@ -33,6 +33,7 @@ import {
     Dashboard as DashboardIcon,
     EditCalendar as EditCalendarIcon,
     LocalActivity as TicketIcon,
+    QuestionAnswer as QuestionAnswerIcon
 } from '@mui/icons-material';
 
 function Navigation() {
@@ -62,6 +63,10 @@ function Navigation() {
         handleCloseMenu();
         navigate('/profile');
     };
+    const handleAdminClick = () => {
+        handleCloseMenu();
+        navigate('/admin');
+    };
 
     const navItems = [
         { title: 'Home', path: '/', icon: <HomeIcon />, public: true },
@@ -69,17 +74,9 @@ function Navigation() {
         { title: 'Create Event', path: '/eventinsert', icon: <AddIcon />, public: false, adminOnly: false, organizerOnly: true },
         { title: 'Manage Events', path: '/myevents', icon: <EditCalendarIcon />, public: false, adminOnly: false, organizerOnly: true },
         { title: 'Your Tickets', path: '/tickets', icon: <TicketIcon />, public: true},
+        { title: 'My Requests', path: '/requests', icon: <QuestionAnswerIcon />, public: false },
     ];
 
-    if (isAdmin()) {
-        navItems.push({ 
-            title: 'Admin Dashboard', 
-            path: '/admin', 
-            icon: <DashboardIcon />, 
-            public: false, 
-            adminOnly: true 
-        });
-    }
 
     const filteredNavItems = navItems.filter(item => {
         if (item.public) return true;
@@ -214,6 +211,31 @@ function Navigation() {
                                 <ListItemText primary="Profile" />
                             </ListItemButton>
                         </ListItem>
+                        {isAdmin() && (
+                            <ListItemButton
+                                component={NavLink}
+                                to="/admin"
+                                sx={{
+                                    textAlign: 'left',
+                                    py: 1.5,
+                                    color: 'white',
+                                    '&.active': {
+                                        background: 'linear-gradient(90deg, rgba(106,17,203,0.15) 0%, rgba(37,117,252,0.1) 100%)',
+                                        borderLeft: '4px solid #6a11cb',
+                                    },
+                                    '&:hover': {
+                                        background: 'rgba(255,255,255,0.05)',
+                                    }
+                                }}
+                                className={isActive('/admin') ? 'active' : ''}
+                            >
+                                <ListItemIcon sx={{ color: 'inherit', minWidth: '40px' }}>
+                                    <QuestionAnswerIcon />
+                                </ListItemIcon>
+                                <ListItemText primary="Manage Questions" />
+                            </ListItemButton>
+                        )}
+
                         <ListItem disablePadding>
                             <ListItemButton
                                 onClick={handleLogout}
@@ -408,6 +430,14 @@ function Navigation() {
                                         </ListItemIcon>
                                         <Typography>Profile</Typography>
                                     </MenuItem>
+                                    {isAdmin() && (
+                                        <MenuItem component={NavLink} to="/admin" sx={{ py: 1.5 }}>
+                                            <ListItemIcon sx={{ color: 'white' }}>
+                                                <DashboardIcon fontSize="small" />
+                                            </ListItemIcon>
+                                            <Typography>Admin Dashboard</Typography>
+                                        </MenuItem>
+                                    )}
                                     <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
                                         <ListItemIcon sx={{ color: 'white' }}>
                                             <LogoutIcon fontSize="small" />

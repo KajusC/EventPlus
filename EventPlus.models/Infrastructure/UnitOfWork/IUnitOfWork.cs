@@ -19,6 +19,8 @@ namespace eventplus.models.Infrastructure.UnitOfWork
 		ICategoryRepository Categories { get; }
 		ISectorPriceRepository SectorPrices { get; }
 		ISeatingRepository Seatings { get; }
+		IUserRequestAnswerRepository UserRequestAnswers { get; }
+		IQuestionRepository Questions { get; }
 		Task SaveAsync();
 	}
 }
