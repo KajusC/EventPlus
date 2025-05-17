@@ -56,5 +56,17 @@ namespace EventPlus.Server.Controllers
             var result = await _ticketLogic.DeleteTicketAsync(id);
             return Ok(result);
         }
+        [HttpPost("ScanQrCode")]
+        public async Task<ActionResult<TicketValidationResult>> ScanQrCode([FromBody] string qrCode)
+        {
+            var result = await _ticketLogic.DecryptQrCode(qrCode);
+
+            if (result.Ticket?.IdTicket > 0)
+            {
+                await _ticketLogic.UpdateTicketScanTime(result.Ticket.IdTicket);
+                Console.WriteLine($"Ticket {result.Ticket.IdTicket} scan time updated");
+            }
+            return Ok(result);
+        }
     }
 }

@@ -8,6 +8,7 @@ using eventplus.models.Infrastructure.UnitOfWork;
 using EventPlus.Server.Application.Authentication;
 using EventPlus.Server.Application.Handlers;
 using EventPlus.Server.Application.IHandlers;
+using EventPlus.Server.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -136,6 +137,9 @@ namespace EventPlus.Server
 
             // AutoMapper
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            // Add background services
+            builder.Services.AddHostedService<TicketInvalidationService>();
 
             var app = builder.Build();
             app.UseCors("AllowFrontend");

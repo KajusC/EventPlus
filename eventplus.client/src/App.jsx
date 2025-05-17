@@ -20,6 +20,7 @@ import TicketEditPage from './pages/tickets/TicketEditPage';
 import TicketPurchasePage from './pages/tickets/TicketPurchacePage';
 import DynamicPricingPanel from './pages/admin/DynamicPricingPanel';
 import { initializeDynamicPricing } from './services/setUpDynamicPricing';
+import TicketScanPage from './pages/tickets/TicketScanPage';
 
 function App() {
     initializeDynamicPricing(false);
@@ -39,7 +40,7 @@ function App() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="tickets/TicketPurchasePage/:eventId" element={<TicketPurchasePage />} />
-                        <Route path="/admin/dynamic-pricing" element={<DynamicPricingPanel />} />
+                        
                         
                         {/* Protected routes (any authenticated user) */}
                         <Route element={<ProtectedRoute />}>
@@ -52,12 +53,13 @@ function App() {
                             <Route path="/eventedit/:id" element={<EventEdit />} />
                             {/* TO DO/ change to admin \/ */}
                             <Route path="/ticket/edit/:id" element={<TicketEditPage />} />
+                            <Route path="/organiser/scan-ticket" element={<TicketScanPage />} />
                             {/* Add more organizer-only routes here */}
                         </Route>
                         
                         {/* Admin routes */}
                         <Route element={<ProtectedRoute requireAdmin={true} />}>
-                            {/* Add admin-only routes here */}
+                            <Route path="/admin/dynamic-pricing" element={<DynamicPricingPanel />} />
                         </Route>
                     </Routes>
                     <Footer />

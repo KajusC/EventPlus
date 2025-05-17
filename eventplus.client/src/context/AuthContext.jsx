@@ -51,12 +51,12 @@ export const AuthProvider = ({ children }) => {
 
   const isAdmin = () => {
     if (!currentUser || !token || isTokenExpired(token)) return false;
-    return currentUser.role === 'Admin';
+    return currentUser.role === 'Administrator';
   };
 
   const isOrganizer = () => {
     if (!currentUser || !token || isTokenExpired(token)) return false;
-    return currentUser.role === 'Organiser' || currentUser.role === 'Admin';
+    return currentUser.role === 'Organiser' || currentUser.role === 'Administrator';
   };
 
   const refreshToken = async () => {

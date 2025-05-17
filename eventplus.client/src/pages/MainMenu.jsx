@@ -68,6 +68,12 @@ function MainMenu() {
               >
                 View Events
               </Link>
+              <Link
+                to="/organiser/scan-ticket"
+                style={styles.link}
+              >
+                Scan Ticket (Organiser)
+              </Link>
             </div>
           </Card>
         </div>

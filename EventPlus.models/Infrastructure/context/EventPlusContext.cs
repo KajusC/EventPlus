@@ -72,7 +72,7 @@ public partial class EventPlusContext : DbContext
 
     public virtual DbSet<TicketType> TicketTypes { get; set; }
 
-    public virtual DbSet<Ticketstatus> Ticketstatuses { get; set; }
+    public virtual DbSet<TicketStatus> Ticketstatuses { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -638,7 +638,7 @@ public partial class EventPlusContext : DbContext
                 .HasColumnName("name");
         });
 
-        modelBuilder.Entity<Ticketstatus>(entity =>
+        modelBuilder.Entity<TicketStatus>(entity =>
         {
             entity.HasKey(e => e.IdStatus).HasName("ticketstatus_pkey");
 
@@ -913,13 +913,13 @@ public partial class EventPlusContext : DbContext
         });
 
         // Default settings for Ticketstatus entity
-        modelBuilder.Entity<Ticketstatus>(entity =>
+        modelBuilder.Entity<TicketStatus>(entity =>
         {
             // Seed initial ticket status data
             entity.HasData(
-                new Ticketstatus { IdStatus = 1, Name = "Active" },
-                new Ticketstatus { IdStatus = 2, Name = "Inactive" },
-                new Ticketstatus { IdStatus = 3, Name = "Scanned" }
+                new TicketStatus { IdStatus = 1, Name = "Active" },
+                new TicketStatus { IdStatus = 2, Name = "Inactive" },
+                new TicketStatus { IdStatus = 3, Name = "Scanned" }
             );
         });
 
