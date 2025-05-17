@@ -77,8 +77,5 @@ namespace EventPlus.Server
 	            .ReverseMap();
 
 		}
-            CreateMap<Organiser, OrganiserViewModel>()
-                .ReverseMap();
-        }
     }
 }

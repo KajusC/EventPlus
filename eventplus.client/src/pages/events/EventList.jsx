@@ -41,20 +41,20 @@ function EventList() {
 	});
 	const { isAdmin, isOrganizer } = useAuth();
 
-	useEffect(() => {
-		const getEvents = async () => {
-			try {
-				setIsLoading(true);
-				const data = await fetchEvents();
-				setEvents(data);
-				setError(null);
-			} catch (error) {
-				console.error("Error fetching events:", error);
-				setError("Failed to load events. Please try again later.");
-			} finally {
-				setIsLoading(false);
-			}
-		};
+	const fetchAllEvents = async () => {
+		try {
+			setIsLoading(true);
+			const data = await fetchEvents();
+			setEvents(data);
+			setShowingRecommended(false);
+			setError(null);
+		} catch (error) {
+			console.error("Error fetching events:", error);
+			setError("Failed to load events. Please try again later.");
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
 	const handleRecommendEvents = async () => {
 		try {

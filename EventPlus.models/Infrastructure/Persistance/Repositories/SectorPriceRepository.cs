@@ -22,6 +22,7 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
 			{
 				throw new ArgumentNullException(nameof(sectorPrice));
 			}
+
 			await _sectorPrices.AddAsync(sectorPrice);
 			await _context.SaveChangesAsync();
 			return true;
@@ -98,7 +99,21 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
 			{
 				throw new ArgumentNullException(nameof(sectorPrice));
 			}
-			_sectorPrices.Update(sectorPrice);
+			var existingEntity = await _sectorPrices
+				.FirstOrDefaultAsync(sp =>
+					sp.FkSectoridSector == sectorPrice.FkSectoridSector &&
+					sp.FkEventidEvent == sectorPrice.FkEventidEvent);
+
+			if (existingEntity == null)
+			{
+				await _sectorPrices.AddAsync(sectorPrice);
+			}
+			else
+			{
+				existingEntity.Price = sectorPrice.Price;
+				_context.Entry(existingEntity).State = EntityState.Modified;
+			}
+
 			await _context.SaveChangesAsync();
 			return true;
 		}

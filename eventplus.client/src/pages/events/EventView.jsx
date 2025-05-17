@@ -19,12 +19,8 @@ import {
     TextField,
     FormControl,
     InputLabel,
-    List,
     Select,
-    MenuItem,
-    ListItem, 
-    ListItemText,
-    Tooltip
+    MenuItem
 } from '@mui/material';
 import {
     CalendarMonth as CalendarIcon,
@@ -69,6 +65,18 @@ function EventView() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const [tickets, setTickets] = useState([]);
+    const [availableTickets, setAvailableTickets] = useState(0);
+    const [isLoadingTickets, setIsLoadingTickets] = useState(true);
+
+    const [editingFeedback, setEditingFeedback] = useState(null);
+    const [editFeedbackData, setEditFeedbackData] = useState({ comment: '', isPositive: true, rating: '' });
+    const [showFeedbackDeleteDialog, setShowFeedbackDeleteDialog] = useState(false);
+    const [feedbackToDelete, setFeedbackToDelete] = useState(null);
+    const [isFeedbackUpdating, setIsFeedbackUpdating] = useState(false);
+    const [isFeedbackDeleting, setIsFeedbackDeleting] = useState(false);
+
     const [toast, setToast] = useState({
         open: false,
         message: '',
@@ -80,6 +88,33 @@ function EventView() {
             .then(data => setCategories(data))
             .catch(err => console.error("Error fetching categories:", err));
     }, []);
+
+    useEffect(() => {
+        setIsLoadingTickets(true);
+        if (event) {
+            fetchTickets()
+                .then(ticketsData => {
+                    // Filter tickets for this specific event
+                    const eventTickets = ticketsData.filter(ticket => 
+                        ticket.fkEventidEvent === parseInt(id)
+                    );
+                    setTickets(eventTickets);
+                    
+                    // Calculate available tickets
+                    const soldCount = eventTickets.length;
+                    const available = Math.max(0, event.maxTicketCount - soldCount);
+                    setAvailableTickets(available);
+                })
+                .catch(err => {
+                    console.error("Error fetching tickets:", err);
+                    // If we can't get tickets, assume all are available to avoid blocking sales
+                    setAvailableTickets(event.maxTicketCount);
+                })
+                .finally(() => {
+                    setIsLoadingTickets(false);
+                });
+        }
+    }, [event, id]);
 
     useEffect(() => {
         setIsLoading(true);

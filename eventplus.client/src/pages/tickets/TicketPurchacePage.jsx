@@ -129,17 +129,13 @@ function TicketPurchasePage() {
         loadSeatingData();
     }, [eventId]);
 
-    // Generate seating options once data is loaded
     useEffect(() => {
         if (!eventId || !sectors.length || !sectorPrices.length || !seatings.length) return;
         
         try {
-            // Generate seating options based on the selected ticket type
             const options = generateSeatingOptions(eventId, parseInt(purchaseData.type), sectorPrices, sectors);
             setSeatingOptions(options);
-            
-            // Set default price based on ticket type if pricing data is available
-            // But don't override if user already selected a seat with a price
+
             if (!purchaseData.seatingId) {
                 const relevantPrice = sectorPrices.find(
                     sp => sp.eventId === parseInt(eventId) && sp.ticketType === parseInt(purchaseData.type)
@@ -171,9 +167,9 @@ function TicketPurchasePage() {
             sp => sp.eventId === eventIdInt
         );
 
+        // Track used uniqueKeys to avoid duplicates
+        const usedKeys = new Set();
 
-
-        // Find matching seatings for each sector
         relevantPrices.forEach(price => {
             const sectorId = price.sectorId;
             const sector = sectorsData.find(s => s.idSector === sectorId);
@@ -183,18 +179,26 @@ function TicketPurchasePage() {
                 sectorSeatings.forEach(seating => {
                     if (existingTickets.some(ticket => ticket.seatingId === seating.idSeating))
                         return;
-                    options.push({
-                        id: seating.idSeating, // Use the actual seating ID
-                        label: `Section ${sector.name}, Row ${seating.row}, Seat ${seating.place}`,
-                        price: price.price
-                    });
+                        
+                    // Create a truly unique key by adding price info or a timestamp
+                    const uniqueKey = `${seating.idSeating}-${sector.idSector}-${seating.row}-${seating.place}-${price.price}-${Date.now()}`;
+                    
+                    // Ensure this key hasn't been used already
+                    if (!usedKeys.has(uniqueKey)) {
+                        usedKeys.add(uniqueKey);
+                        options.push({
+                            id: seating.idSeating,
+                            label: `Section ${sector.name}, Row ${seating.row}, Seat ${seating.place}`,
+                            price: parseFloat(price.price.toFixed(2)),
+                            uniqueKey: uniqueKey
+                        });
+                    }
                 });
             }
         });
         
         return options;
     };
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         
@@ -616,7 +620,7 @@ function SeatingAndPriceStep({ purchaseData, handleChange, validationErrors, sea
                     >
                         {seatingOptions && seatingOptions.length > 0 ? (
                             seatingOptions.map((seat) => (
-                                <MenuItem key={seat.id} value={seat.id}>
+                                <MenuItem key={seat.uniqueKey} value={seat.id}>
                                     {seat.label} - ${seat.price}
                                 </MenuItem>
                             ))

@@ -3,20 +3,30 @@ import { fetchTickets } from './ticketService';
 import { fetchSectorPrices, updateSectorPrice } from './sectorPriceService';
 import { fetchOrganiserById } from './authService';
 
+// Keep track of whether the scheduler is running to prevent duplicate initialization
+let schedulerRunning = false;
 
 export const dynamicPricingService = {
   // Schedule the price adjustment to run every 24 hours
-  startPriceAdjustmentScheduler: () => {
-    console.log('Starting dynamic pricing scheduler');
-
-    dynamicPricingService.adjustAllEventPrices();
+  startPriceAdjustmentScheduler: (runImmediately = false) => {
+    if (schedulerRunning) {
+      console.log('Dynamic pricing scheduler is already running');
+      return;
+    }
     
-    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    console.log('Starting dynamic pricing scheduler');
+    schedulerRunning = true;
+    
+    // Only run immediately if specifically requested
+    if (runImmediately) {
+      dynamicPricingService.adjustAllEventPrices();
+    }
+    
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000; // 10 * 1000 (for teststing) // 24 * 60 * 60 * 1000
     setInterval(() => {
       dynamicPricingService.adjustAllEventPrices();
     }, ONE_DAY_MS);
   },
-
 
   adjustAllEventPrices: async () => {
     try {
@@ -39,7 +49,6 @@ export const dynamicPricingService = {
 
   adjustEventPrice: async (eventId) => {
     try {
-
       const event = await fetchEventById(eventId);
       if (!event) {
         console.error(`Event with ID ${eventId} not found`);
@@ -224,7 +233,8 @@ export const dynamicPricingService = {
           ...sectorPrice,
           price: newPrice
         };
-        
+        console.log(newPrice);
+        console.log("AI");
         await updateSectorPrice(updatedSectorPrice);
       }
       

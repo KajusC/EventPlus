@@ -22,7 +22,7 @@ import DynamicPricingPanel from './pages/admin/DynamicPricingPanel';
 import { initializeDynamicPricing } from './services/setUpDynamicPricing';
 
 function App() {
-    initializeDynamicPricing();
+    initializeDynamicPricing(false);
     return (
         <AuthProvider>
             <NotificationProvider>

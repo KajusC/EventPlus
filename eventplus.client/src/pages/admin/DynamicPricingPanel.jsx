@@ -15,10 +15,16 @@ import {
     TableCell,
     TableContainer,
     TableHead,
-    TableRow
+    TableRow,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    Chip
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { dynamicPricingService } from '../../services/dynamicPricingService';
 import { fetchEvents } from '../../services/eventService';
+import { fetchSectorPrices } from '../../services/sectorPriceService';
 import { useAuth } from '../../context/AuthContext';
 
 function DynamicPricingPanel() {
@@ -29,6 +35,8 @@ function DynamicPricingPanel() {
     const [error, setError] = useState(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [allEvents, setAllEvents] = useState([]);
+    const [sectorPrices, setSectorPrices] = useState([]);
+    const [previousPrices, setPreviousPrices] = useState({});
     const { currentUser } = useAuth();
 
     useEffect(() => {
@@ -38,7 +46,15 @@ function DynamicPricingPanel() {
         }
 
         loadEvents();
+        loadSectorPrices();
     }, [currentUser]);
+
+    // Update sector prices when selecting a different event
+    useEffect(() => {
+        if (selectedEventId) {
+            loadSectorPricesForEvent(selectedEventId);
+        }
+    }, [selectedEventId]);
 
     const loadEvents = async () => {
         try {
@@ -54,6 +70,34 @@ function DynamicPricingPanel() {
         } catch (err) {
             console.error('Failed to load events:', err);
             setError('Failed to load events');
+        }
+    };
+
+    const loadSectorPrices = async () => {
+        try {
+            const prices = await fetchSectorPrices();
+            setSectorPrices(prices);
+        } catch (err) {
+            console.error('Failed to load sector prices:', err);
+            setError('Failed to load sector prices');
+        }
+    };
+
+    const loadSectorPricesForEvent = async (eventId) => {
+        try {
+            const prices = await fetchSectorPrices();
+            const filteredPrices = prices.filter(price => price.eventId === parseInt(eventId, 10));
+            console.log(prices);
+            // Save current prices as previous prices for comparison after adjustment
+            const priceMap = {};
+            filteredPrices.forEach(price => {
+                priceMap[`${price.sectorId}-${price.eventId}`] = price.price;
+            });
+            
+            setPreviousPrices(priceMap);
+            setSectorPrices(prices);
+        } catch (err) {
+            console.error('Failed to load sector prices for event:', err);
         }
     };
 
@@ -75,6 +119,9 @@ function DynamicPricingPanel() {
 
             const adjustmentResult = await dynamicPricingService.triggerPriceAdjustment(selectedEventId);
             
+            // Reload sector prices to show the updated values
+            await loadSectorPrices();
+            
             setResult(adjustmentResult);
             setSnackbarOpen(true);
         } catch (err) {
@@ -94,6 +141,9 @@ function DynamicPricingPanel() {
 
             await dynamicPricingService.adjustAllEventPrices();
             
+            // Reload sector prices to show the updated values
+            await loadSectorPrices();
+            
             setResult({ message: 'All event prices have been adjusted' });
             setSnackbarOpen(true);
         } catch (err) {
@@ -107,6 +157,37 @@ function DynamicPricingPanel() {
 
     const handleCloseSnackbar = () => {
         setSnackbarOpen(false);
+    };
+
+    // Get event name by ID
+    const getEventName = (eventId) => {
+        const event = allEvents.find(e => e.idEvent === eventId);
+        return event ? event.name : 'Unknown Event';
+    };
+
+    // Get sector name by ID
+    const getSectorName = (sectorId) => {
+        // This is a placeholder - in a real app, you'd fetch sector names from your API
+        // For now, we'll just return a generic name
+        return `Sector ${sectorId}`;
+    };
+
+    // Calculate price change percentage
+    const getPriceChangePercentage = (currentPrice, key) => {
+        const previousPrice = previousPrices[key];
+        if (!previousPrice) return 0;
+        
+        const change = ((currentPrice - previousPrice) / previousPrice) * 100;
+        return change;
+    };
+
+    // Filter sector prices for the selected event
+    const getEventSectorPrices = () => {
+        if (!selectedEventId) return [];
+        
+        return sectorPrices.filter(price => 
+            price.eventId === parseInt(selectedEventId, 10)
+        );
     };
 
     // If user is not admin, don't render the component
@@ -213,6 +294,34 @@ function DynamicPricingPanel() {
                     </Table>
                 </TableContainer>
             </Paper>
+
+            <Accordion sx={{ mt: 4 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography variant="h6">All Sector Prices</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                    <TableContainer>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Event</TableCell>
+                                    <TableCell>Sector</TableCell>
+                                    <TableCell>Price</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {sectorPrices.map((price) => (
+                                    <TableRow key={`${price.sectorId}-${price.eventId}`}>
+                                        <TableCell>{getEventName(price.eventId)}</TableCell>
+                                        <TableCell>{getSectorName(price.sectorId)}</TableCell>
+                                        <TableCell>${parseFloat(price.price).toFixed(2)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </AccordionDetails>
+            </Accordion>
 
             <Snackbar 
                 open={snackbarOpen} 

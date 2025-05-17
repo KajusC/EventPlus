@@ -1,15 +1,12 @@
 import { dynamicPricingService } from './dynamicPricingService';
 
-/**
- * Initialize the dynamic pricing scheduler
- * This should be called when the application starts
- */
-export const initializeDynamicPricing = () => {
+export const initializeDynamicPricing = (runImmediately = false) => {
   try {
     console.log('Initializing dynamic pricing system...');
     
     // Start the scheduler that runs every 24 hours
-    dynamicPricingService.startPriceAdjustmentScheduler();
+    // Pass the runImmediately parameter to control immediate execution
+    dynamicPricingService.startPriceAdjustmentScheduler(runImmediately);
     
     console.log('Dynamic pricing system initialized successfully.');
   } catch (error) {
