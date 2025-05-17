@@ -55,3 +55,7 @@ export const updateUserProfile = async (userData, token) => {
     throw error;
   }
 };
+
+export const getToken = () => {
+    return localStorage.getItem('token');
+};

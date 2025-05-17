@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using eventplus.models.Domain.Events;
+using eventplus.models.Domain.Feedbacks;
 using eventplus.models.Domain.Sectors;
 using eventplus.models.Domain.Tickets;
 using eventplus.models.Domain.Users;
@@ -12,6 +13,8 @@ namespace EventPlus.Server
         public AutoMapper()
         {
             CreateMap<Event, EventViewModel>()
+                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate.HasValue ? src.StartDate.Value : (DateOnly?)null))
+                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate.HasValue ? src.EndDate.Value : (DateOnly?)null))
                 .ForMember(dest => dest.FkEventLocationidEventLocation, opt => opt.MapFrom(src => src.FkEventLocationidEventLocation))
                 .ForMember(dest => dest.FkOrganiseridUser, opt => opt.MapFrom(src => src.FkOrganiseridUser))
                 .ReverseMap();
@@ -59,6 +62,13 @@ namespace EventPlus.Server
 	            .ForMember(dest => dest.FkSectoridSector, opt => opt.MapFrom(src => src.SectorId))
 	            .ForMember(dest => dest.Place, opt => opt.MapFrom(src => src.Place))
 	            .ReverseMap();
+            CreateMap<Feedback, FeedbackViewModel>()
+                .ForMember(dest => dest.IdFeedback, opt => opt.MapFrom(src => src.IdFeedback))
+                .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.Comment))
+                .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Score))
+                .ForMember(dest => dest.FkEventidEvent, opt => opt.MapFrom(src => src.FkEventidEvent))
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
+                .ReverseMap();
 
 			CreateMap<OrganiserViewModel, Organiser>()
 	            .ForMember(dest => dest.IdUser, opt => opt.MapFrom(src => src.IdUser))
@@ -67,5 +77,8 @@ namespace EventPlus.Server
 	            .ReverseMap();
 
 		}
+            CreateMap<Organiser, OrganiserViewModel>()
+                .ReverseMap();
+        }
     }
 }

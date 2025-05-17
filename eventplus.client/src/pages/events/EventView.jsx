@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchEventById, deleteEvent } from '../../services/eventService';
 import { fetchCategories } from '../../services/categoryService';
+import { fetchFeedbacksByEventId, createFeedback, updateFeedback, deleteFeedback } from '../../services/feedbackService';
+import { useAuth } from '../../context/AuthContext';
 import { fetchTickets } from '../../services/ticketService';
 import {
     Container,
@@ -14,6 +16,14 @@ import {
     Card,
     CardContent,
     IconButton,
+    TextField,
+    FormControl,
+    InputLabel,
+    List,
+    Select,
+    MenuItem,
+    ListItem, 
+    ListItemText,
     Tooltip
 } from '@mui/material';
 import {
@@ -31,9 +41,8 @@ import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import ErrorDisplay from '../../components/shared/ErrorDisplay';
 import ToastNotification from '../../components/shared/ToastNotification';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
-
 import { formatDate, formatTime } from '../../utils/dateFormatter';
-
+import Tooltip from '@mui/material/Tooltip';
 const getCategoryColor = (categoryId) => {
     const colors = {
         1: '#6a11cb',
@@ -51,7 +60,13 @@ function EventView() {
     const [categories, setCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    
+    const [feedbacks, setFeedbacks] = useState([]); 
+    const [newFeedback, setNewFeedback] = useState({
+        comment: '',
+        isPositive: true,
+        rating: '',
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [toast, setToast] = useState({
@@ -59,11 +74,6 @@ function EventView() {
         message: '',
         severity: 'info'
     });
-    
-    // New state for tickets
-    const [tickets, setTickets] = useState([]);
-    const [availableTickets, setAvailableTickets] = useState(0);
-    const [isLoadingTickets, setIsLoadingTickets] = useState(true);
 
     useEffect(() => {
         fetchCategories()
@@ -85,34 +95,6 @@ function EventView() {
                 setIsLoading(false);
             });
     }, [id]);
-
-    // Fetch tickets for the event to calculate available tickets
-    useEffect(() => {
-        setIsLoadingTickets(true);
-        if (event) {
-            fetchTickets()
-                .then(ticketsData => {
-                    // Filter tickets for this specific event
-                    const eventTickets = ticketsData.filter(ticket => 
-                        ticket.fkEventidEvent === parseInt(id)
-                    );
-                    setTickets(eventTickets);
-                    
-                    // Calculate available tickets
-                    const soldCount = eventTickets.length;
-                    const available = Math.max(0, event.maxTicketCount - soldCount);
-                    setAvailableTickets(available);
-                })
-                .catch(err => {
-                    console.error("Error fetching tickets:", err);
-                    // If we can't get tickets, assume all are available to avoid blocking sales
-                    setAvailableTickets(event.maxTicketCount);
-                })
-                .finally(() => {
-                    setIsLoadingTickets(false);
-                });
-        }
-    }, [event, id]);
 
     const getCategoryName = (categoryId) => {
         if (!categories || categories.length === 0) return "Event";
@@ -141,6 +123,115 @@ function EventView() {
             setShowDeleteDialog(false);
         }
     };
+    const handleEditFeedbackClick = (feedback) => {
+        setEditingFeedback(feedback.idFeedback);
+        setEditFeedbackData({
+            comment: feedback.comment,
+            isPositive: feedback.type ? feedback.type === 1 : true,
+            rating: feedback.rating,
+        });
+    };
+    const handleFeedbackChange = (e) => {
+        const { name, value } = e.target;
+        setNewFeedback((prev) => ({
+            ...prev,
+            [name]: name === 'isPositive' ? value === 'true' : value,
+        }));
+    };
+
+    const handleFeedbackSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            await createFeedback({
+                comment: newFeedback.comment,
+                type: newFeedback.isPositive ? 1 : 2,
+                rating: parseFloat(newFeedback.rating),
+                fkEventidEvent: id,
+            });
+            setToast({
+                open: true,
+                message: 'Feedback submitted successfully!',
+                severity: 'success',
+            });
+            setNewFeedback({ comment: '', isPositive: true, rating: '' });
+            fetchFeedbacksByEventId(id).then((data) => setFeedbacks(data));
+        } catch (err) {
+            setToast({
+                open: true,
+                message: `Error: ${err.message || 'Failed to submit feedback'}`,
+                severity: 'error',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteFeedbackClick = (feedback) => {
+        setFeedbackToDelete(feedback);
+        setShowFeedbackDeleteDialog(true);
+    };
+
+    const handleConfirmDeleteFeedback = async () => {
+        if (!feedbackToDelete) return;
+        setIsFeedbackDeleting(true);
+        try {
+            await deleteFeedback(feedbackToDelete.idFeedback);
+            setToast({
+                open: true,
+                message: 'Feedback deleted successfully!',
+                severity: 'success',
+            });
+            fetchFeedbacksByEventId(id).then((data) => setFeedbacks(data));
+        } catch (err) {
+            setToast({
+                open: true,
+                message: `Error: ${err.message || 'Failed to delete feedback'}`,
+                severity: 'error',
+            });
+        } finally {
+            setIsFeedbackDeleting(false);
+            setShowFeedbackDeleteDialog(false);
+            setFeedbackToDelete(null);
+        }
+    };
+
+    const handleEditFeedbackChange = (e) => {
+        const { name, value } = e.target;
+        setEditFeedbackData((prev) => ({
+            ...prev,
+            [name]: name === 'isPositive' ? value === 'true' : value,
+        }));
+    };
+
+    const handleEditFeedbackSubmit = async (e) => {
+        e.preventDefault();
+        setIsFeedbackUpdating(true);
+        try {
+            await updateFeedback({
+                ...editFeedbackData,
+                type: editFeedbackData.isPositive ? 1 : 2,
+                idFeedback: editingFeedback,
+                fkEventidEvent: id,
+            });
+            setToast({
+                open: true,
+                message: 'Feedback updated successfully!',
+                severity: 'success',
+            });
+            setEditingFeedback(null);
+            fetchFeedbacksByEventId(id).then((data) => setFeedbacks(data));
+        } catch (err) {
+            setToast({
+                open: true,
+                message: `Error: ${err.message || 'Failed to update feedback'}`,
+                severity: 'error',
+            });
+        } finally {
+            setIsFeedbackUpdating(false);
+        }
+    };
+
 
     if (isLoading) return <LoadingSpinner />;
     if (error) return <ErrorDisplay error={error} />;
@@ -522,6 +613,216 @@ function EventView() {
                 </Grid>
             </Container>
 
+            <Container maxWidth="lg" sx={{ mt: 4 }}>
+                <Card
+                    sx={{
+                        borderRadius: 3,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                        bgcolor: 'background.paper',
+                        mb: 4,
+                    }}
+                >
+                    <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+                        <Typography variant="h5" component="h2" sx={{ mb: 3, fontWeight: 600 }}>
+                            Submit Your Feedback
+                        </Typography>
+                        <form onSubmit={handleFeedbackSubmit}>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        label="Comment"
+                                        name="comment"
+                                        value={newFeedback.comment}
+                                        onChange={handleFeedbackChange}
+                                        fullWidth
+                                        multiline
+                                        rows={4}
+                                        variant="outlined"
+                                        required
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="isPositive-label">Feedback Type</InputLabel>
+                                        <Select
+                                            labelId="isPositive-label"
+                                            name="isPositive"
+                                            value={newFeedback.isPositive.toString()}
+                                            onChange={handleFeedbackChange}
+                                            required
+                                        >
+                                            <MenuItem value="true">Positive</MenuItem>
+                                            <MenuItem value="false">Negative</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="Rating (1-10)"
+                                        name="rating"
+                                        type="number"
+                                        value={newFeedback.rating}
+                                        onChange={handleFeedbackChange}
+                                        fullWidth
+                                        inputProps={{ min: 1, max: 10, step: 0.1 }}
+                                        variant="outlined"
+                                        required
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        color="primary"
+                                        fullWidth
+                                        disabled={isSubmitting || !newFeedback.comment || !newFeedback.rating}
+                                        sx={{
+                                            py: 1.5,
+                                            fontWeight: 600,
+                                            fontSize: '1rem',
+                                            borderRadius: 2,
+                                            textTransform: 'none',
+                                        }}
+                                    >
+                                        {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+                                    </Button>
+                                </Grid>
+                            </Grid>
+                        </form>
+                    </CardContent>
+                </Card>
+            </Container>
+
+            {/* Feedbacks List */}
+
+            <Container maxWidth="lg" sx={{ mt: 2, mb: 6 }}>
+                {feedbacks.length > 0 ? (
+                    <Grid container spacing={3}>
+                        {feedbacks.map((feedback) => (
+                            <Grid item xs={12} sm={6} md={4} key={feedback.idFeedback}>
+                            <Card
+                                sx={{
+                                    borderRadius: 3,
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                                    overflow: 'hidden',
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                }}
+                            >
+                                
+                                <CardContent sx={{ p: 3 }}>
+                                    {editingFeedback === feedback.idFeedback && (isAdmin || isOrganizer) ? (
+                                        <form onSubmit={handleEditFeedbackSubmit}>
+                                            <TextField
+                                                label="Comment"
+                                                name="comment"
+                                                value={editFeedbackData.comment}
+                                                onChange={handleEditFeedbackChange}
+                                                fullWidth
+                                                multiline
+                                                rows={3}
+                                                variant="outlined"
+                                                required
+                                                sx={{ mb: 2 }}
+                                            />
+                                            <FormControl fullWidth sx={{ mb: 2 }}>
+                                                <InputLabel id={`isPositive-label-${feedback.idFeedback}`}>Feedback Type</InputLabel>
+                                                <Select
+                                                    labelId={`isPositive-label-${feedback.idFeedback}`}
+                                                    name="isPositive"
+                                                    value={(editFeedbackData.isPositive ?? true).toString()}
+                                                    onChange={handleEditFeedbackChange}
+                                                    required
+                                                >
+                                                    <MenuItem value="true">Positive</MenuItem>
+                                                    <MenuItem value="false">Negative</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                            <TextField
+                                                label="Rating (1-10)"
+                                                name="rating"
+                                                type="number"
+                                                value={editFeedbackData.rating}
+                                                onChange={handleEditFeedbackChange}
+                                                fullWidth
+                                                inputProps={{ min: 1, max: 10, step: 0.1 }}
+                                                variant="outlined"
+                                                required
+                                                sx={{ mb: 2 }}
+                                            />
+                                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                                <Button
+                                                    type="submit"
+                                                    variant="contained"
+                                                    color="primary"
+                                                    disabled={isFeedbackUpdating}
+                                                >
+                                                    {isFeedbackUpdating ? 'Saving...' : 'Save'}
+                                                </Button>
+                                                <Button
+                                                    variant="outlined"
+                                                    onClick={() => setEditingFeedback(null)}
+                                                    disabled={isFeedbackUpdating}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </Box>
+                                        </form>
+                                    ) : (
+                                        <>
+                                            <Typography
+                                                variant="body1"
+                                                color="text.primary"
+                                                sx={{ fontWeight: 600, mb: 1 }}
+                                            >
+                                                {feedback.comment}
+                                            </Typography>
+                                            {feedback.rating && (
+                                                <Typography
+                                                    variant="body2"
+                                                    color="text.secondary"
+                                                    sx={{ fontWeight: 500, mt: 1 }}
+                                                >
+                                                    Rating: {feedback.rating}/10
+                                                </Typography>
+                                            )}
+                                            <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                                                {(isAdmin || isOrganizer) && (
+                                                    <>
+                                                        <Tooltip title="Edit Feedback">
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => handleEditFeedbackClick(feedback)}
+                                                            >
+                                                                <EditIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Delete Feedback">
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => handleDeleteFeedbackClick(feedback)}
+                                                            >
+                                                                <DeleteIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </>
+                                                )}
+                                            </Box>
+                                        </>
+                                    )}
+                                </CardContent>
+                            </Card>
+                            </Grid>
+                        ))}
+                    </Grid>
+                ) : (
+                    <Typography variant="body1" color="text.secondary">
+                        No feedbacks available for this event.
+                    </Typography>
+                )}
+            </Container>
+
             {/* Delete confirmation dialog */}
             <ConfirmationDialog
                 open={showDeleteDialog}
@@ -541,6 +842,17 @@ function EventView() {
                 message={toast.message}
                 severity={toast.severity}
                 onClose={() => setToast({...toast, open: false})}
+            />
+            <ConfirmationDialog
+                open={showFeedbackDeleteDialog}
+                title="Confirm Feedback Deletion"
+                message="Are you sure you want to delete this feedback? This action cannot be undone."
+                confirmLabel="Delete Feedback"
+                cancelLabel="Cancel"
+                onConfirm={handleConfirmDeleteFeedback}
+                onCancel={() => setShowFeedbackDeleteDialog(false)}
+                loading={isFeedbackDeleting}
+                isDestructive={true}
             />
         </>
     );

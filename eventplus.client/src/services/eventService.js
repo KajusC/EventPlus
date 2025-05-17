@@ -12,6 +12,21 @@ export const fetchEventById = async (id) => {
   return response.data;
 };
 
+export const fetchRecommendedEvents = async () => {
+  try {
+    console.log('Fetching recommended events (rating 7/10 or higher)');
+    const response = await apiClient.get(`${API_ENDPOINT}/toprated`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching recommended events:', error);
+    // If server returns 404, it means no highly rated events were found
+    if (error.response?.status === 404) {
+      throw { response: { status: 404, data: 'No highly rated events found' } };
+    }
+    throw error;
+  }
+};
+
 export const createEvent = async (eventData) => {
 
   const processedData = JSON.parse(JSON.stringify(eventData));

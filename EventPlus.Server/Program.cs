@@ -66,7 +66,16 @@ namespace EventPlus.Server
                                       .AllowAnyHeader()
                                       .AllowAnyMethod());
             });
-
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend",
+                    policy =>
+                    {
+                        policy.WithOrigins("https://localhost:5173")
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+            });
             // Configure JWT Authentication
             builder.Services.AddAuthentication(options =>
             {
@@ -120,6 +129,7 @@ namespace EventPlus.Server
             builder.Services.AddScoped<ICategoryLogic, CategoryLogic>();
             builder.Services.AddScoped<ISectorPriceLogic, SectorPriceLogic>();
             builder.Services.AddScoped<ISeatingLogic, SeatingLogic>();
+            builder.Services.AddScoped<IOrganiserLogic, OrganiserLogic>();
 
             // Authentication - Use role-based auth service
             builder.Services.AddScoped<IRoleBasedAuthService, RoleBasedAuthService>();
@@ -128,7 +138,7 @@ namespace EventPlus.Server
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             var app = builder.Build();
-
+            app.UseCors("AllowFrontend");
             if (builder.Environment.IsDevelopment())
             {
                 app.UseSwagger();
