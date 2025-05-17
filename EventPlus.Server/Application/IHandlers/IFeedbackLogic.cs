@@ -11,6 +11,7 @@ namespace EventPlus.Server.Application.IHandlers
         Task<List<FeedbackViewModel>> GetAllFeedbacksAsync();
 
         Task<List<FeedbackViewModel>> GetFeedbacksByEventIdAsync(int eventId);
+        Task<List<FeedbackViewModel>> GetFeedbacksByUserIdAsync(int userId);
         Task<bool> DeleteEventFeedbacks(int eventId);
     }
 }

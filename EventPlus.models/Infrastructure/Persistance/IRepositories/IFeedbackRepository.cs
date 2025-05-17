@@ -10,6 +10,7 @@ namespace eventplus.models.Infrastructure.Persistance.IRepositories
         Task<Feedback> GetFeedbackByIdAsync(int id);
         Task<List<Feedback>> GetAllFeedbacksAsync();
         Task<List<Feedback>> GetAllFeedbacksByEventIdAsync(int eventId);
+        Task<List<Feedback>> GetAllFeedbacksByUserIdAsync(int userId);
         Task<bool> DeleteEventFeedbacks(int eventId);
     }
 }

@@ -59,26 +59,31 @@ function EventList() {
 	const handleRecommendEvents = async () => {
 		try {
 			setIsLoading(true);
-			const data = await fetchRecommendedEvents();
+			const userId = localStorage.getItem('userId'); // Try to get the user ID from localStorage
+			const data = await fetchRecommendedEvents(userId ? parseInt(userId) : null);
 			setEvents(data);
 			setShowingRecommended(true);
 			setError(null);
+			
+			let toastMessage = "Showing recommended events based on ratings, category performance, and organizer reputation!";
+			if (userId) {
+				toastMessage += " Personalized for you based on your preferences.";
+			}
+			
 			setToast({
 				open: true,
-				message: "Showing recommended events based on ratings, category performance, and organizer reputation!",
+				message: toastMessage,
 				severity: "success"
 			});
 		} catch (error) {
-			if (error.response?.status === 404) {
-				setToast({
-					open: true,
-					message: "No highly rated events found. Try viewing all events instead.",
-					severity: "info"
-				});
-				return;
-			}
 			console.error("Error fetching recommended events:", error);
 			setError("Failed to load recommended events. Please try again later.");
+			
+			setToast({
+				open: true,
+				message: "No highly rated events found that match your preferences. Try viewing all events instead.",
+				severity: "info"
+			});
 		} finally {
 			setIsLoading(false);
 		}

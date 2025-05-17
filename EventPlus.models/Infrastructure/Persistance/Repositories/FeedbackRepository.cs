@@ -110,6 +110,38 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<Feedback>> GetAllFeedbacksByUserIdAsync(int userId)
+        {
+            // Get all feedback IDs associated with this user
+            var userFeedbackIds = await _context.UserFeedbacks
+                .Where(uf => uf.FkUseridUser == userId)
+                .Select(uf => uf.FkFeedbackidFeedback)
+                .ToListAsync();
+                
+            var adminFeedbackIds = await _context.AdministratorFeedbacks
+                .Where(af => af.FkAdministratoridUser == userId)
+                .Select(af => af.FkFeedbackidFeedback)
+                .ToListAsync();
+                
+            var organiserFeedbackIds = await _context.OrganiserFeedbacks
+                .Where(of => of.FkOrganiseridUser == userId)
+                .Select(of => of.FkFeedbackidFeedback)
+                .ToListAsync();
+                
+            // Combine all feedback IDs
+            var allFeedbackIds = userFeedbackIds
+                .Concat(adminFeedbackIds)
+                .Concat(organiserFeedbackIds)
+                .Distinct()
+                .ToList();
+                
+            // Get the actual feedback objects
+            return await _feedbacks
+                .Include(f => f.FkEventidEventNavigation)
+                .Where(f => allFeedbackIds.Contains(f.IdFeedback))
+                .ToListAsync();
+        }
+
         public async Task<Feedback> GetFeedbackByIdAsync(int id)
         {
             var feedback = await _feedbacks

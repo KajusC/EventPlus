@@ -80,6 +80,17 @@ namespace EventPlus.Server.Application.Handlers
             return _mapper.Map<List<FeedbackViewModel>>(feedbacks);
         }
 
+        public async Task<List<FeedbackViewModel>> GetFeedbacksByUserIdAsync(int userId)
+        {
+            if (userId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(userId), "User ID must be greater than zero.");
+            }
+
+            var feedbacks = await _feedbackRepository.GetAllFeedbacksByUserIdAsync(userId);
+            return _mapper.Map<List<FeedbackViewModel>>(feedbacks);
+        }
+
         public async Task<bool> UpdateFeedbackAsync(FeedbackViewModel feedback)
         {
             if (feedback == null)
