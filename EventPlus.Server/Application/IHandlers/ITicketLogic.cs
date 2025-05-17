@@ -10,5 +10,7 @@ namespace EventPlus.Server.Application.IHandlers
         Task<TicketViewModel> GetTicketByIdAsync(int id);
         Task<List<TicketViewModel>> GetAllTicketsAsync();
         Task<bool> IfEventHasTickets(int eventId);
+        Task<byte[]> GenerateTicketPdfAsync(int ticketId);
+        
     }
 }

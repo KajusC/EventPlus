@@ -26,3 +26,15 @@ export const deleteTicket = async (id) => {
   const response = await apiClient.delete(`${API_ENDPOINT}/${id}`);
   return response.data;
 };
+
+export const downloadTicketPdf = async (ticketId) => {
+    try {
+        const response = await apiClient.get(`${API_ENDPOINT}/generatePdf/${ticketId}`, {
+            responseType: 'blob',
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error downloading ticket PDF:', error);
+        throw error;
+    }
+};
