@@ -242,7 +242,7 @@ namespace EventPlus.Server.Controllers
 					var organizerRating = await GetOrganizerRatingAsync(eventEntity.FkOrganiseridUser);
 					var followerCount = await GetOrganizerFollowerCountAsync(eventEntity.FkOrganiseridUser);
 					
-					double followerScore = Math.Min(followerCount / 100.0, 1.0);
+					double followerScore = Math.Min(followerCount / 20000.0, 1.0);
 
 					organizerWeight = (organizerRating * 0.7 + followerScore * 0.3) * 0.3; 
 					Console.WriteLine($"Organizer {eventEntity.FkOrganiseridUser} - Rating: {organizerRating:F2}, Followers: {followerCount}, Organizer Weight: {organizerWeight:F2}");
