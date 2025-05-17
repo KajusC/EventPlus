@@ -111,7 +111,7 @@ function TicketPurchasePage() {
                     fetchSectors(),
                     fetchSeatings()
                 ]);
-                
+                console.log('Sector Prices:', sectorPricesData);
                 setSectorPrices(sectorPricesData);
                 setSectors(sectorsData);
                 setSeatings(seatingsData);

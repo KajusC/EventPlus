@@ -32,7 +32,6 @@ function EventList() {
 	const [error, setError] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const { isAdmin, isOrganizer } = useAuth();
-
 	useEffect(() => {
 		const getEvents = async () => {
 			try {

@@ -1,4 +1,5 @@
-﻿using EventPlus.Server.Application.IHandlers;
+﻿using EventPlus.Server.Application.Handlers;
+using EventPlus.Server.Application.IHandlers;
 using EventPlus.Server.Application.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,17 @@ namespace EventPlus.Server.Controllers
 				return NotFound();
 			}
 			return Ok(seatingEntity);
+		}
+
+		[HttpPut]
+		public async Task<ActionResult<bool>> UpdateSectorPrice([FromBody] SectorPriceViewModel sectorPriceDTO)
+		{
+			if (sectorPriceDTO == null)
+			{
+				return BadRequest("Sector Price cannot be null");
+			}
+			var result = await _sectorPriceLogic.UpdateSectorPriceAsync(sectorPriceDTO);
+			return Ok(result);
 		}
 	}
 }

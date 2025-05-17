@@ -1,5 +1,7 @@
+using AutoMapper;
 using eventplus.models.Domain.Users;
 using eventplus.models.Infrastructure.Persistance.IRepositories;
+using eventplus.models.Infrastructure.UnitOfWork;
 using EventPlus.Server.Application.ViewModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -17,14 +19,20 @@ namespace EventPlus.Server.Application.Authentication
         private readonly IOrganiserRepository _organiserRepository;
         private readonly IAdministratorRepository _administratorRepository;
         private readonly IConfiguration _configuration;
+		private readonly IUnitOfWork _unitOfWork;
+		private readonly IMapper _mapper;
 
-        public RoleBasedAuthService(
-            IUserRepository userRepository,
+		public RoleBasedAuthService(
+			IUnitOfWork unitOfWork,
+			IUserRepository userRepository,
             IOrganiserRepository organiserRepository,
             IAdministratorRepository administratorRepository,
-            IConfiguration configuration)
+            IConfiguration configuration,
+			IMapper mapper)
         {
-            _userRepository = userRepository;
+			_mapper = mapper;
+			_unitOfWork = unitOfWork;
+			_userRepository = userRepository;
             _organiserRepository = organiserRepository;
             _administratorRepository = administratorRepository;
             _configuration = configuration;
@@ -86,7 +94,17 @@ namespace EventPlus.Server.Application.Authentication
             return CreateSuccessResult(user.IdUser, user.Username, user.Name, user.Surname, "User");
         }
 
-        public async Task<AuthResult> RegisterOrganiserAsync(OrganiserViewModel organiserViewModel)
+		public async Task<OrganiserViewModel> GetOrganiserByIdAsync(int id)
+		{
+			if (id <= 0)
+			{
+				throw new ArgumentOutOfRangeException(nameof(id), "ID must be greater than zero.");
+			}
+			var organiserEntity = await _unitOfWork.Organisers.GetByIdAsync(id);
+			return _mapper.Map<OrganiserViewModel>(organiserEntity);
+		}
+
+		public async Task<AuthResult> RegisterOrganiserAsync(OrganiserViewModel organiserViewModel)
         {
             var AuthStatus = await ValidateFormData(organiserViewModel.Username, organiserViewModel.Password);
             if (!AuthStatus.Success)

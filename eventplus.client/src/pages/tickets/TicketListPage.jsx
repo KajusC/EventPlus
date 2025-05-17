@@ -34,6 +34,7 @@ import { useAuth } from '../../context/AuthContext';
 import { fetchSeatingById } from '../../services/seatingService'; 
 import { fetchSectorById } from '../../services/sectorService'; 
 import { fetchTickets } from '../../services/ticketService';
+import { fetchOrganiserById } from '../../services/authService';
 
 // Ticket type mapping
 const TICKET_TYPES = {
@@ -49,6 +50,7 @@ const TICKET_STATUSES = {
     3: { label: 'Scanned', color: 'warning' }
 };
 
+
 function TicketListPage() {
     const navigate = useNavigate();
     const [tickets, setTickets] = useState([]);
@@ -61,10 +63,24 @@ function TicketListPage() {
     const [sectors, setSectors] = useState({});
     const [event, setEvent] = useState([]);
     
+
     const { currentUser } = useAuth();
+    const [org, setOrg] = useState(null);
+    console.log("event", event);
+    console.log(tickets);
+    useEffect(() => {
+        if (!currentUser?.id) return;
+
+        const fetchData = async () => {
+            console.log('currentUser:', currentUser);
+            const organiser = await fetchOrganiserById(currentUser.id);
+            console.log('Organiser:', organiser);
+            setOrg(organiser);
+        };
+        fetchData();
+    }, [currentUser]);
 
     useEffect(() => {
-        console.log('isAdmin:', currentUser.role);
         if (currentUser.role !== 'Admin' && currentUser.role !== 'Organiser') {
             loadUserTickets();
         }

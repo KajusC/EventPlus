@@ -13,6 +13,7 @@ namespace EventPlus.Server.Application.Authentication
         Task<bool> ChangePasswordAsync(int userId, string userType, string currentPassword, string newPassword);
         Task<bool> UpdateLastLoginAsync(int userId, string userType);
         Task<SignOutResult> SignOutAsync(int userId);
+        Task<OrganiserViewModel> GetOrganiserByIdAsync(int id);
     }
 
     public class SignOutResult

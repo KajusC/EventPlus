@@ -7,6 +7,7 @@ namespace eventplus.models.Infrastructure.UnitOfWork
 {
 	public interface IUnitOfWork
 	{
+		IOrganiserRepository Organisers { get; }
 		IEventRepository Events { get; }
 		IRepository<EventLocation> EventLocations { get; }
 		IRepository<Partner> Partners { get; }

@@ -18,8 +18,11 @@ import TicketListPage from './pages/tickets/TicketListPage';
 import TicketView from './pages/tickets/TicketView';
 import TicketEditPage from './pages/tickets/TicketEditPage';
 import TicketPurchasePage from './pages/tickets/TicketPurchacePage';
+import DynamicPricingPanel from './pages/admin/DynamicPricingPanel';
+import { initializeDynamicPricing } from './services/setUpDynamicPricing';
 
 function App() {
+    initializeDynamicPricing();
     return (
         <AuthProvider>
             <NotificationProvider>
@@ -36,6 +39,7 @@ function App() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="tickets/TicketPurchasePage/:eventId" element={<TicketPurchasePage />} />
+                        <Route path="/admin/dynamic-pricing" element={<DynamicPricingPanel />} />
                         
                         {/* Protected routes (any authenticated user) */}
                         <Route element={<ProtectedRoute />}>

@@ -34,6 +34,12 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
             return organiser;
         }
 
+        public override async Task<Organiser> GetByIdAsync(int id)
+        {
+            var organiser = await _dbSet.FirstOrDefaultAsync(o => o.IdUser == id);
+            return organiser;
+        }
+
         public async Task<bool> IsUsernameUniqueAsync(string username)
         {
             if (string.IsNullOrWhiteSpace(username))

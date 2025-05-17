@@ -2,6 +2,7 @@
 using eventplus.models.Domain.Events;
 using eventplus.models.Domain.Sectors;
 using eventplus.models.Domain.Tickets;
+using eventplus.models.Domain.Users;
 using EventPlus.Server.Application.ViewModels;
 
 namespace EventPlus.Server
@@ -57,6 +58,12 @@ namespace EventPlus.Server
 	            .ForMember(dest => dest.Row, opt => opt.MapFrom(src => src.Row))
 	            .ForMember(dest => dest.FkSectoridSector, opt => opt.MapFrom(src => src.SectorId))
 	            .ForMember(dest => dest.Place, opt => opt.MapFrom(src => src.Place))
+	            .ReverseMap();
+
+			CreateMap<OrganiserViewModel, Organiser>()
+	            .ForMember(dest => dest.IdUser, opt => opt.MapFrom(src => src.IdUser))
+	            .ForMember(dest => dest.FollowerCount, opt => opt.MapFrom(src => src.FollowerCount))
+	            .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Rating))
 	            .ReverseMap();
 
 		}

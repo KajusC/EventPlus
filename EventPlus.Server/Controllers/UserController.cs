@@ -1,9 +1,11 @@
+using eventplus.models.Domain.Tickets;
 using EventPlus.Server.Application.Authentication;
 using EventPlus.Server.Application.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using eventplus.models.Domain.Users;
 
 namespace EventPlus.Server.Controllers
 {
@@ -93,7 +95,19 @@ namespace EventPlus.Server.Controllers
             });
         }
 
-        [HttpPost("register/administrator")]
+
+		[HttpGet("{id}")]
+		public async Task<ActionResult<Organiser>> GetOrganiser(int id)
+		{
+            var organiserEntity = await _authService.GetOrganiserByIdAsync(id);
+			if (organiserEntity == null)
+			{
+				return NotFound();
+			}
+			return Ok(organiserEntity);
+		}
+
+		[HttpPost("register/administrator")]
         [Authorize(Roles = "Administrator")] // Only administrators can create other administrators
         public async Task<IActionResult> RegisterAdministrator([FromBody] AdministratorViewModel model)
         {
