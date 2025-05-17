@@ -2,6 +2,8 @@
 using EventPlus.Server.Application.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace EventPlus.Server.Controllers
 {
@@ -15,6 +17,7 @@ namespace EventPlus.Server.Controllers
 		private readonly ISectorLogic _sectorLogic;
 		private readonly ISectorPriceLogic _sectorPriceLogic;
 		private readonly ISeatingLogic _seatingLogic;
+		private readonly IOrganiserLogic _organiserLogic;
 
 		public EventController(
 			IEventLogic eventLogic,
@@ -22,7 +25,8 @@ namespace EventPlus.Server.Controllers
 			IFeedbackLogic feedbackLogic,
 			ISectorLogic sectorLogic,
 			ISectorPriceLogic sectorPriceLogic,
-			ISeatingLogic seatingLogic)
+			ISeatingLogic seatingLogic,
+			IOrganiserLogic organiserLogic)
 		{
 			_eventLogic = eventLogic;
 			_ticketLogic = ticketLogic;
@@ -30,6 +34,7 @@ namespace EventPlus.Server.Controllers
 			_sectorLogic = sectorLogic;
 			_sectorPriceLogic = sectorPriceLogic;
 			_seatingLogic = seatingLogic;
+			_organiserLogic = organiserLogic;
 		}
 
 		[HttpGet]
@@ -78,20 +83,17 @@ namespace EventPlus.Server.Controllers
 		[Authorize(Roles = "Administrator")]
 		public async Task<ActionResult<bool>> DeleteEvent(int id)
 		{
-			// Check if the event has tickets before deleting
 			var hasTickets = await _ticketLogic.IfEventHasTickets(id);
 			if (hasTickets)
 			{
 				return BadRequest("Cannot delete event with associated tickets.");
 			}
 
-			// If the event has feedback, delete them first
 			var feedbackDeleted = await _feedbackLogic.DeleteEventFeedbacks(id);
-			Console.WriteLine($"Feedback deleted: {feedbackDeleted}"); // should be logger
+			Console.WriteLine($"Feedback deleted: {feedbackDeleted}");
 
-			// delete sectors
 			var sectorsDeleted = await _sectorLogic.DeleteEventSectors(id);
-			Console.WriteLine($"Sectors deleted: {sectorsDeleted}"); // should be logger
+			Console.WriteLine($"Sectors deleted: {sectorsDeleted}");
 
 			var result = await _eventLogic.DeleteEventAsync(id);
 			if (!result)
@@ -122,7 +124,6 @@ namespace EventPlus.Server.Controllers
 					return BadRequest(new { Message = "Validation failed", Errors = errors });
 				}
 
-				// Additional validation logic
 				if (completeEventEntity.Event.StartDate > completeEventEntity.Event.EndDate)
 				{
 					return BadRequest("Start date cannot be later than end date");
@@ -148,6 +149,156 @@ namespace EventPlus.Server.Controllers
 			{
 				Console.WriteLine($"Error creating event: {ex.ToString()}");
 				return StatusCode(500, $"Internal server error: {ex.Message}");
+			}
+		}
+
+		[HttpGet("toprated")]
+		[AllowAnonymous]
+		public async Task<ActionResult<List<EventViewModel>>> GetTopRatedEvents()
+		{
+			try
+			{
+				var events = await _eventLogic.GetAllEventsAsync();
+				
+				var recommendedEvents = new List<EventViewModel>();
+				
+				foreach (var eventEntity in events)
+				{
+					double weight = await CalculateEventWeight(eventEntity);
+					if (weight > 0.65)
+					{
+						recommendedEvents.Add(eventEntity);
+					}
+				}
+				
+				recommendedEvents = recommendedEvents.OrderByDescending(e => CalculateEventWeight(e).Result).ToList();
+				
+				if (recommendedEvents.Count == 0)
+				{
+					return NotFound("No highly rated events found. Try viewing all events instead.");
+				}
+				
+				return Ok(recommendedEvents);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error in GetTopRatedEvents: {ex.Message}");
+				return StatusCode(500, $"Internal error: {ex.Message}");
+			}
+		}
+
+		private async Task<double> CalculateEventWeight(EventViewModel eventEntity)
+		{
+			if (eventEntity == null) return 0;
+
+			try
+			{
+				double ratingWeight = 0.5;
+				double categoryWeight = 0.0;
+				double organizerWeight = 0.0;
+				
+				var feedbacks = await _feedbackLogic.GetFeedbacksByEventIdAsync(eventEntity.IdEvent);
+				Console.WriteLine($"Calculating weight for event '{eventEntity.Name}' with {feedbacks?.Count ?? 0} feedbacks");
+				
+				if (feedbacks != null && feedbacks.Any())
+				{
+					var ratings = feedbacks.Where(f => f.Rating.HasValue).Select(f => f.Rating.Value);
+					if (ratings.Any())
+					{
+						var averageRating = ratings.Average();
+						ratingWeight = Convert.ToDouble(averageRating) / 10.0 * 0.5;
+						Console.WriteLine($"Event '{eventEntity.Name}' - Average rating: {averageRating:F2}, Rating Weight: {ratingWeight:F2}");
+					}
+				}
+				
+				if (eventEntity.Category.HasValue)
+				{
+					var eventsInCategory = await _eventLogic.GetEventsByCategoryAsync(eventEntity.Category.Value);
+					var categoryFeedbacks = new List<FeedbackViewModel>();
+					
+					foreach (var evt in eventsInCategory.Where(e => e.IdEvent != eventEntity.IdEvent))
+					{
+						var evtFeedbacks = await _feedbackLogic.GetFeedbacksByEventIdAsync(evt.IdEvent);
+						if (evtFeedbacks != null && evtFeedbacks.Any())
+						{
+							categoryFeedbacks.AddRange(evtFeedbacks);
+						}
+					}
+					
+					if (categoryFeedbacks.Any())
+					{
+						var categoryRatings = categoryFeedbacks.Where(f => f.Rating.HasValue).Select(f => f.Rating.Value);
+						if (categoryRatings.Any())
+						{
+							var categoryAverage = categoryRatings.Average();
+							categoryWeight = Convert.ToDouble(categoryAverage) / 10.0 * 0.2;
+							Console.WriteLine($"Category {eventEntity.Category} - Average rating: {categoryAverage:F2}, Category Weight: {categoryWeight:F2}");
+						}
+					}
+				}
+				
+				if (eventEntity.FkOrganiseridUser > 0)
+				{
+					var organizerRating = await GetOrganizerRatingAsync(eventEntity.FkOrganiseridUser);
+					var followerCount = await GetOrganizerFollowerCountAsync(eventEntity.FkOrganiseridUser);
+					
+					double followerScore = Math.Min(followerCount / 100.0, 1.0);
+
+					organizerWeight = (organizerRating * 0.7 + followerScore * 0.3) * 0.3; 
+					Console.WriteLine($"Organizer {eventEntity.FkOrganiseridUser} - Rating: {organizerRating:F2}, Followers: {followerCount}, Organizer Weight: {organizerWeight:F2}");
+				}
+				
+				double totalWeight = ratingWeight + categoryWeight + organizerWeight;
+				Console.WriteLine($"Event '{eventEntity.Name}' - Total Weight: {totalWeight:F2}");
+				
+				return totalWeight;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error calculating weight for event '{eventEntity.Name}': {ex.Message}");
+				return 0.5;
+			}
+		}
+		
+		private async Task<double> GetOrganizerRatingAsync(int organizerId)
+		{
+			try
+			{
+				var organizer = await _organiserLogic.GetOrganiserByIdAsync(organizerId);
+				
+				if (organizer != null && organizer.Rating.HasValue)
+				{
+					return Math.Min(Math.Max(organizer.Rating.Value / 10.0, 0), 1);
+				}
+				
+				Console.WriteLine($"No rating found for organizer {organizerId}, using default value");
+				return 0.7;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error fetching organizer rating: {ex.Message}");
+				return 0.7;
+			}
+		}
+		
+		private async Task<int> GetOrganizerFollowerCountAsync(int organizerId)
+		{
+			try
+			{
+				var organizer = await _organiserLogic.GetOrganiserByIdAsync(organizerId);
+				
+				if (organizer != null && organizer.FollowerCount.HasValue)
+				{
+					return organizer.FollowerCount.Value;
+				}
+				
+				Console.WriteLine($"No follower count found for organizer {organizerId}, using default value");
+				return 50;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error fetching organizer follower count: {ex.Message}");
+				return 50;
 			}
 		}
 

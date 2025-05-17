@@ -1,5 +1,6 @@
 ﻿using eventplus.models.Domain.Events;
 using eventplus.models.Domain.Sectors;
+using eventplus.models.Domain.Users;
 using eventplus.models.Infrastructure.context;
 using eventplus.models.Infrastructure.Persistance;
 using eventplus.models.Infrastructure.Persistance.IRepositories;
@@ -21,6 +22,7 @@ namespace eventplus.models.Infrastructure.UnitOfWork
 		private ICategoryRepository? _categories;
 		private ISectorPriceRepository? _sectorPrices;
 		private ISeatingRepository? _seatings;
+		private IOrganiserRepository? _organisers;
 
 		public UnitOfWork(EventPlusContext context)
 		{
@@ -38,6 +40,7 @@ namespace eventplus.models.Infrastructure.UnitOfWork
 		public ICategoryRepository Categories => _categories ??= new CategoryRepository(_context);
 		public ISectorPriceRepository SectorPrices => _sectorPrices ??= new SectorPriceRepository(_context);
 		public ISeatingRepository Seatings => _seatings ??= new SeatingRepository(_context);
+		public IOrganiserRepository Organisers => _organisers ??= new OrganiserRepository(_context);
 
 		public async Task SaveAsync()
 		{

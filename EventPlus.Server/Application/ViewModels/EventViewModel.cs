@@ -1,4 +1,6 @@
-﻿namespace EventPlus.Server.Application.ViewModels
+﻿using System;
+
+namespace EventPlus.Server.Application.ViewModels
 {
     public class EventViewModel
     {

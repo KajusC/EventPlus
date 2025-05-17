@@ -25,5 +25,7 @@ namespace EventPlus.Server.Application.IHandlers
             List<SectorViewModel> sectors,
 			List<SectorPriceViewModel> sectorPrice,
 			List<SeatingViewModel> seating);
+
+        Task<List<EventViewModel>> GetEventsByCategoryAsync(int categoryId);
     }
 }

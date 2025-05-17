@@ -5,6 +5,7 @@ using eventplus.models.Infrastructure.UnitOfWork;
 using EventPlus.Server.Application.IHandlers;
 using EventPlus.Server.Application.ViewModels;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EventPlus.Server.Application.Handlers
 {
@@ -294,6 +295,22 @@ namespace EventPlus.Server.Application.Handlers
 			await _unitOfWork.Sectors.CreateSectorAsync(eventSectorsMapped);
 			await _unitOfWork.SaveAsync();
 			return eventSectorsMapped;
+		}
+
+		public async Task<List<EventViewModel>> GetEventsByCategoryAsync(int categoryId)
+		{
+			if (categoryId <= 0)
+			{
+				throw new ArgumentOutOfRangeException(nameof(categoryId), "Category ID must be greater than zero.");
+			}
+			
+			// Get all events
+			var allEvents = await _unitOfWork.Events.GetAllAsync();
+			
+			// Filter by category
+			var filteredEvents = allEvents.Where(e => e.Category == categoryId).ToList();
+			
+			return _mapper.Map<List<EventViewModel>>(filteredEvents);
 		}
 	}
 }

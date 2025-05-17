@@ -3,6 +3,7 @@ using eventplus.models.Domain.Events;
 using eventplus.models.Domain.Feedbacks;
 using eventplus.models.Domain.Sectors;
 using eventplus.models.Domain.Tickets;
+using eventplus.models.Domain.Users;
 using EventPlus.Server.Application.ViewModels;
 
 namespace EventPlus.Server
@@ -12,6 +13,8 @@ namespace EventPlus.Server
         public AutoMapper()
         {
             CreateMap<Event, EventViewModel>()
+                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate.HasValue ? src.StartDate.Value : (DateOnly?)null))
+                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate.HasValue ? src.EndDate.Value : (DateOnly?)null))
                 .ForMember(dest => dest.FkEventLocationidEventLocation, opt => opt.MapFrom(src => src.FkEventLocationidEventLocation))
                 .ForMember(dest => dest.FkOrganiseridUser, opt => opt.MapFrom(src => src.FkOrganiseridUser))
                 .ReverseMap();
@@ -64,6 +67,9 @@ namespace EventPlus.Server
                 .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Score))
                 .ForMember(dest => dest.FkEventidEvent, opt => opt.MapFrom(src => src.FkEventidEvent))
                 .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
+                .ReverseMap();
+
+            CreateMap<Organiser, OrganiserViewModel>()
                 .ReverseMap();
         }
     }

@@ -129,6 +129,7 @@ namespace EventPlus.Server
             builder.Services.AddScoped<ICategoryLogic, CategoryLogic>();
             builder.Services.AddScoped<ISectorPriceLogic, SectorPriceLogic>();
             builder.Services.AddScoped<ISeatingLogic, SeatingLogic>();
+            builder.Services.AddScoped<IOrganiserLogic, OrganiserLogic>();
 
             // Authentication - Use role-based auth service
             builder.Services.AddScoped<IRoleBasedAuthService, RoleBasedAuthService>();

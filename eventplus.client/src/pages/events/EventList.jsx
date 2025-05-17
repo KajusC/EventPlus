@@ -16,14 +16,16 @@ import {
 	Search as SearchIcon,
 	Add as AddIcon,
 	FilterList,
+	Recommend as RecommendIcon,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 
 import EventCard from "../../components/events/EventCard";
-import { fetchEvents } from "../../services/eventService";
+import { fetchEvents, fetchRecommendedEvents } from "../../services/eventService";
 
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorDisplay from "../../components/shared/ErrorDisplay";
+import ToastNotification from "../../components/shared/ToastNotification";
 import { useAuth } from "../../context/AuthContext";
 
 function EventList() {
@@ -31,24 +33,59 @@ function EventList() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
+	const [showingRecommended, setShowingRecommended] = useState(false);
+	const [toast, setToast] = useState({
+		open: false,
+		message: "",
+		severity: "info"
+	});
 	const { isAdmin, isOrganizer } = useAuth();
 
-	useEffect(() => {
-		const getEvents = async () => {
-			try {
-				setIsLoading(true);
-				const data = await fetchEvents();
-				setEvents(data);
-				setError(null);
-			} catch (error) {
-				console.error("Error fetching events:", error);
-				setError("Failed to load events. Please try again later.");
-			} finally {
-				setIsLoading(false);
-			}
-		};
+	const fetchAllEvents = async () => {
+		try {
+			setIsLoading(true);
+			const data = await fetchEvents();
+			setEvents(data);
+			setError(null);
+			setShowingRecommended(false);
+		} catch (error) {
+			console.error("Error fetching events:", error);
+			setError("Failed to load events. Please try again later.");
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
-		getEvents();
+	const handleRecommendEvents = async () => {
+		try {
+			setIsLoading(true);
+			const data = await fetchRecommendedEvents();
+			setEvents(data);
+			setShowingRecommended(true);
+			setError(null);
+			setToast({
+				open: true,
+				message: "Showing recommended events based on ratings, category performance, and organizer reputation!",
+				severity: "success"
+			});
+		} catch (error) {
+			if (error.response?.status === 404) {
+				setToast({
+					open: true,
+					message: "No highly rated events found. Try viewing all events instead.",
+					severity: "info"
+				});
+				return;
+			}
+			console.error("Error fetching recommended events:", error);
+			setError("Failed to load recommended events. Please try again later.");
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchAllEvents();
 	}, []);
 
 	const filteredEvents = searchTerm
@@ -204,51 +241,78 @@ function EventList() {
 					maxWidth="lg"
 					sx={{ mt: -5, position: "relative", zIndex: 3 }}
 				>
-					{(isAdmin() || isOrganizer()) && (
-											<Box
-											sx={{
-												display: "flex",
-												justifyContent: "space-between",
-												alignItems: "center",
-												mb: 4,
-												backgroundColor: "white",
-												borderRadius: 3,
-												p: 3,
-												boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-											}}
-										>
-											<Typography
-												variant="h5"
-												component="h2"
-												fontWeight={700}
-												color="text.primary"
-											>
-												{filteredEvents.length === 0 && !isLoading
-													? "No events found"
-													: "Upcoming Events"}
-											</Typography>
-											<Button
-												component={Link}
-												to="/eventinsert"
-												variant="contained"
-												startIcon={<AddIcon />}
-												sx={{
-													background: "linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)",
-													boxShadow: "0 3px 5px 2px rgba(106, 17, 203, .3)",
-													color: "white",
-													fontWeight: 600,
-													borderRadius: 2,
-													px: 3,
-													"&:hover": {
-														boxShadow: "0 5px 8px 2px rgba(106, 17, 203, .35)",
-													},
-												}}
-											>
-												Create Event
-											</Button>
-										</Box>
+					<Box
+						sx={{
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+							mb: 4,
+							backgroundColor: "white",
+							borderRadius: 3,
+							p: 3,
+							boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+						}}
+					>
+						<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+							<Typography
+								variant="h5"
+								component="h2"
+								fontWeight={700}
+								color="text.primary"
+							>
+								{filteredEvents.length === 0 && !isLoading
+									? "No events found"
+									: showingRecommended 
+										? "Recommended Events"
+										: "Upcoming Events"}
+							</Typography>
+							<Button
+								variant="outlined"
+								startIcon={<RecommendIcon />}
+								onClick={handleRecommendEvents}
+								sx={{
+									borderColor: showingRecommended ? "#6a11cb" : "rgba(0,0,0,0.23)",
+									color: showingRecommended ? "#6a11cb" : "text.secondary",
+									"&:hover": {
+										borderColor: "#6a11cb",
+										backgroundColor: "rgba(106,17,203,0.04)",
+									},
+								}}
+							>
+								{showingRecommended ? "Smart Recommendations" : "Smart Recommendations"}
+							</Button>
+							{showingRecommended && (
+								<Button
+									variant="text"
+									onClick={fetchAllEvents}
+									sx={{ color: "text.secondary" }}
+								>
+									Show All Events
+								</Button>
+							)}
+						</Box>
+						{(isAdmin() || isOrganizer()) && (
+							<Button
+								component={Link}
+								to="/eventinsert"
+								variant="contained"
+								startIcon={<AddIcon />}
+								sx={{
+									background: "linear-gradient(45deg, #6a11cb 30%, #2575fc 90%)",
+									boxShadow: "0 3px 5px 2px rgba(106, 17, 203, .3)",
+									color: "white",
+									fontWeight: 600,
+									borderRadius: 2,
+									px: 3,
+									"&:hover": {
+										boxShadow: "0 5px 8px 2px rgba(106, 17, 203, .35)",
+									},
+								}}
+							>
+								Create Event
+							</Button>
 						)}
-
+					</Box>
 
 					{/* Use shared components for loading and error states */}
 					{isLoading ? (
@@ -273,7 +337,12 @@ function EventList() {
 							</Typography>
 							<Button
 								variant="outlined"
-								onClick={() => setSearchTerm("")}
+								onClick={() => {
+									setSearchTerm("");
+									if (showingRecommended) {
+										fetchAllEvents();
+									}
+								}}
 								sx={{
 									borderColor: "#6a11cb",
 									color: "#6a11cb",
@@ -283,12 +352,19 @@ function EventList() {
 									},
 								}}
 							>
-								Clear Search
+								Show All Events
 							</Button>
 						</Box>
 					)}
 				</Container>
 			</Box>
+
+			<ToastNotification
+				open={toast.open}
+				message={toast.message}
+				severity={toast.severity}
+				onClose={() => setToast({ ...toast, open: false })}
+			/>
 		</>
 	);
 }
