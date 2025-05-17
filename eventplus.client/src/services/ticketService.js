@@ -27,6 +27,18 @@ export const deleteTicket = async (id) => {
   return response.data;
 };
 
+export const downloadTicketPdf = async (ticketId) => {
+    try {
+        const response = await apiClient.get(`${API_ENDPOINT}/generatePdf/${ticketId}`, {
+            responseType: 'blob',
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error downloading ticket PDF:', error);
+        throw error;
+    }
+};
+
 export const scanTicket = async (qrCode) => {
   const response = await Promise.race([
     apiClient.post(`${API_ENDPOINT}/ScanQrCode`, qrCode),

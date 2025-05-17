@@ -4,6 +4,9 @@ using eventplus.models.Infrastructure.Persistance.IRepositories;
 using eventplus.models.Infrastructure.UnitOfWork;
 using EventPlus.Server.Application.IHandlers;
 using EventPlus.Server.Application.ViewModels;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using QRCoder;
 
 namespace EventPlus.Server.Application.Handlers
 {
@@ -74,6 +77,80 @@ namespace EventPlus.Server.Application.Handlers
             var tickets = await _unitOfWork.Tickets.GetAllAsync();
             return tickets.Any(t => t.FkEventidEvent == eventId);
         }
+        
+        public async Task<byte[]> GenerateTicketPdfAsync(int ticketId)
+        {
+            if (ticketId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(ticketId), "Ticket ID must be greater than zero.");
+            }
+            
+            var ticket = await _unitOfWork.Tickets.GetByIdAsync(ticketId);
+            if (ticket == null)
+            {
+                throw new KeyNotFoundException($"Ticket with ID {ticketId} not found.");
+            }
+            
+            var eventInfo = await _unitOfWork.Events.GetByIdAsync(ticket.FkEventidEvent);
+            if (eventInfo == null)
+            {
+                throw new KeyNotFoundException($"Event with ID {ticket.FkEventidEvent} not found.");
+            }
+            var seating = await _unitOfWork.Seatings.GetSeatingByIdAsync(ticket.FkSeatingidSeating);
+            if (seating == null)
+            {
+                throw new KeyNotFoundException($"Seating with ID {ticket.FkSeatingidSeating} not found.");
+            }
+            
+            var pdfStream = new MemoryStream();
+            var document = new Document(PageSize.A4, 50, 50, 50, 50);
+            var writer = PdfWriter.GetInstance(document, pdfStream);
+            document.Open();
+
+            // Pridėti antraštę
+            var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 20);
+            var title = new Paragraph($"Event Ticket: {eventInfo?.Name ?? "Event #" + ticket.FkEventidEvent}", titleFont);
+            title.Alignment = Element.ALIGN_CENTER;
+            document.Add(title);
+            document.Add(new Paragraph(" ")); // Add space
+
+            // Pridėti bilieto informaciją
+            var contentFont = FontFactory.GetFont(FontFactory.HELVETICA, 12);
+            document.Add(new Paragraph($"Ticket ID: {ticket.IdTicket}", contentFont));
+            document.Add(new Paragraph($"Event: {eventInfo?.Name ?? "Unknown Event"}", contentFont));
+            document.Add(new Paragraph($"Date: {ticket.GenerationDate}", contentFont));
+            document.Add(new Paragraph($"Price: {ticket.Price} €", contentFont));
+            document.Add(new Paragraph($"Seat: Row {seating?.Row ?? 0}, Place {seating?.Place ?? 0}", contentFont));
+            document.Add(new Paragraph($"Status: {ticket.FkTicketstatusNavigation?.Name ?? ticket.FkTicketstatus.ToString()}", contentFont));
+            document.Add(new Paragraph($"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm:ss}", contentFont));
+            document.Add(new Paragraph(" ")); // Add space
+
+            // Generuoti QR kodą
+            QRCodeGenerator qrGenerator = new QRCodeGenerator();
+            QRCodeData qrCodeData = qrGenerator.CreateQrCode(ticket.QrCode, QRCodeGenerator.ECCLevel.Q);
+            BitmapByteQRCode qrCode = new BitmapByteQRCode(qrCodeData);
+            byte[] qrCodeBytes = qrCode.GetGraphic(20);
+
+            // Pridėti QR kodą į dokumentą
+            using (var qrCodeStream = new MemoryStream(qrCodeBytes))
+            {
+                var qrImage = Image.GetInstance(qrCodeStream);
+                qrImage.Alignment = Element.ALIGN_CENTER;
+                qrImage.ScaleToFit(150, 150);
+                document.Add(qrImage);
+            }
+
+            // Pridėti validacijos tekstą
+            var validationFont = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10);
+            var validationText = new Paragraph("This ticket is valid only when presented with ID. QR code will be scanned at entrance.", validationFont);
+            validationText.Alignment = Element.ALIGN_CENTER;
+            document.Add(validationText);
+
+            document.Close();
+            writer.Close();
+            return pdfStream.ToArray();
+        }
+        
 
         public async Task<TicketValidationResult> DecryptQrCode(string qrCode)
         {

@@ -56,6 +56,24 @@ namespace EventPlus.Server.Controllers
             var result = await _ticketLogic.DeleteTicketAsync(id);
             return Ok(result);
         }
+
+        [HttpGet("generatePdf/{ticketId}")]
+        public async Task<IActionResult> GenerateTicketPdf(int ticketId)
+        {
+            try
+            {
+                var pdfBytes = await _ticketLogic.GenerateTicketPdfAsync(ticketId);
+                return File(pdfBytes, "application/pdf", $"ticket_{ticketId}.pdf");
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Ticket not found");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error generating ticket: {ex.Message}");
+            }
+        }       
         [HttpPost("ScanQrCode")]
         public async Task<ActionResult<TicketValidationResult>> ScanQrCode([FromBody] string qrCode)
         {
