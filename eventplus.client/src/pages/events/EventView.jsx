@@ -51,6 +51,7 @@ const getCategoryColor = (categoryId) => {
 function EventView() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { isAdmin, isOrganizer } = useAuth();
     
     const [event, setEvent] = useState(null);
     const [categories, setCategories] = useState([]);
@@ -88,6 +89,12 @@ function EventView() {
             .then(data => setCategories(data))
             .catch(err => console.error("Error fetching categories:", err));
     }, []);
+
+    useEffect(() => {
+        fetchFeedbacksByEventId(id)
+            .then(data => setFeedbacks(data))
+            .catch(err => console.error("Error fetching feedbacks:", err));
+    }, [id]);
 
     useEffect(() => {
         setIsLoadingTickets(true);
