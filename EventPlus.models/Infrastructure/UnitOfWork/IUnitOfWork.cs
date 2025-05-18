@@ -6,7 +6,7 @@ using eventplus.models.Infrastructure.Persistance.Repositories;
 
 namespace eventplus.models.Infrastructure.UnitOfWork
 {
-    public interface IUnitOfWork
+public interface IUnitOfWork
     {
         IOrganiserRepository Organisers { get; }
         IEventRepository Events { get; }
@@ -21,6 +21,8 @@ namespace eventplus.models.Infrastructure.UnitOfWork
         ISectorPriceRepository SectorPrices { get; }
         ISeatingRepository Seatings { get; }
         ITicketStatusRepository TicketStatus { get; }
+        IUserRequestAnswerRepository UserRequestAnswers { get; }
+		    IQuestionRepository Questions { get; }
         Task SaveAsync();
     }
 }
