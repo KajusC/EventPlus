@@ -22,7 +22,7 @@ public interface IUnitOfWork
         ISeatingRepository Seatings { get; }
         ITicketStatusRepository TicketStatus { get; }
         IUserRequestAnswerRepository UserRequestAnswers { get; }
-		    IQuestionRepository Questions { get; }
+		IQuestionRepository Questions { get; }
         Task SaveAsync();
     }
 }
