@@ -345,5 +345,17 @@ namespace EventPlus.Server.Application.Handlers
 		await _unitOfWork.SaveAsync();
 		return true;
 	}
-	}
+
+        public async Task<List<EventViewModel>> GetEventsByUserTicketsAsync(int userId)
+        {
+			var events = await _unitOfWork.Events.GetEventsByUserTicketsAsync(userId);
+			return _mapper.Map<List<EventViewModel>>(events);
+        }
+
+		public async Task<List<EventViewModel>> GetEventsByOrganiserIdAsync(int organiserId)
+		{
+			var events = await _unitOfWork.Events.GetEventsByOrganiserIdAsync(organiserId);
+			return _mapper.Map<List<EventViewModel>>(events);
+		}
+    }
 }

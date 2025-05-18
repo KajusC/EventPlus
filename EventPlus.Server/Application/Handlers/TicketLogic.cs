@@ -266,6 +266,12 @@ namespace EventPlus.Server.Application.Handlers
             return _unitOfWork.Tickets.UpdateTicketScanDate(ticketId);
         }
 
+        public async Task<List<TicketViewModel>> GetTicketsByUserIdAsync(int userId)
+        {
+            var tickets = await _unitOfWork.Tickets.GetTicketsByUserIdAsync(userId);
+            return _mapper.Map<List<TicketViewModel>>(tickets);
+        }
+
         private async Task<bool> ValidateTicketData(Ticket ticket)
         {
             if (ticket == null)

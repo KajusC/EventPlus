@@ -11,8 +11,9 @@ namespace EventPlus.Server.Application.IHandlers
         Task<List<TicketViewModel>> GetAllTicketsAsync();
         Task<bool> IfEventHasTickets(int eventId);
         Task<byte[]> GenerateTicketPdfAsync(int ticketId);
-        
         Task<TicketValidationResult> DecryptQrCode(string qrCode);
         Task<bool> UpdateTicketScanTime(int ticketId);
+        Task<List<TicketViewModel>> GetTicketsByUserIdAsync(int userId);
+
     }
 }

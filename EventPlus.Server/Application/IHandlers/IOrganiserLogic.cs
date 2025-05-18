@@ -9,5 +9,6 @@ namespace EventPlus.Server.Application.IHandlers
         Task<OrganiserViewModel> CreateOrganiserAsync(OrganiserViewModel organiser);
         Task<bool> UpdateOrganiserAsync(OrganiserViewModel organiser);
         Task<bool> DeleteOrganiserAsync(int id);
+        Task<double> GetOrganiserRating(int organiserId);
     }
 } 

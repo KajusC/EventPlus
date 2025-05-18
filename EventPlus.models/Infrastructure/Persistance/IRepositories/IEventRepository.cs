@@ -9,5 +9,7 @@ namespace eventplus.models.Infrastructure.Persistance.IRepositories
         Task<List<Event>> GetEventsByUserIdAsync(int userId);
         Task<List<Event>> GetEventsByCategoryIdAsync(int categoryId);
         Task<List<Event>> GetEventsByDateRangeAsync(DateOnly startDate, DateOnly endDate);
+        Task<List<Event>> GetEventsByUserTicketsAsync(int userId);
+        Task<List<Event>> GetEventsByOrganiserIdAsync(int organiserId);
     }
 }

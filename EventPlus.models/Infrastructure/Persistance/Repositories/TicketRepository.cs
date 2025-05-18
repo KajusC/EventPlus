@@ -104,5 +104,15 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
             ticket.FkTicketstatus = ticketStatus.IdStatus;
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<List<Ticket>> GetTicketsByUserIdAsync(int userId)
+        {
+            var tickets = await _dbSet
+                .Include(t => t.UserTicket)
+                .ThenInclude(ut => ut.FkUseridUserNavigation)
+                .Where(t => t.UserTicket.FkUseridUser == userId)
+                .ToListAsync();
+            return tickets;
+        }
     }
 }

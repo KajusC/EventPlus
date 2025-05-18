@@ -8,5 +8,6 @@ namespace eventplus.models.Infrastructure.Persistance.IRepositories
         Task<int> GetIdByQrCode(string qrCode);
         Task<bool> UpdateTicketStatusInvalid(int ticketId);
         Task<bool> UpdateTicketStatusRead(int ticketId);
+        Task<List<Ticket>> GetTicketsByUserIdAsync(int userId);
     }
 }
