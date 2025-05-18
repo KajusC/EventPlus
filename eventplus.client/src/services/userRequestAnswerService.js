@@ -56,6 +56,19 @@ export const createUserRequestAnswer = async (userRequestAnswerData) => {
     }
 };
 
+export const createBulkUserRequestAnswers = async (answersArray) => {
+    try {
+        const response = await apiClient.post(`${API_ENDPOINT}/bulk`, answersArray);
+        return response.data;
+    } catch (error) {
+        console.error('Klaida kuriant atsakymus masiškai:', error);
+        if (error.response) {
+            console.error('Serverio atsakymas (bulk):', error.response.data);
+        }
+        throw error;
+    }
+};
+
 export const updateUserRequestAnswer = async (UserRequestAnswerData) => {
     try {
         const response = await apiClient.put(API_ENDPOINT, UserRequestAnswerData);

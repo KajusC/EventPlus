@@ -27,20 +27,18 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/ico
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import { fetchQuestions, createQuestion, updateQuestion, deleteQuestion } from '../../services/questionService';
-import EventView from '../events/EventView';
 
 function QuestionsTab() {
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
-    const [dialogType, setDialogType] = useState('add'); // 'add' arba 'edit'
+    const [dialogType, setDialogType] = useState('add');
     const [currentQuestion, setCurrentQuestion] = useState({ formulatedQuestion: '', fkAdministratoridUser: null });
     
     const { currentUser } = useAuth();
     const { showSuccess, showError } = useNotification();
     
-    // Užkrauti klausimus
     const loadQuestions = async () => {
         try {
             setLoading(true);
@@ -59,7 +57,6 @@ function QuestionsTab() {
         loadQuestions();
     }, []);
     
-    // Dialogo atidarymas - priima 'add' arba 'edit' tipą ir pasirinktą klausimą
     const handleOpenDialog = (type, question = null) => {
         setDialogType(type);
         if (type === 'edit' && question) {
@@ -70,12 +67,10 @@ function QuestionsTab() {
         setOpenDialog(true);
     };
     
-    // Dialogo uždarymas
     const handleCloseDialog = () => {
         setOpenDialog(false);
     };
     
-    // Klausimo teksto keitimas
     const handleQuestionChange = (e) => {
         setCurrentQuestion({
             ...currentQuestion,
@@ -83,7 +78,6 @@ function QuestionsTab() {
         });
     };
     
-    // Klausimo išsaugojimas (sukūrimas arba redagavimas)
     const handleSaveQuestion = async () => {
         if (!currentQuestion.formulatedQuestion.trim()) {
             showError('Klausimo tekstas negali būti tuščias');
@@ -92,7 +86,6 @@ function QuestionsTab() {
         
         try {
             if (dialogType === 'add') {
-                // Sukurti naują klausimą
                 await createQuestion({
                     IdQuestion: 0,
                     FormulatedQuestion: currentQuestion.formulatedQuestion,
@@ -101,7 +94,6 @@ function QuestionsTab() {
                 });
                 showSuccess('Klausimas sėkmingai sukurtas!');
             } else {
-                // Atnaujinti esamą klausimą
                 await updateQuestion({
                     IdQuestion: currentQuestion.idQuestion,
                     FormulatedQuestion: currentQuestion.formulatedQuestion,
@@ -111,7 +103,6 @@ function QuestionsTab() {
                 showSuccess('Klausimas sėkmingai atnaujintas!');
             }
             
-            // Perkrauti klausimų sąrašą
             await loadQuestions();
             handleCloseDialog();
         } catch (error) {
@@ -119,7 +110,6 @@ function QuestionsTab() {
         }
     };
     
-    // Klausimo ištrynimas
     const handleDeleteQuestion = async (questionId) => {
         if (!window.confirm('Ar tikrai norite ištrinti šį klausimą?')) {
             return;
@@ -208,7 +198,6 @@ function QuestionsTab() {
                 </Table>
             </TableContainer>
             
-            {/* Klausimo pridėjimo/redagavimo dialogas */}
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
                 <DialogTitle>
                     {dialogType === 'add' ? 'Pridėti naują klausimą' : 'Redaguoti klausimą'}
@@ -277,20 +266,17 @@ function AdminDashboard() {
                 </Tabs>
             </Paper>
             
-            
             {tabValue === 0 && <QuestionsTab />}
             
             {tabValue === 1 && (
                 <Box>
                     <Typography variant="h6" sx={{ mb: 2 }}>Vartotojų valdymas</Typography>
-                    
                 </Box>
             )}
             
             {tabValue === 2 && (
                 <Box>
                     <Typography variant="h6" sx={{ mb: 2 }}>Renginių valdymas</Typography>
-                    {EventView}
                 </Box>
             )}
         </Container>

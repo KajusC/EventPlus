@@ -60,6 +60,36 @@ namespace EventPlus.Server.Application.Handlers
             return await _unitOfWork.UserRequestAnswers.CreateAsync(UserRequestAnswerEntity);
         }
 
+        public async Task<bool> CreateBulkUserRequestAnswersAsync(List<UserRequestAnswerViewModel> answersVMs, int userId)
+        {
+            if (answersVMs == null || !answersVMs.Any())
+            {
+                throw new ArgumentNullException(nameof(answersVMs), "Atsakymų sąrašas negali būti tuščias.");
+            }
+
+            var answerEntities = new List<UserRequestAnswer>();
+            foreach (var answerVM in answersVMs)
+            {
+                if (string.IsNullOrWhiteSpace(answerVM.Answer))
+                {
+                    continue; 
+                }
+                // Svarbu: UserRequestAnswerViewModel dabar turi turėti FkUseridUser,
+                // bet mes jį priskirsime tiesiogiai UserRequestAnswerUser objekte.
+                // UserRequestAnswer domeno objektas neturi FkUseridUser.
+                var entity = _mapper.Map<UserRequestAnswer>(answerVM); 
+                
+                // UserRequestAnswerUser objektas bus sukurtas repozitorijoje arba čia,
+                // jei repozitorija priima sudėtingesnę struktūrą.
+                // Dabar tiesiog perduodame userId į repozitoriją kartu su atsakymais.
+                answerEntities.Add(entity);
+            }
+
+            if (!answerEntities.Any()) return false;
+
+            // Pakeičiame kvietimą, kad repozitorija žinotų, kuriam vartotojui priskirti
+            return await _unitOfWork.UserRequestAnswers.CreateBulkUserRequestAnswersWithUserAsync(answerEntities, userId);
+        }
         public async Task<bool> UpdateUserRequestAnswerAsync(UserRequestAnswerViewModel UserRequestAnswer)
         {
             if (UserRequestAnswer == null)

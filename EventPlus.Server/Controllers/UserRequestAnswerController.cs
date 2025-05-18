@@ -2,8 +2,11 @@ using EventPlus.Server.Application.IHandlers;
 using EventPlus.Server.Application.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Linq;
 using System;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace EventPlus.Server.Controllers
 {
@@ -75,7 +78,6 @@ namespace EventPlus.Server.Controllers
 
             try
             {
-                // Validuojame duomenis prieš išsaugojimą
                 var isValid = await _UserRequestAnswerLogic.CheckUserRequestAnswerDataAsync(UserRequestAnswer);
                 if (!isValid)
                 {
@@ -94,6 +96,42 @@ namespace EventPlus.Server.Controllers
             catch (Exception ex)
             {
                 return BadRequest($"Klaida kuriant vartotojo užklausą: {ex.Message}");
+            }
+        }
+
+        [HttpPost("bulk")]
+        [Authorize]
+        public async Task<IActionResult> CreateBulkAnswers([FromBody] List<UserRequestAnswerViewModel> answers)
+        {
+            if (answers == null || !answers.Any())
+            {
+                return BadRequest("Atsakymų sąrašas negali būti tuščias.");
+            }
+
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return Unauthorized("Vartotojo ID nerastas arba neteisingas token'e.");
+            }
+
+            // Validacija ir FkUseridUser priskyrimas logikos sluoksnyje
+            try
+            {
+                var result = await _UserRequestAnswerLogic.CreateBulkUserRequestAnswersAsync(answers, userId);
+                if (result)
+                {
+                    return Ok(new { message = "Visi atsakymai sėkmingai išsaugoti." });
+                }
+                return BadRequest("Nepavyko išsaugoti atsakymų.");
+            }
+            catch (ArgumentException ex) // Gaudo specifines validacijos klaidas iš logikos
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Log error ex
+                return StatusCode(500, "Vidinė serverio klaida apdorojant atsakymus.");
             }
         }
 

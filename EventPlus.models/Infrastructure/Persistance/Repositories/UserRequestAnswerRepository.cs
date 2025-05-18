@@ -16,10 +16,14 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
 
         public async Task<List<UserRequestAnswer>> GetUserRequestAnswersByUserIdAsync(int userId)
         {
+            if (userId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(userId), "User ID must be greater than zero.");
+            }
             return await _context.UserRequestAnswers
-                .Include(u => u.FkQuestionidQuestionNavigation)
-                .Include(u => u.UserRequestAnswerUser)
-                .Where(u => u.UserRequestAnswerUser != null && u.UserRequestAnswerUser.FkUseridUser == userId)
+                .Include(ura => ura.FkQuestionidQuestionNavigation) // Įtraukia Question informaciją
+                .Include(ura => ura.UserRequestAnswerUser) // Įtraukia UserRequestAnswerUser informaciją
+                .Where(ura => ura.UserRequestAnswerUser != null && ura.UserRequestAnswerUser.FkUseridUser == userId)
                 .ToListAsync();
         }
 
@@ -59,8 +63,11 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
         }
         public async Task<bool> HasUserAnsweredQuestionAsync(int userId, int questionId)
         {
-            return await _dbSet.AnyAsync(ura => ura.UserRequestAnswerUser.FkUseridUser == userId && ura.FkQuestionidQuestionNavigation.IdQuestion == questionId);
+            return await _dbSet
+                .Include(ura => ura.UserRequestAnswerUser)
+                .AnyAsync(ura => ura.UserRequestAnswerUser != null && ura.UserRequestAnswerUser.FkUseridUser == userId && ura.FkQuestionidQuestion == questionId);
         }
+        
         public async Task<bool> CreateBulkUserRequestAnswersAsync(List<UserRequestAnswer> userRequestAnswers)
         {
             if (userRequestAnswers == null || !userRequestAnswers.Any())
@@ -70,6 +77,50 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
 
             await _dbSet.AddRangeAsync(userRequestAnswers);
             return await _context.SaveChangesAsync() > 0;
+        }
+        public async Task<bool> CreateBulkUserRequestAnswersWithUserAsync(List<UserRequestAnswer> userRequestAnswers, int userId)
+        {
+            if (userRequestAnswers == null || !userRequestAnswers.Any())
+            {
+                throw new ArgumentNullException(nameof(userRequestAnswers), "Atsakymų sąrašas negali būti tuščias.");
+            }
+            if (userId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(userId), "Neteisingas vartotojo ID.");
+            }
+
+            // Pridedame atsakymus. EF Core automatiškai priskirs ID po AddRangeAsync,
+            // bet mes juos gausime tik po SaveChangesAsync.
+            // Todėl UserRequestAnswerUser kūrimą atliekame po pirminio išsaugojimo.
+
+            await _dbSet.AddRangeAsync(userRequestAnswers);
+            var saved = await _context.SaveChangesAsync() > 0;
+
+            if (saved)
+            {
+                // Dabar, kai atsakymai turi ID, sukuriame UserRequestAnswerUser įrašus
+                var userAnswersLinks = new List<UserRequestAnswerUser>();
+                foreach (var answer in userRequestAnswers)
+                {
+                    // answer.IdUserRequestAnswer dabar turėtų turėti sugeneruotą reikšmę
+                    if (answer.IdUserRequestAnswer > 0) // Patikrinam ar ID tikrai priskirtas
+                    {
+                        userAnswersLinks.Add(new UserRequestAnswerUser
+                        {
+                            FkUserRequestAnsweridUserRequestAnswer = answer.IdUserRequestAnswer,
+                            FkUseridUser = userId
+                        });
+                    }
+                }
+
+                if (userAnswersLinks.Any())
+                {
+                    _context.UserRequestAnswerUsers.AddRange(userAnswersLinks);
+                    return await _context.SaveChangesAsync() > 0;
+                }
+                return true; // Atsakymai išsaugoti, bet nebuvo ką susieti (neturėtų įvykti, jei answer.IdUserRequestAnswer visada > 0)
+            }
+            return false; // Nepavyko išsaugoti atsakymų
         }
     }
 }

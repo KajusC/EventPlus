@@ -80,7 +80,16 @@ namespace EventPlus.Server
                 .ForMember(dest => dest.IdUserRequestAnswer, opt => opt.MapFrom(src => src.IdUserRequestAnswer))
                 .ForMember(dest => dest.Answer, opt => opt.MapFrom(src => src.Answer))
                 .ForMember(dest => dest.FkQuestionidQuestion, opt => opt.MapFrom(src => src.FkQuestionidQuestion))
-                .ReverseMap();
+                .ForMember(dest => dest.QuestionText, opt => opt.MapFrom(src => src.FkQuestionidQuestionNavigation != null ? src.FkQuestionidQuestionNavigation.FormulatedQuestion : null)) // Mapinam klausimo tekstą
+                .ForMember(dest => dest.FkUseridUser, opt => opt.MapFrom(src => src.UserRequestAnswerUser != null ? (int?)src.UserRequestAnswerUser.FkUseridUser : null))
+                .ForMember(dest => dest.FkAdministratoridUser, opt => opt.MapFrom(src => src.UserRequestAnswerAdministrator != null ? (int?)src.UserRequestAnswerAdministrator.FkAdministratoridUser : null))
+                .ForMember(dest => dest.FkOrganiseridUser, opt => opt.MapFrom(src => src.UserRequestAnswerOrganiser != null ? (int?)src.UserRequestAnswerOrganiser.FkOrganiseridUser : null));
+
+            CreateMap<UserRequestAnswerViewModel, UserRequestAnswer>()
+                .ForMember(dest => dest.IdUserRequestAnswer, opt => opt.MapFrom(src => src.IdUserRequestAnswer))
+                .ForMember(dest => dest.Answer, opt => opt.MapFrom(src => src.Answer))
+                .ForMember(dest => dest.FkQuestionidQuestion, opt => opt.MapFrom(src => src.FkQuestionidQuestion));
+               
             CreateMap<Question, QuestionViewModel>()
                 .ForMember(dest => dest.IdQuestion, opt => opt.MapFrom(src => src.IdQuestion))
                 .ForMember(dest => dest.FormulatedQuestion, opt => opt.MapFrom(src => src.FormulatedQuestion))

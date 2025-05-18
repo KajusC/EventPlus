@@ -1,27 +1,25 @@
 import React, { useState } from 'react';
-import { 
+import {
     Card, 
     CardContent, 
     Typography, 
     Box, 
-    Chip, 
     IconButton, 
+    Collapse, 
+    Divider,
     TextField,
-    Button,
-    Collapse,
-    Divider
+    Button
 } from '@mui/material';
 import { 
-    Edit as EditIcon,
+    Edit as EditIcon, 
     Delete as DeleteIcon,
     ExpandMore as ExpandMoreIcon,
     ExpandLess as ExpandLessIcon,
     QuestionAnswer as QuestionIcon
 } from '@mui/icons-material';
-import { formatDate } from '../../utils/dateFormatter';
 import { useAuth } from '../../context/AuthContext';
-import { updateUserRequestAnswer, deleteUserRequestAnswer } from '../../services/userRequestAnswerService';
 import { useNotification } from '../../context/NotificationContext';
+import { updateUserRequestAnswer, deleteUserRequestAnswer } from '../../services/userRequestAnswerService';
 
 const UserRequestAnswerItem = ({ UserRequestAnswer, onUpdate, onDelete }) => {
     const [expanded, setExpanded] = useState(false);
@@ -60,21 +58,21 @@ const UserRequestAnswerItem = ({ UserRequestAnswer, onUpdate, onDelete }) => {
             };
             
             await updateUserRequestAnswer(updatedRequest);
-            showSuccess('Užklausa sėkmingai atnaujinta!');
+            showSuccess('Atsakymas sėkmingai atnaujintas!');
             setIsEditing(false);
             
             if (onUpdate) {
                 onUpdate(updatedRequest);
             }
         } catch (error) {
-            showError(`Klaida atnaujinant užklausą: ${error.message}`);
+            showError(`Klaida atnaujinant atsakymą: ${error.message}`);
         } finally {
             setIsSubmitting(false);
         }
     };
     
     const handleDelete = async () => {
-        if (!window.confirm('Ar tikrai norite ištrinti šią užklausą?')) {
+        if (!window.confirm('Ar tikrai norite ištrinti šį atsakymą?')) {
             return;
         }
         
@@ -82,13 +80,13 @@ const UserRequestAnswerItem = ({ UserRequestAnswer, onUpdate, onDelete }) => {
         
         try {
             await deleteUserRequestAnswer(UserRequestAnswer.idUserRequestAnswer);
-            showSuccess('Užklausa sėkmingai ištrinta!');
+            showSuccess('Atsakymas sėkmingai ištrintas!');
             
             if (onDelete) {
                 onDelete(UserRequestAnswer.idUserRequestAnswer);
             }
         } catch (error) {
-            showError(`Klaida trinant užklausą: ${error.message}`);
+            showError(`Klaida trinant atsakymą: ${error.message}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -105,7 +103,6 @@ const UserRequestAnswerItem = ({ UserRequestAnswer, onUpdate, onDelete }) => {
                         </Typography>
                     </Box>
                     <Box>
-                        
                         <IconButton size="small" onClick={handleExpandClick}>
                             {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                         </IconButton>

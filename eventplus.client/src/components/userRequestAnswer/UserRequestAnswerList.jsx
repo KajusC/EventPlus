@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Box, 
-    Typography, 
-    CircularProgress, 
-    Alert, 
-    Tabs, 
-    Tab, 
-    Paper 
+    Tabs,
+    Tab,
+    Paper,
+    Typography,
+    CircularProgress,
+    Alert
 } from '@mui/material';
-import UserRequestAnswerItem from './UserRequestAnswerItem';
-import { fetchUserRequestAnswers, fetchUserRequestAnswersByUserId } from '../../services/userRequestAnswerService';
 import { useAuth } from '../../context/AuthContext';
+import { fetchUserRequestAnswers, fetchUserRequestAnswersByUserId } from '../../services/userRequestAnswerService';
+import UserRequestAnswerItem from './UserRequestAnswerItem';
 
 const UserRequestAnswerList = () => {
-    const [UserRequestAnswers, setUserRequestAnswers] = useState([]);
+    const [userRequestAnswers, setUserRequestAnswers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [tabValue, setTabValue] = useState(0);
@@ -21,31 +21,32 @@ const UserRequestAnswerList = () => {
     const { currentUser, isAdmin, isOrganizer } = useAuth();
     
     const loadUserRequestAnswers = async () => {
-        setLoading(true);
-        setError(null);
-        
         try {
+            setLoading(true);
             let requests;
             
             if (isAdmin || isOrganizer) {
-                // Administratoriai ir organizatoriai mato visas užklausas
+                // Administrators and organizers can see all requests
                 requests = await fetchUserRequestAnswers();
             } else {
-                // Paprasti vartotojai mato tik savo užklausas
+                // Regular users can only see their own requests
                 requests = await fetchUserRequestAnswersByUserId(currentUser.id);
             }
             
             setUserRequestAnswers(requests);
+            setError(null);
         } catch (error) {
             console.error('Error loading user requests:', error);
-            setError('Įvyko klaida kraunant užklausas. Bandykite dar kartą vėliau.');
+            setError('Įvyko klaida kraunant atsakymus. Bandykite dar kartą vėliau.');
         } finally {
             setLoading(false);
         }
     };
     
     useEffect(() => {
-        loadUserRequestAnswers();
+        if (currentUser?.id) {
+            loadUserRequestAnswers();
+        }
     }, [currentUser?.id, isAdmin, isOrganizer]);
     
     const handleTabChange = (event, newValue) => {
@@ -55,22 +56,16 @@ const UserRequestAnswerList = () => {
     const handleRequestUpdate = (updatedRequest) => {
         setUserRequestAnswers(prevRequests => 
             prevRequests.map(req => 
-                req.idUserRequestAnswerAnswer === updatedRequest.idUserRequestAnswerAnswer ? updatedRequest : req
+                req.idUserRequestAnswer === updatedRequest.idUserRequestAnswer ? updatedRequest : req
             )
         );
     };
     
     const handleRequestDelete = (deletedId) => {
         setUserRequestAnswers(prevRequests => 
-            prevRequests.filter(req => req.idUserRequestAnswerAnswer !== deletedId)
+            prevRequests.filter(req => req.idUserRequestAnswer !== deletedId)
         );
     };
-    
-    const filteredRequests = tabValue === 0 
-        ? UserRequestAnswers 
-        : tabValue === 1 
-            ? UserRequestAnswers.filter(req => req.isProcessed) 
-            : UserRequestAnswers.filter(req => !req.isProcessed);
     
     if (loading) {
         return (
@@ -86,21 +81,23 @@ const UserRequestAnswerList = () => {
     
     return (
         <Box>
-            <Paper sx={{ mb: 1 }}>
+            <Paper sx={{ mb: 2 }}>
                 <Tabs 
                     value={tabValue} 
                     onChange={handleTabChange}
                     variant="fullWidth"
                     sx={{ borderBottom: 1, borderColor: 'divider' }}
                 >
-                    <Tab label="Visos užklausos" />
+                    <Tab label="Visi atsakymai" />
+                    {(isAdmin || isOrganizer) && <Tab label="Apdoroti" />}
+                    {(isAdmin || isOrganizer) && <Tab label="Neapdoroti" />}
                 </Tabs>
             </Paper>
             
-            {filteredRequests.length > 0 ? (
-                filteredRequests.map(request => (
+            {userRequestAnswers.length > 0 ? (
+                userRequestAnswers.map(request => (
                     <UserRequestAnswerItem 
-                        key={request.idUserRequestAnswerAnswer} 
+                        key={request.idUserRequestAnswer} 
                         UserRequestAnswer={request} 
                         onUpdate={handleRequestUpdate}
                         onDelete={handleRequestDelete}
@@ -108,7 +105,7 @@ const UserRequestAnswerList = () => {
                 ))
             ) : (
                 <Typography variant="body1" color="text.secondary" align="center" sx={{ mt: 3 }}>
-                    Nėra {tabValue === 0 ? "jokių" : tabValue === 1 ? "atsakytų" : "laukiančių"} užklausų.
+                    Nėra atsakymų, kuriuos būtų galima parodyti.
                 </Typography>
             )}
         </Box>

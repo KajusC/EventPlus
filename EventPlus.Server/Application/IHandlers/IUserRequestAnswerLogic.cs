@@ -13,5 +13,6 @@ namespace EventPlus.Server.Application.IHandlers
         Task<bool> UpdateUserRequestAnswerAsync(UserRequestAnswerViewModel UserRequestAnswer);
         Task<bool> DeleteUserRequestAnswerAsync(int id);
         Task<bool> CheckUserRequestAnswerDataAsync(UserRequestAnswerViewModel UserRequestAnswer);
+        Task<bool> CreateBulkUserRequestAnswersAsync(List<UserRequestAnswerViewModel> answers, int userId); // NAUJAS METODAS
     }
 }
