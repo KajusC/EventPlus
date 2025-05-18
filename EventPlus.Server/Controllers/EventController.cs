@@ -183,38 +183,65 @@ namespace EventPlus.Server.Controllers
 				var batch = allEvents.Skip(i).Take(batchSize);
 				var batchTasks = batch.Select(evt =>
 				{
-					return Task.Run(() =>
+					return Task.Run(async () =>
 					{
-						// Get feedback for current event from pre-fetched feedbacks
-						var eventFeedbacks = allFeedbacks.Where(f => f.FkEventidEvent == evt.IdEvent).ToList();
-
-						if (eventFeedbacks.Any())
+						var feedbackTask = Task.Run(() =>
 						{
-							var feedbackAverage = eventFeedbacks.Average(f => f.Rating ?? 0);
-							lock (weights)
+							var eventFeedbacks = allFeedbacks.Where(f => f.FkEventidEvent == evt.IdEvent).ToList();
+							if (eventFeedbacks.Any())
 							{
-								if (feedbackAverage > 3)
+								var feedbackAverage = eventFeedbacks.Average(f => f.Rating ?? 0);
+								lock (weights)
 								{
-									weights[evt.IdEvent].IncreaseWeight();
-								}
-								else if (feedbackAverage < 3)
-								{
-									weights[evt.IdEvent].DecreaseWeight();
+									if (feedbackAverage > 3)
+									{
+										weights[evt.IdEvent].IncreaseWeight();
+									}
+									else if (feedbackAverage < 3)
+									{
+										weights[evt.IdEvent].DecreaseWeight();
+									}
 								}
 							}
-						}
+						});
 
-						// Calculate organiser rating
-						var organiserEvents = visitedEvents.Where(ve => ve.FkOrganiseridUser == evt.FkOrganiseridUser);
-						if (organiserEvents.Any())
+						var organiserTask = Task.Run(() =>
 						{
-							var organiserEventFeedbacks = allFeedbacks
-								.Where(f => f.FkEventidEvent == organiserEvents.First().IdEvent)
+							var organiserEvents = visitedEvents.Where(ve => ve.FkOrganiseridUser == evt.FkOrganiseridUser);
+							if (organiserEvents.Any())
+							{
+								var organiserEventFeedbacks = allFeedbacks
+									.Where(f => f.FkEventidEvent == organiserEvents.First().IdEvent)
+									.ToList();
+
+								if (organiserEventFeedbacks.Any())
+								{
+									var avgRating = organiserEventFeedbacks.Average(f => f.Rating ?? 0);
+									lock (weights)
+									{
+										if (avgRating > 3)
+										{
+											weights[evt.IdEvent].IncreaseWeight();
+										}
+										else if (avgRating < 3)
+										{
+											weights[evt.IdEvent].DecreaseWeight();
+										}
+									}
+								}
+							}
+							var userBoughtTickets = tickets.Where(t => t.FkUseridUser == userId).ToList();
+							var userEventCategories = userBoughtTickets
+								.Select(t => hashMap[t.FkEventidEvent]?.Category)
+								.Where(c => c != null)
+								.Distinct()
 								.ToList();
 
-							if (organiserEventFeedbacks.Any())
+							var similarCategoryEvents = allEvents.Where(e => userEventCategories.Contains(e.Category)).ToList();
+							var similarCategoryEventFeedbacks = allFeedbacks.Where(f => similarCategoryEvents.Any(e => e.IdEvent == f.FkEventidEvent)).ToList();
+							if (similarCategoryEventFeedbacks.Any())
 							{
-								var avgRating = organiserEventFeedbacks.Average(f => f.Rating ?? 0);
+								var avgRating = similarCategoryEventFeedbacks.Average(f => f.Rating ?? 0);
 								lock (weights)
 								{
 									if (avgRating > 3)
@@ -227,7 +254,9 @@ namespace EventPlus.Server.Controllers
 									}
 								}
 							}
-						}
+						});
+
+						await Task.WhenAll(feedbackTask, organiserTask);
 
 						lock (hashMap)
 						{
