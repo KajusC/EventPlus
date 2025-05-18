@@ -25,11 +25,12 @@ namespace eventplus.models.Infrastructure.UnitOfWork
 		private IOrganiserRepository? _organisers;
 		private IUserRequestAnswerRepository? _UserRequestAnswersAnswers;
 		private IQuestionRepository _questions;
+    private ITicketStatusRepository? _ticketStatus;
 
-		public UnitOfWork(EventPlusContext context)
-		{
-			_context = context;
-		}
+        public UnitOfWork(EventPlusContext context)
+        {
+            _context = context;
+        }
 
 		public IEventRepository Events => _events ??= new EventRepository(_context);
 		public IRepository<EventLocation> EventLocations => _eventLocations ??= new Repository<EventLocation>(_context);
@@ -45,10 +46,12 @@ namespace eventplus.models.Infrastructure.UnitOfWork
 		public IOrganiserRepository Organisers => _organisers ??= new OrganiserRepository(_context);
 		public IUserRequestAnswerRepository UserRequestAnswers => _UserRequestAnswersAnswers ??= new UserRequestAnswerRepository(_context);
 		public IQuestionRepository Questions => _questions ??= new QuestionRepository(_context);
+    public IOrganiserRepository Organisers => _organisers ??= new OrganiserRepository(_context);
 
-		public async Task SaveAsync()
-		{
-			await _context.SaveChangesAsync();
-		}
-	}
+
+        public async Task SaveAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+    }
 }

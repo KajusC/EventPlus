@@ -314,5 +314,48 @@ namespace EventPlus.Server.Application.Handlers
 			
 			return _mapper.Map<List<EventViewModel>>(filteredEvents);
 		}
+
+	public async Task<bool> InvalidateEventTicketsAsync(int eventId)
+	{
+		if (eventId <= 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(eventId), "Event ID must be greater than zero.");
+		}
+
+		var eventEntity = await _unitOfWork.Events.GetByIdAsync(eventId);
+		if (eventEntity == null)
+		{
+			throw new KeyNotFoundException($"Event with ID {eventId} not found.");
+		}
+
+		// Check if event has ended
+		if (eventEntity.EndDate > DateOnly.FromDateTime(DateTime.Now))
+		{
+			return false;
+		}
+
+		var tickets = await _unitOfWork.Tickets.GetAllAsync();
+		var eventTickets = tickets.Where(t => t.FkEventidEvent == eventId).ToList();
+
+		foreach (var ticket in eventTickets)
+		{
+			await _unitOfWork.Tickets.UpdateTicketStatusInvalid(ticket.IdTicket);
+		}
+
+		await _unitOfWork.SaveAsync();
+		return true;
 	}
+
+        public async Task<List<EventViewModel>> GetEventsByUserTicketsAsync(int userId)
+        {
+			var events = await _unitOfWork.Events.GetEventsByUserTicketsAsync(userId);
+			return _mapper.Map<List<EventViewModel>>(events);
+        }
+
+		public async Task<List<EventViewModel>> GetEventsByOrganiserIdAsync(int organiserId)
+		{
+			var events = await _unitOfWork.Events.GetEventsByOrganiserIdAsync(organiserId);
+			return _mapper.Map<List<EventViewModel>>(events);
+		}
+    }
 }

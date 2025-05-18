@@ -72,7 +72,7 @@ public partial class EventPlusContext : DbContext
 
     public virtual DbSet<TicketType> TicketTypes { get; set; }
 
-    public virtual DbSet<Ticketstatus> Ticketstatuses { get; set; }
+    public virtual DbSet<TicketStatus> Ticketstatuses { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -547,14 +547,17 @@ public partial class EventPlusContext : DbContext
             entity.Property(e => e.IdSector)
                 .ValueGeneratedOnAdd()
                 .HasColumnName("id_sector");
-            entity.Property(e => e.FkEventLocationidEventLocation).HasColumnName("fk_event_locationid_event_location");
+            entity.Property(e => e.FkEventLocationidEventLocation)
+                .IsRequired()
+                .HasColumnName("fk_event_locationid_event_location");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
                 .HasColumnName("name");
 
-            entity.HasOne(d => d.FkEventLocationidEventLocationNavigation).WithMany(p => p.Sectors)
+            entity.HasOne(d => d.FkEventLocationidEventLocationNavigation)
+                .WithMany(p => p.Sectors)
                 .HasForeignKey(d => d.FkEventLocationidEventLocation)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("sector_fk_event_locationid_event_location_fkey");
         });
 
@@ -604,7 +607,8 @@ public partial class EventPlusContext : DbContext
                 .HasColumnName("qr_code");
             entity.Property(e => e.Type).HasColumnName("type");
 
-            entity.HasOne(d => d.FkEventidEventNavigation).WithMany(p => p.Tickets)
+            entity.HasOne(d => d.FkEventidEventNavigation)
+                .WithMany(p => p.Tickets)
                 .HasForeignKey(d => d.FkEventidEvent)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("ticket_fk_eventid_event_fkey");
@@ -638,7 +642,7 @@ public partial class EventPlusContext : DbContext
                 .HasColumnName("name");
         });
 
-        modelBuilder.Entity<Ticketstatus>(entity =>
+        modelBuilder.Entity<TicketStatus>(entity =>
         {
             entity.HasKey(e => e.IdStatus).HasName("ticketstatus_pkey");
 
@@ -913,13 +917,13 @@ public partial class EventPlusContext : DbContext
         });
 
         // Default settings for Ticketstatus entity
-        modelBuilder.Entity<Ticketstatus>(entity =>
+        modelBuilder.Entity<TicketStatus>(entity =>
         {
             // Seed initial ticket status data
             entity.HasData(
-                new Ticketstatus { IdStatus = 1, Name = "Active" },
-                new Ticketstatus { IdStatus = 2, Name = "Inactive" },
-                new Ticketstatus { IdStatus = 3, Name = "Scanned" }
+                new TicketStatus { IdStatus = 1, Name = "Active" },
+                new TicketStatus { IdStatus = 2, Name = "Inactive" },
+                new TicketStatus { IdStatus = 3, Name = "Scanned" }
             );
         });
 

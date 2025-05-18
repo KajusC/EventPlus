@@ -27,5 +27,7 @@ namespace EventPlus.Server.Application.IHandlers
 			List<SeatingViewModel> seating);
 
         Task<List<EventViewModel>> GetEventsByCategoryAsync(int categoryId);
+        Task<List<EventViewModel>> GetEventsByUserTicketsAsync(int userId);
+		Task<List<EventViewModel>> GetEventsByOrganiserIdAsync(int organiserId);
     }
 }

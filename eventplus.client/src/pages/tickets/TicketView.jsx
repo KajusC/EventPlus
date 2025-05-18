@@ -22,10 +22,10 @@ import {
     Edit as EditIcon
 } from '@mui/icons-material';
 
-import { fetchTicketById } from '../../services/ticketService';
 import { formatDate, formatTime } from '../../utils/dateFormatter';
 import { fetchSeatingById } from '../../services/seatingService'; 
 import { fetchSectorById } from '../../services/sectorService'; 
+import { fetchTicketById, downloadTicketPdf } from '../../services/ticketService';
 
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import ErrorDisplay from '../../components/shared/ErrorDisplay';
@@ -58,11 +58,33 @@ function TicketView() {
     const [event, setEvent] = useState(null);
     const [seating, setSeating] = useState(null);
     const [sector, setSector] = useState(null);
+    const [downloadingPdf, setDownloadingPdf] = useState(false);
     const [toast, setToast] = useState({
         open: false,
         message: '',
         severity: 'info'
     });
+
+    const handleDownloadPdf = async () => {
+        setDownloadingPdf(true);
+        try {
+            const pdfBlob = await downloadTicketPdf(id); // 'id' dabar pasiekiamas iš useParams
+            const url = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `ticket_${id}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            setToast({ open: true, message: 'Ticket PDF downloaded successfully!', severity: 'success' });
+        } catch (err) {
+            console.error('Error downloading PDF:', err);
+            setToast({ open: true, message: err.message || 'Failed to download PDF', severity: 'error' });
+        } finally {
+            setDownloadingPdf(false);
+        }
+    };
 
     useEffect(() => {
         const loadTicket = async () => {
@@ -160,16 +182,25 @@ function TicketView() {
                         Ticket Details
                     </Typography>
                 </Box>
-                {(currentUser.role === 'Admin' || currentUser.role === 'Organiser') && (
-                    <Box sx={{ display: 'flex', gap: 2 }}>
+                <Box sx={{ display: 'flex', gap: 1 }}> {/* Pridėtas tarpas tarp mygtukų */}
+                    <Button
+                        variant="outlined"
+                        startIcon={<QrCodeIcon />}
+                        onClick={handleDownloadPdf}
+                        disabled={downloadingPdf}
+                        sx={{ mr: (currentUser.role === 'Admin' || currentUser.role === 'Organiser') ? 1 : 0 }} // Prideda dešinį tarpą, jei yra redagavimo mygtukas
+                    >
+                        {downloadingPdf ? 'Downloading...' : 'Download PDF'}
+                    </Button>
+                    {(currentUser.role === 'Administrator' || currentUser.role === 'Organiser') && (
                         <IconButton
                             onClick={() => navigate(`/ticket/edit/${id}`)}
                             color="primary"
                         >
                             <EditIcon />
                         </IconButton>
-                    </Box>
-                )}
+                    )}
+                </Box>
             </Box>
 
             <Grid container spacing={4}>

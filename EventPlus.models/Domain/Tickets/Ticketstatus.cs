@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace eventplus.models.Domain.Tickets;
 
-public partial class Ticketstatus
+public partial class TicketStatus
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

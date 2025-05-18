@@ -41,7 +41,7 @@ function DynamicPricingPanel() {
 
     useEffect(() => {
         // Only admin users should access this panel
-        if (!currentUser || (currentUser.role !== 'Admin' && currentUser.role !== 'Organiser')) {
+        if (!currentUser || (currentUser.role !== 'Administrator' && currentUser.role !== 'Organiser')) {
             return;
         }
 
@@ -124,6 +124,11 @@ function DynamicPricingPanel() {
             
             setResult(adjustmentResult);
             setSnackbarOpen(true);
+            
+            // Reload the page after a short delay to show the success message
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
         } catch (err) {
             console.error('Error adjusting prices:', err);
             setError(err.message || 'An error occurred');
@@ -146,6 +151,11 @@ function DynamicPricingPanel() {
             
             setResult({ message: 'All event prices have been adjusted' });
             setSnackbarOpen(true);
+            
+            // Reload the page after a short delay to show the success message
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
         } catch (err) {
             console.error('Error adjusting all prices:', err);
             setError(err.message || 'An error occurred');
@@ -191,7 +201,7 @@ function DynamicPricingPanel() {
     };
 
     // If user is not admin, don't render the component
-    if (!currentUser || (currentUser.role !== 'Admin' && currentUser.role !== 'Organiser')) {
+    if (!currentUser || (currentUser.role !== 'Administrator' && currentUser.role !== 'Organiser')) {
         return null;
     }
 

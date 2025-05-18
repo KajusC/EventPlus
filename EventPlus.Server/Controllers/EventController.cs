@@ -155,260 +155,152 @@ namespace EventPlus.Server.Controllers
 
 		[HttpGet("toprated")]
 		[AllowAnonymous]
-		public async Task<ActionResult<List<EventViewModel>>> GetTopRatedEvents([FromQuery] int? userId = null)
+		public async Task<ActionResult<List<EventViewModel>>> InitializeEventRecomm([FromQuery] int userId)
 		{
-			try
+			var hashMap = new Dictionary<int, EventViewModel>();
+			var weights = new Dictionary<int, RecommendedWeight>();
+
+			// Sequential fetch of initial data since they use DbContext
+			var visitedEvents = await GetVisitedEvents(userId);
+			var tickets = await FetchUserTickets(userId);
+			var allEvents = await _eventLogic.GetAllEventsAsync();
+			
+			// Pre-fetch all feedbacks to avoid concurrent DbContext access
+			var allFeedbacks = await _feedbackLogic.GetAllFeedbacksAsync();
+			
+			// Initialize weights
+			foreach (var evt in allEvents)
 			{
-				var events = await _eventLogic.GetAllEventsAsync();
-				
-				// Create a dictionary to map event IDs to their tasks for easier lookup
-				var taskDict = new Dictionary<int, Task<double>>();
-				foreach (var evt in events)
+				weights[evt.IdEvent] = new RecommendedWeight();
+			}
+
+			// Process events in parallel batches
+			var eventTasks = new List<Task>();
+			var batchSize = 5;
+			
+			for (int i = 0; i < allEvents.Count; i += batchSize)
+			{
+				var batch = allEvents.Skip(i).Take(batchSize);
+				var batchTasks = batch.Select(evt =>
 				{
-					taskDict[evt.IdEvent] = CalculateEventWeight(evt, userId);
-				}
-				
-				// Wait for all tasks to complete
-				await Task.WhenAll(taskDict.Values);
-				
-				// Create a dictionary of event ID to weight for easy lookup
-				var weightDict = new Dictionary<int, double>();
-				foreach (var kvp in taskDict)
-				{
-					weightDict[kvp.Key] = kvp.Value.Result;
-				}
-				
-				var recommendedEvents = new List<EventViewModel>();
-				
-				// Filter events with weight > 0.65
-				foreach (var evt in events)
-				{
-					double weight = weightDict[evt.IdEvent];
-					if (weight > 0.65)
+					return Task.Run(async () =>
 					{
-						recommendedEvents.Add(evt);
-					}
-				}
+						var feedbackTask = Task.Run(() =>
+						{
+							var eventFeedbacks = allFeedbacks.Where(f => f.FkEventidEvent == evt.IdEvent).ToList();
+							if (eventFeedbacks.Any())
+							{
+								var feedbackAverage = eventFeedbacks.Average(f => f.Rating ?? 0);
+								lock (weights)
+								{
+									if (feedbackAverage > 3)
+									{
+										weights[evt.IdEvent].IncreaseWeight();
+									}
+									else if (feedbackAverage < 3)
+									{
+										weights[evt.IdEvent].DecreaseWeight();
+									}
+								}
+							}
+						});
+
+						var organiserTask = Task.Run(() =>
+						{
+							var organiserEvents = visitedEvents.Where(ve => ve.FkOrganiseridUser == evt.FkOrganiseridUser);
+							if (organiserEvents.Any())
+							{
+								var organiserEventFeedbacks = allFeedbacks
+									.Where(f => f.FkEventidEvent == organiserEvents.First().IdEvent)
+									.ToList();
+
+								if (organiserEventFeedbacks.Any())
+								{
+									var avgRating = organiserEventFeedbacks.Average(f => f.Rating ?? 0);
+									lock (weights)
+									{
+										if (avgRating > 3)
+										{
+											weights[evt.IdEvent].IncreaseWeight();
+										}
+										else if (avgRating < 3)
+										{
+											weights[evt.IdEvent].DecreaseWeight();
+										}
+									}
+								}
+							}
+							var userBoughtTickets = tickets.Where(t => t.FkUseridUser == userId).ToList();
+							var userEventCategories = userBoughtTickets
+								.Select(t => hashMap[t.FkEventidEvent]?.Category)
+								.Where(c => c != null)
+								.Distinct()
+								.ToList();
+
+							var similarCategoryEvents = allEvents.Where(e => userEventCategories.Contains(e.Category)).ToList();
+							var similarCategoryEventFeedbacks = allFeedbacks.Where(f => similarCategoryEvents.Any(e => e.IdEvent == f.FkEventidEvent)).ToList();
+							if (similarCategoryEventFeedbacks.Any())
+							{
+								var avgRating = similarCategoryEventFeedbacks.Average(f => f.Rating ?? 0);
+								lock (weights)
+								{
+									if (avgRating > 3)
+									{
+										weights[evt.IdEvent].IncreaseWeight();
+									}
+									else if (avgRating < 3)
+									{
+										weights[evt.IdEvent].DecreaseWeight();
+									}
+								}
+							}
+						});
+
+						await Task.WhenAll(feedbackTask, organiserTask);
+
+						lock (hashMap)
+						{
+							hashMap[evt.IdEvent] = evt;
+						}
+					});
+				});
+
+				eventTasks.AddRange(batchTasks);
 				
-				// Sort by weight in descending order
-				recommendedEvents = recommendedEvents
-					.OrderByDescending(e => weightDict[e.IdEvent])
-					.ToList();
-				
-				if (recommendedEvents.Count == 0)
+				// Wait for the current batch to complete
+				if (eventTasks.Count >= batchSize)
 				{
-					// Return empty array with 200 status instead of 404
-					return Ok(new List<EventViewModel>());
+					await Task.WhenAll(eventTasks);
+					eventTasks.Clear();
 				}
-				
-				return Ok(recommendedEvents);
 			}
-			catch (Exception ex)
+
+			// Wait for any remaining tasks
+			if (eventTasks.Any())
 			{
-				Console.WriteLine($"Error in GetTopRatedEvents: {ex.Message}");
-				return StatusCode(500, $"Internal error: {ex.Message}");
+				await Task.WhenAll(eventTasks);
 			}
+
+			// Generate recommendations
+			var recommendedEvents = allEvents
+				.Where(e => !visitedEvents.Any(ve => ve.IdEvent == e.IdEvent))
+				.OrderByDescending(e => weights[e.IdEvent].Weight)
+				.Take(10)
+				.ToList();
+
+			return Ok(recommendedEvents);
 		}
 
-		private async Task<double> CalculateEventWeight(EventViewModel eventEntity, int? userId = null)
+		private async Task<List<EventViewModel>> GetVisitedEvents(int userId)
 		{
-			if (eventEntity == null) return 0;
-
-			try
-			{
-				var feedbacksTask = _feedbackLogic.GetFeedbacksByEventIdAsync(eventEntity.IdEvent);
-				var organizerRatingTask = (eventEntity.FkOrganiseridUser > 0) ? 
-					GetOrganizerRatingAsync(eventEntity.FkOrganiseridUser) : 
-					Task.FromResult(0.7);
-				var followerCountTask = (eventEntity.FkOrganiseridUser > 0) ? 
-					GetOrganizerFollowerCountAsync(eventEntity.FkOrganiseridUser) : 
-					Task.FromResult(50);
-				
-				Task<double> userCategoryPreferenceTask = Task.FromResult(0.0);
-				if (userId.HasValue && eventEntity.Category.HasValue)
-				{
-					userCategoryPreferenceTask = GetUserCategoryPreferenceAsync(userId.Value, eventEntity.Category.Value);
-				}
-				
-				Task<double> categoryWeightTask = Task.FromResult(0.0);
-				if (eventEntity.Category.HasValue)
-				{
-					categoryWeightTask = GetCategoryWeightAsync(eventEntity.Category.Value, eventEntity.IdEvent);
-				}
-				
-				await Task.WhenAll(feedbacksTask, organizerRatingTask, followerCountTask, categoryWeightTask, userCategoryPreferenceTask);
-				
-				var feedbacks = await feedbacksTask;
-				double ratingWeight = 0.0;
-				
-				if (feedbacks != null && feedbacks.Any())
-				{
-					var ratings = feedbacks.Where(f => f.Rating.HasValue).Select(f => f.Rating.Value);
-					if (ratings.Any())
-					{
-						var averageRating = ratings.Average();
-						ratingWeight = Convert.ToDouble(averageRating) / 10.0 * 0.5;
-						Console.WriteLine($"Event '{eventEntity.Name}' - Average rating: {averageRating:F2}, Rating Weight: {ratingWeight:F2}");
-					}
-				}
-				
-				double categoryWeight = await categoryWeightTask;
-				double userCategoryPreferenceWeight = await userCategoryPreferenceTask;
-				
-				double organizerWeight = 0.0;
-				if (eventEntity.FkOrganiseridUser > 0)
-				{
-					var organizerRating = await organizerRatingTask;
-					var followerCount = await followerCountTask;
-					
-					double followerScore = Math.Min(followerCount / 20000.0, 1.0);
-					organizerWeight = (organizerRating * 0.7 + followerScore * 0.3) * 0.3;
-					Console.WriteLine($"Organizer {eventEntity.FkOrganiseridUser} - Rating: {organizerRating:F2}, Followers: {followerCount}, Organizer Weight: {organizerWeight:F2}");
-				}
-				
-				double totalWeight = 0.0;
-				if (userId.HasValue && userCategoryPreferenceWeight > 0)
-				{
-					totalWeight = (ratingWeight * 0.4) +
-								  (categoryWeight * 0.15) +
-								  (organizerWeight * 0.25) +
-								  (userCategoryPreferenceWeight * 0.2);
-					Console.WriteLine($"Event '{eventEntity.Name}' - With user preference: {userCategoryPreferenceWeight:F2}, Total Weight: {totalWeight:F2}");
-				}
-				else
-				{
-					totalWeight = ratingWeight + categoryWeight + organizerWeight;
-					Console.WriteLine($"Event '{eventEntity.Name}' - Total Weight: {totalWeight:F2}");
-				}
-				
-				return totalWeight;
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Error calculating weight for event '{eventEntity.Name}': {ex.Message}");
-				return 0.5;
-			}
-		}
-		
-		private async Task<double> GetOrganizerRatingAsync(int organizerId)
-		{
-			try
-			{
-				var organizer = await _organiserLogic.GetOrganiserByIdAsync(organizerId);
-				
-				if (organizer != null && organizer.Rating.HasValue)
-				{
-					return Math.Min(Math.Max(organizer.Rating.Value / 10.0, 0), 1);
-				}
-				
-				Console.WriteLine($"No rating found for organizer {organizerId}, using default value");
-				return 0.7;
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Error fetching organizer rating: {ex.Message}");
-				return 0.7;
-			}
-		}
-		
-		private async Task<int> GetOrganizerFollowerCountAsync(int organizerId)
-		{
-			try
-			{
-				var organizer = await _organiserLogic.GetOrganiserByIdAsync(organizerId);
-				
-				if (organizer != null && organizer.FollowerCount.HasValue)
-				{
-					return organizer.FollowerCount.Value;
-				}
-				
-				Console.WriteLine($"No follower count found for organizer {organizerId}, using default value");
-				return 50;
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Error fetching organizer follower count: {ex.Message}");
-				return 50;
-			}
+			var visitedEvents = await _eventLogic.GetEventsByUserTicketsAsync(userId);
+			return visitedEvents;
 		}
 
-		private async Task<double> GetCategoryWeightAsync(int categoryId, int currentEventId)
+		private async Task<List<TicketViewModel>> FetchUserTickets(int userId)
 		{
-			try
-			{
-				var eventsInCategory = await _eventLogic.GetEventsByCategoryAsync(categoryId);
-				var categoryFeedbacks = new List<FeedbackViewModel>();
-				
-				foreach (var evt in eventsInCategory.Where(e => e.IdEvent != currentEventId))
-				{
-					var evtFeedbacks = await _feedbackLogic.GetFeedbacksByEventIdAsync(evt.IdEvent);
-					if (evtFeedbacks != null && evtFeedbacks.Any())
-					{
-						categoryFeedbacks.AddRange(evtFeedbacks);
-					}
-				}
-				
-				if (categoryFeedbacks.Any())
-				{
-					var categoryRatings = categoryFeedbacks.Where(f => f.Rating.HasValue).Select(f => f.Rating.Value);
-					if (categoryRatings.Any())
-					{
-						var categoryAverage = categoryRatings.Average();
-						double categoryWeight = Convert.ToDouble(categoryAverage) / 10.0 * 0.2;
-						Console.WriteLine($"Category {categoryId} - Average rating: {categoryAverage:F2}, Category Weight: {categoryWeight:F2}");
-						return categoryWeight;
-					}
-				}
-				
-				return 0.0;
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Error calculating category weight: {ex.Message}");
-				return 0.0;
-			}
-		}
-
-		private async Task<double> GetUserCategoryPreferenceAsync(int userId, int categoryId)
-		{
-			try
-			{
-				// Get all feedbacks from this user
-				var userFeedbacks = await _feedbackLogic.GetFeedbacksByUserIdAsync(userId);
-				if (userFeedbacks == null || !userFeedbacks.Any())
-				{
-					return 0.0;
-				}
-				
-				// Get all events to check categories
-				var allEvents = await _eventLogic.GetAllEventsAsync();
-				var eventsMap = allEvents.ToDictionary(e => e.IdEvent, e => e);
-				
-				// Filter feedbacks for events in the same category
-				var categoryFeedbacks = userFeedbacks.Where(f => 
-					eventsMap.ContainsKey(f.FkEventidEvent) && 
-					eventsMap[f.FkEventidEvent].Category == categoryId && 
-					f.Rating.HasValue
-				).ToList();
-				
-				if (categoryFeedbacks.Any())
-				{
-					var userCategoryRatings = categoryFeedbacks.Select(f => f.Rating.Value);
-					var averageUserCategoryRating = userCategoryRatings.Average();
-					
-					double userCategoryWeight = Convert.ToDouble(averageUserCategoryRating) / 10.0 * 0.2;
-					
-					Console.WriteLine($"User {userId} preference for Category {categoryId} - Average: {averageUserCategoryRating:F2}, Weight: {userCategoryWeight:F2}");
-					return userCategoryWeight;
-				}
-				
-				return 0.0;
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Error calculating user category preference: {ex.Message}");
-				return 0.0;
-			}
+			var boughtTickets = await _ticketLogic.GetTicketsByUserIdAsync(userId);
+			return boughtTickets;
 		}
 
 		public class CompleteEvent
@@ -420,6 +312,28 @@ namespace EventPlus.Server.Controllers
 			public List<SectorViewModel> Sectors { get; set; } = new List<SectorViewModel>();
 			public List<SectorPriceViewModel> SectorPrices { get; set; } = new List<SectorPriceViewModel>();
 			public List<SeatingViewModel> Seatings { get; set; } = new List<SeatingViewModel>();
+		}
+
+		private class RecommendedWeight
+		{
+			public double Weight { get; private set; }
+			private readonly double _delta = 0.1;
+
+			public RecommendedWeight()
+			{
+				Weight = 1.0;
+			}
+
+			public void IncreaseWeight()
+			{
+				Weight += _delta;
+			}
+
+			public void DecreaseWeight()
+			{
+				Weight -= _delta;
+				if (Weight < 0.01) Weight = 0.01;
+			}
 		}
 	}
 }

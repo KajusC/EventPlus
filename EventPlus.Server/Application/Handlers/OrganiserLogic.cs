@@ -76,5 +76,12 @@ namespace EventPlus.Server.Application.Handlers
             
             return result;
         }
+
+        public async Task<double> GetOrganiserRating(int organiserId)
+        {
+            var organiser = await _unitOfWork.Organisers.GetByIdAsync(organiserId);
+            var rating = organiser.Rating ?? 0;
+            return rating;
+        }
     }
 } 
