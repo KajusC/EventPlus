@@ -17,6 +17,8 @@ using Swashbuckle.AspNetCore.SwaggerUI;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace EventPlus.Server
 {
@@ -26,9 +28,10 @@ namespace EventPlus.Server
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
+			// Add services to the container.
+			builder.Services.AddHostedService<BackgroundPricingService>();
+			builder.Services.AddControllers();
+			builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "EventPlus API", Version = "v1" });

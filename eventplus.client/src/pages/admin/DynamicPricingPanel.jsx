@@ -6,7 +6,6 @@ import {
     Button,
     Paper,
     Grid,
-    TextField,
     CircularProgress,
     Alert,
     Snackbar,
@@ -18,25 +17,24 @@ import {
     TableRow,
     Accordion,
     AccordionSummary,
-    AccordionDetails,
-    Chip
+    AccordionDetails
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { dynamicPricingService } from '../../services/dynamicPricingService';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
 import { fetchEvents } from '../../services/eventService';
 import { fetchSectorPrices } from '../../services/sectorPriceService';
 import { useAuth } from '../../context/AuthContext';
+import { adjustAllEventPrices } from '../../services/ticketService';
 
 function DynamicPricingPanel() {
-    const [events, setEvents] = useState([]);
-    const [selectedEventId, setSelectedEventId] = useState('');
     const [loading, setLoading] = useState(false);
+    const [globalLoading, setGlobalLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [allEvents, setAllEvents] = useState([]);
     const [sectorPrices, setSectorPrices] = useState([]);
-    const [previousPrices, setPreviousPrices] = useState({});
+    const [nextUpdateTime, setNextUpdateTime] = useState(null);
     const { currentUser } = useAuth();
 
     useEffect(() => {
@@ -47,26 +45,31 @@ function DynamicPricingPanel() {
 
         loadEvents();
         loadSectorPrices();
+        
+        
+        // Set up polling to update the next update time
+        const interval = setInterval(() => {
+            updateNextUpdateTimeDisplay();
+        }, 60000); // Update every minute
+        
+        // Initial display
+        updateNextUpdateTimeDisplay();
+        
+        return () => clearInterval(interval);
     }, [currentUser]);
-
-    // Update sector prices when selecting a different event
-    useEffect(() => {
-        if (selectedEventId) {
-            loadSectorPricesForEvent(selectedEventId);
+    
+    const updateNextUpdateTimeDisplay = () => {
+        const lastScheduledTime = localStorage.getItem('lastPriceUpdateSchedule');
+        if (lastScheduledTime) {
+            const nextUpdate = parseInt(lastScheduledTime, 10) + 24 * 60 * 60 * 1000;
+            setNextUpdateTime(new Date(nextUpdate));
         }
-    }, [selectedEventId]);
+    };
 
     const loadEvents = async () => {
         try {
             const fetchedEvents = await fetchEvents();
-            
-            // Filter for active events (those that haven't ended yet)
-            const activeEvents = fetchedEvents.filter(event => {
-                return new Date(event.endDate) > new Date();
-            });
-            
             setAllEvents(fetchedEvents);
-            setEvents(activeEvents);
         } catch (err) {
             console.error('Failed to load events:', err);
             setError('Failed to load events');
@@ -82,76 +85,30 @@ function DynamicPricingPanel() {
             setError('Failed to load sector prices');
         }
     };
-
-    const loadSectorPricesForEvent = async (eventId) => {
+    
+    // Handle the global price update for all events
+    const handleGlobalPriceUpdate = async () => {
         try {
-            const prices = await fetchSectorPrices();
-            const filteredPrices = prices.filter(price => price.eventId === parseInt(eventId, 10));
-            console.log(prices);
-            // Save current prices as previous prices for comparison after adjustment
-            const priceMap = {};
-            filteredPrices.forEach(price => {
-                priceMap[`${price.sectorId}-${price.eventId}`] = price.price;
-            });
-            
-            setPreviousPrices(priceMap);
-            setSectorPrices(prices);
-        } catch (err) {
-            console.error('Failed to load sector prices for event:', err);
-        }
-    };
-
-    const handleEventSelect = (event) => {
-        setSelectedEventId(event.target.value);
-    };
-
-    const handleAdjustPrice = async () => {
-        if (!selectedEventId) {
-            setError('Please select an event');
-            setSnackbarOpen(true);
-            return;
-        }
-
-        try {
-            setLoading(true);
+            setGlobalLoading(true);
             setError(null);
             setResult(null);
 
-            const adjustmentResult = await dynamicPricingService.triggerPriceAdjustment(selectedEventId);
+            await adjustAllEventPrices();
             
-            // Reload sector prices to show the updated values
             await loadSectorPrices();
             
-            setResult(adjustmentResult);
+            setResult({ message: 'Global price update completed successfully' });
             setSnackbarOpen(true);
+            
+            localStorage.removeItem('lastPriceUpdateSchedule');
+            
+            updateNextUpdateTimeDisplay();
         } catch (err) {
-            console.error('Error adjusting prices:', err);
-            setError(err.message || 'An error occurred');
+            console.error('Error performing global price update:', err);
+            setError(err.message || 'An error occurred during global price update');
             setSnackbarOpen(true);
         } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAdjustAllPrices = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            setResult(null);
-
-            await dynamicPricingService.adjustAllEventPrices();
-            
-            // Reload sector prices to show the updated values
-            await loadSectorPrices();
-            
-            setResult({ message: 'All event prices have been adjusted' });
-            setSnackbarOpen(true);
-        } catch (err) {
-            console.error('Error adjusting all prices:', err);
-            setError(err.message || 'An error occurred');
-            setSnackbarOpen(true);
-        } finally {
-            setLoading(false);
+            setGlobalLoading(false);
         }
     };
 
@@ -168,26 +125,22 @@ function DynamicPricingPanel() {
     // Get sector name by ID
     const getSectorName = (sectorId) => {
         // This is a placeholder - in a real app, you'd fetch sector names from your API
-        // For now, we'll just return a generic name
         return `Sector ${sectorId}`;
     };
 
-    // Calculate price change percentage
-    const getPriceChangePercentage = (currentPrice, key) => {
-        const previousPrice = previousPrices[key];
-        if (!previousPrice) return 0;
+    // Format time until next update
+    const formatTimeUntilNextUpdate = () => {
+        if (!nextUpdateTime) return 'Not scheduled';
         
-        const change = ((currentPrice - previousPrice) / previousPrice) * 100;
-        return change;
-    };
-
-    // Filter sector prices for the selected event
-    const getEventSectorPrices = () => {
-        if (!selectedEventId) return [];
+        const now = new Date();
+        const diffMs = nextUpdateTime - now;
         
-        return sectorPrices.filter(price => 
-            price.eventId === parseInt(selectedEventId, 10)
-        );
+        if (diffMs <= 0) return 'Update due now';
+        
+        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        
+        return `${diffHrs}h ${diffMins}m`;
     };
 
     // If user is not admin, don't render the component
@@ -201,98 +154,42 @@ function DynamicPricingPanel() {
                 Dynamic Pricing Control Panel
             </Typography>
 
-            <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                    Adjust Event Pricing
+            {/* Global Price Update Section */}
+            <Paper elevation={3} sx={{ p: 3, mb: 4, borderLeft: '4px solid #2196f3' }}>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                    <AutorenewIcon sx={{ mr: 1 }} /> Global Price Update System
                 </Typography>
-
-                <Grid container spacing={3}>
+                
+                <Grid container spacing={3} alignItems="center">
                     <Grid item xs={12} md={6}>
-                        <TextField
-                            select
-                            fullWidth
-                            label="Select Event"
-                            value={selectedEventId}
-                            onChange={handleEventSelect}
-                            SelectProps={{
-                                native: true,
-                            }}
-                            variant="outlined"
-                        >
-                            <option value="">-- Select Event --</option>
-                            {events.map((event) => (
-                                <option key={event.idEvent} value={event.idEvent}>
-                                    {event.name}
-                                </option>
-                            ))}
-                        </TextField>
+                        <Box>
+                            <Typography variant="body1" sx={{ mb: 1 }}>
+                                This system automatically updates all event prices every 24 hours.
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Next scheduled update: {nextUpdateTime ? nextUpdateTime.toLocaleString() : 'Not scheduled'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Time until next update: {formatTimeUntilNextUpdate()}
+                            </Typography>
+                        </Box>
                     </Grid>
                     
-                    <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <Button 
                             variant="contained" 
                             color="primary"
-                            onClick={handleAdjustPrice}
-                            disabled={loading || !selectedEventId}
-                            sx={{ mr: 2 }}
+                            startIcon={<AutorenewIcon />}
+                            onClick={handleGlobalPriceUpdate}
+                            disabled={globalLoading}
                         >
-                            {loading ? <CircularProgress size={24} /> : 'Adjust Price'}
-                        </Button>
-                        
-                        <Button 
-                            variant="outlined" 
-                            color="secondary"
-                            onClick={handleAdjustAllPrices}
-                            disabled={loading}
-                        >
-                            {loading ? <CircularProgress size={24} /> : 'Adjust All Events'}
+                            {globalLoading ? 
+                                <CircularProgress size={24} color="inherit" /> : 
+                                'Run Update Now'
+                            }
                         </Button>
                     </Grid>
                 </Grid>
-
-                {result && (
-                    <Box sx={{ mt: 3 }}>
-                        <Alert severity="success">
-                            Price adjustment completed successfully!
-                            {result.marketabilityFactor && (
-                                <Typography variant="body2" sx={{ mt: 1 }}>
-                                    Marketability Factor: {result.marketabilityFactor.toFixed(2)}
-                                </Typography>
-                            )}
-                        </Alert>
-                    </Box>
-                )}
-            </Paper>
-
-            <Paper elevation={3} sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                    Event Information
-                </Typography>
-
-                <TableContainer>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Event Name</TableCell>
-                                <TableCell>Category</TableCell>
-                                <TableCell>Start Date</TableCell>
-                                <TableCell>End Date</TableCell>
-                                <TableCell>Max Tickets</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {events.map((event) => (
-                                <TableRow key={event.idEvent}>
-                                    <TableCell>{event.name}</TableCell>
-                                    <TableCell>{event.category}</TableCell>
-                                    <TableCell>{new Date(event.startDate).toLocaleDateString()}</TableCell>
-                                    <TableCell>{new Date(event.endDate).toLocaleDateString()}</TableCell>
-                                    <TableCell>{event.maxTicketCount}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
             </Paper>
 
             <Accordion sx={{ mt: 4 }}>

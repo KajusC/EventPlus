@@ -19,10 +19,9 @@ import TicketView from './pages/tickets/TicketView';
 import TicketEditPage from './pages/tickets/TicketEditPage';
 import TicketPurchasePage from './pages/tickets/TicketPurchacePage';
 import DynamicPricingPanel from './pages/admin/DynamicPricingPanel';
-import { initializeDynamicPricing } from './services/setUpDynamicPricing';
+import TicketScanPage from './pages/tickets/TicketScanPage';
 
 function App() {
-    initializeDynamicPricing(false);
     return (
         <AuthProvider>
             <NotificationProvider>
@@ -52,6 +51,8 @@ function App() {
                             <Route path="/eventedit/:id" element={<EventEdit />} />
                             {/* TO DO/ change to admin \/ */}
                             <Route path="/ticket/edit/:id" element={<TicketEditPage />} />
+                            <Route path="/organiser/scan-ticket" element={<TicketScanPage />} />
+                            <Route path="/dynamic-pricing" element={<DynamicPricingPanel />} />
                             {/* Add more organizer-only routes here */}
                         </Route>
                         

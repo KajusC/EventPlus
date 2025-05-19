@@ -1,4 +1,6 @@
-﻿using eventplus.models.Domain.Tickets;
+﻿using eventplus.models.Domain.Events;
+using eventplus.models.Domain.Sectors;
+using eventplus.models.Domain.Tickets;
 using eventplus.models.Infrastructure.context;
 using eventplus.models.Infrastructure.Persistance.IRepositories;
 using Microsoft.EntityFrameworkCore;
@@ -54,5 +56,85 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
             ticket.ScannedDate = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
             return await _context.SaveChangesAsync() > 0;
         }
-    }
+
+        public Task<int> GetIdByQrCode(string qrCode)
+        {
+            if (string.IsNullOrEmpty(qrCode))
+            {
+                throw new ArgumentNullException(nameof(qrCode), "QR code cannot be null or empty.");
+            }
+            var ticket = _dbSet.FirstOrDefault(t => t.QrCode == qrCode);
+            if (ticket == null)
+            {
+                throw new KeyNotFoundException("Ticket not found.");
+            }
+            return Task.FromResult(ticket.IdTicket);
+        }
+
+        public async Task<bool> UpdateTicketStatusInvalid(int ticketId)
+        {
+            var ticket = await _dbSet.FindAsync(ticketId);
+            if (ticket == null)
+            {
+                return false;
+            }
+
+            var ticketStatus = await _context.Ticketstatuses.FirstOrDefaultAsync(ts => ts.Name == "Invalid");
+
+            if (ticketStatus == null)
+            {
+                throw new KeyNotFoundException("Ticket status of \"Invalid\" not found.");
+            }
+
+            ticket.FkTicketstatus = ticketStatus.IdStatus;
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> UpdateTicketStatusRead(int ticketId)
+        {
+            var ticket = await _dbSet.FindAsync(ticketId);
+            if (ticket == null)
+            {
+                return false;
+            }
+            var ticketStatus = await _context.Ticketstatuses.FirstOrDefaultAsync(ts => ts.Name == "Scanned");
+            if (ticketStatus == null)
+            {
+                throw new KeyNotFoundException("Ticket status of \"Scanned\" not found.");
+            }
+
+            ticket.FkTicketstatus = ticketStatus.IdStatus;
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<List<Ticket>> GetTicketsByUserIdAsync(int userId)
+        {
+            var tickets = await _dbSet
+                .Include(t => t.UserTicket)
+                .ThenInclude(ut => ut.FkUseridUserNavigation)
+                .Where(t => t.UserTicket.FkUseridUser == userId)
+                .ToListAsync();
+            return tickets;
+        }
+		public async Task<List<Ticket>> GetTicketsByEventIdAsync(int eventId)
+		{
+			var tickets = await _dbSet
+				.Include(t => t.FkEventidEventNavigation)
+				.Where(t => t.FkEventidEvent == eventId)
+				.ToListAsync();
+			return tickets;
+		}
+		public async Task<List<SectorPrice>> GetSectorPricesByEventIdAsync(int eventId)
+		{
+			return await _context.SectorPrices
+				.Where(sp => sp.FkEventidEvent == eventId)
+				.ToListAsync();
+		}
+		public async Task<List<Event>> GetSameCategoryEventSectorPricesAsync(int categoryId)
+		{
+			return await _context.Events
+				.Where(e => e.Category == categoryId)
+				.ToListAsync();
+		}
+	}
 }
