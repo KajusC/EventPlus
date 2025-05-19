@@ -39,7 +39,7 @@ function DynamicPricingPanel() {
 
     useEffect(() => {
         // Only admin users should access this panel
-        if (!currentUser || (currentUser.role !== 'Admin' && currentUser.role !== 'Organiser')) {
+        if (!currentUser || (currentUser.role !== 'Administrator' && currentUser.role !== 'Organiser')) {
             return;
         }
 
@@ -144,7 +144,7 @@ function DynamicPricingPanel() {
     };
 
     // If user is not admin, don't render the component
-    if (!currentUser || (currentUser.role !== 'Admin' && currentUser.role !== 'Organiser')) {
+    if (!currentUser || (currentUser.role !== 'Administrator' && currentUser.role !== 'Organiser')) {
         return null;
     }
 

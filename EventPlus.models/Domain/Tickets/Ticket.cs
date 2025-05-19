@@ -37,7 +37,7 @@ public partial class Ticket
 
     public virtual Seating FkSeatingidSeatingNavigation { get; set; } = null!;
 
-    public virtual Ticketstatus FkTicketstatusNavigation { get; set; } = null!;
+    public virtual TicketStatus FkTicketstatusNavigation { get; set; } = null!;
 
     public virtual OrganiserTicket? OrganiserTicket { get; set; }
 

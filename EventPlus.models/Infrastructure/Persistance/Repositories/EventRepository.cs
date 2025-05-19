@@ -94,5 +94,33 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
             _dbSet.Update(eventEntity);
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<List<Event>> GetEventsByUserTicketsAsync(int userId)
+        {
+            var events = await _dbSet
+                .Include(e => e.CategoryNavigation)
+                .Include(e => e.FkEventLocationidEventLocationNavigation)
+                .Include(e => e.FkOrganiseridUserNavigation)
+                .Include(e => e.SectorPrices)
+                .Include(e => e.Tickets)
+                .ThenInclude(t => t.UserTicket)
+                .ThenInclude(ut => ut.FkUseridUserNavigation)
+                .Where(e => e.Tickets.Any(t => t.UserTicket.FkUseridUser == userId))
+                .ToListAsync();
+            return events;
+        }
+
+        public async Task<List<Event>> GetEventsByOrganiserIdAsync(int organiserId)
+        {
+            var events = await _dbSet
+                .Include(e => e.CategoryNavigation)
+                .Include(e => e.FkEventLocationidEventLocationNavigation)
+                .Include(e => e.FkOrganiseridUserNavigation)
+                .Include(e => e.SectorPrices)
+                .Include(e => e.Tickets)
+                .Where(e => e.FkOrganiseridUser == organiserId)
+                .ToListAsync();
+            return events;
+        }
     }
 }

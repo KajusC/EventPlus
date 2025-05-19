@@ -14,6 +14,8 @@ import Profile from './pages/auth/Profile';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import NotificationProvider from './context/NotificationContext';
+import UserRequestAnswersPage from './pages/userRequestAnswer/UserRequestAnswerPage';
+import QuestionManagement from './pages/userRequestAnswer/QuestionManagement';
 import TicketListPage from './pages/tickets/TicketListPage';
 import TicketView from './pages/tickets/TicketView';
 import TicketEditPage from './pages/tickets/TicketEditPage';
@@ -38,11 +40,12 @@ function App() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="tickets/TicketPurchasePage/:eventId" element={<TicketPurchasePage />} />
-                        <Route path="/admin/dynamic-pricing" element={<DynamicPricingPanel />} />
+                        
                         
                         {/* Protected routes (any authenticated user) */}
                         <Route element={<ProtectedRoute />}>
                             <Route path="/profile" element={<Profile />} />
+                            <Route path="/requests" element={<UserRequestAnswersPage />} />
                         </Route>
                         
                         {/* Organizer routes */}
@@ -59,6 +62,8 @@ function App() {
                         {/* Admin routes */}
                         <Route element={<ProtectedRoute requireAdmin={true} />}>
                             {/* Add admin-only routes here */}
+                            <Route path="/admin" element={<QuestionManagement />} />
+                            <Route path="/admin/dynamic-pricing" element={<DynamicPricingPanel />} />
                         </Route>
                     </Routes>
                     <Footer />

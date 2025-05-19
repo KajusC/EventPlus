@@ -11,6 +11,12 @@ namespace eventplus.models.Infrastructure.Persistance.IRepositories
         Task<bool> UpdateTicketStatusInvalid(int ticketId);
         Task<bool> UpdateTicketStatusRead(int ticketId);
         Task<List<Ticket>> GetTicketsByUserIdAsync(int userId);
+    }
+}
+        Task<int> GetIdByQrCode(string qrCode);
+        Task<bool> UpdateTicketStatusInvalid(int ticketId);
+        Task<bool> UpdateTicketStatusRead(int ticketId);
+        Task<List<Ticket>> GetTicketsByUserIdAsync(int userId);
         Task<List<Ticket>> GetTicketsByEventIdAsync(int eventId);
         Task<List<SectorPrice>> GetSectorPricesByEventIdAsync(int eventId);
         Task<List<Event>> GetSameCategoryEventSectorPricesAsync(int categoryId);
