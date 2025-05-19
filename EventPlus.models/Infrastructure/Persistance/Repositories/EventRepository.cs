@@ -122,5 +122,17 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
                 .ToListAsync();
             return events;
         }
+
+        public Task<List<Event>> GetEventsByLocationIdAsync(int locationId)
+        {
+            var events = _dbSet
+                .Include(e => e.CategoryNavigation)
+                .Include(e => e.FkEventLocationidEventLocationNavigation)
+                .Include(e => e.FkOrganiseridUserNavigation)
+                .Include(e => e.SectorPrices)
+                .Include(e => e.Tickets)
+                .Where(e => e.FkEventLocationidEventLocation == locationId);
+            return events.ToListAsync();
+        }
     }
 }

@@ -69,6 +69,17 @@ namespace EventPlus.Server.Application.Handlers
             var feedbackEntity = await _feedbackRepository.GetFeedbackByIdAsync(id);
             return _mapper.Map<FeedbackViewModel>(feedbackEntity);
         }
+
+        public async Task<List<FeedbackViewModel>> GetFeedbackByLocationIdAsync(int locationId)
+        {
+            if (locationId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(locationId), "Location ID must be greater than zero.");
+            }
+
+            var feedbacks = await _feedbackRepository.GetFeedbacksByLocationIdAsync(locationId);
+            return _mapper.Map<List<FeedbackViewModel>>(feedbacks);
+        }
         public async Task<List<FeedbackViewModel>> GetFeedbacksByEventIdAsync(int eventId)
         {
             if (eventId <= 0)

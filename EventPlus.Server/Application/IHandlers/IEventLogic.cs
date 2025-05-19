@@ -15,19 +15,21 @@ namespace EventPlus.Server.Application.IHandlers
         Task<EventLocation> CreateEventLocation(EventLocationViewModel eventLocation);
         Task<Partner> CreatePartners(PartnerViewModel eventPartners);
         Task<Performer> CreatePerformers(PerformerViewModel eventPerformers);
-		Task<Sector> CreateSectors(SectorViewModel eventPartners);
+        Task<Sector> CreateSectors(SectorViewModel eventPartners);
 
-		Task<int> CreateFullEvent(EventViewModel eventViewModel,
+        Task<int> CreateFullEvent(EventViewModel eventViewModel,
             EventLocationViewModel eventLocation,
             PartnerViewModel partner,
             PerformerViewModel performer,
             SectorViewModel sector,
             List<SectorViewModel> sectors,
-			List<SectorPriceViewModel> sectorPrice,
-			List<SeatingViewModel> seating);
+            List<SectorPriceViewModel> sectorPrice,
+            List<SeatingViewModel> seating);
 
         Task<List<EventViewModel>> GetEventsByCategoryAsync(int categoryId);
         Task<List<EventViewModel>> GetEventsByUserTicketsAsync(int userId);
-		Task<List<EventViewModel>> GetEventsByOrganiserIdAsync(int organiserId);
+        Task<List<EventViewModel>> GetEventsByOrganiserIdAsync(int organiserId);
+        Task<List<EventViewModel>> GetEventsByLocationIdAsync(int locationId);
+        Task<List<EventLocationViewModel>> GetSuggestedLocationsAsync(int? capacity, decimal? price, int? categoryId);
     }
 }
