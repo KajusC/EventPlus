@@ -17,10 +17,6 @@ namespace EventPlus.Server.Application.IHandlers
         Task<TicketValidationResult> DecryptQrCode(string qrCode);
         Task<bool> UpdateTicketScanTime(int ticketId);
         Task<List<TicketViewModel>> GetTicketsByUserIdAsync(int userId);
-        Task<byte[]> GenerateTicketPdfAsync(int ticketId);
-        Task<TicketValidationResult> DecryptQrCode(string qrCode);
-        Task<bool> UpdateTicketScanTime(int ticketId);
-        Task<List<TicketViewModel>> GetTicketsByUserIdAsync(int userId);
         Task<double> InitiliazeBuyWeight();
         Task<ActionResult<List<EventViewModel>>> CollectEventsData();
         Task<ActionResult<List<TicketViewModel>>> FetchAllEventTickets(int eventId);
