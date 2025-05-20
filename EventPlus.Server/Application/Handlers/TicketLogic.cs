@@ -328,11 +328,6 @@ namespace EventPlus.Server.Application.Handlers
             var tickets = await _ticketRepository.GetTicketsByEventIdAsync(eventId);
             return _mapper.Map<List<TicketViewModel>>(tickets);
         }
-		public async Task<ActionResult<List<SectorPriceViewModel>>> FetchAllEventSectorPrices(int eventId)
-		{
-			var sectorPrices = await _ticketRepository.GetSectorPricesByEventIdAsync(eventId);
-			return _mapper.Map<List<SectorPriceViewModel>>(sectorPrices);
-		}
 		public double RemainingWaitingTime(EventViewModel eventData)
         {
 			var currentDate = DateOnly.FromDateTime(DateTime.Today);
@@ -370,7 +365,7 @@ namespace EventPlus.Server.Application.Handlers
 		{
 			return buyWeight -= weight;
 		}
-		public async Task<List<double>> CollectSameCategoryEventSectorPricesAsync(int? categoryId)
+		public async Task<List<double>> CollectSameCategoryEventSectorPrices(int? categoryId)
 		{
 			int catId = categoryId ?? 0;
 

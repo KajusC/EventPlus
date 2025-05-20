@@ -58,8 +58,7 @@ namespace EventPlus.Server.Services
 					foreach (var e in eventList) // seq truksta loop?
 					{
 						var eventTickets = await _ticketLogic.FetchAllEventTickets(e.IdEvent);
-						var eventSectorPrice = await _ticketLogic.FetchAllEventSectorPrices(e.IdEvent);
-						var eventSameCategorySectorPrice = await _ticketLogic.CollectSameCategoryEventSectorPricesAsync(e.IdEvent);
+						var eventSameCategorySectorPrice = await _ticketLogic.CollectSameCategoryEventSectorPrices(e.IdEvent);
 						var organiser = await _ticketLogic.GetOrganiserByEvent(e.FkOrganiseridUser);
 						var task1 = Task.Run(() => {
 							var task1BW = buyWeight;

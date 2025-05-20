@@ -20,13 +20,11 @@ namespace EventPlus.Server.Application.IHandlers
         Task<double> InitiliazeBuyWeight();
         Task<ActionResult<List<EventViewModel>>> CollectEventsData();
         Task<ActionResult<List<TicketViewModel>>> FetchAllEventTickets(int eventId);
-        Task<ActionResult<List<SectorPriceViewModel>>> FetchAllEventSectorPrices(int eventId);
         Task MultiplyWeightAndSectorPrices(int eventId, double buyWeight);
         double RemainingEventTicketQuantity(EventViewModel eventData, List<TicketViewModel> tickets);
 		double SoldEventTicketSpeed(EventViewModel eventData, List<TicketViewModel> tickets, int monthPeriod = 1);
         double RemainingWaitingTime(EventViewModel eventData);
-        Task<List<double>> CollectSameCategoryEventSectorPricesAsync(int? categoryId);
-
+        Task<List<double>> CollectSameCategoryEventSectorPrices(int? categoryId);
 		double IncludeToWeight(double buyWeight, double adjustment);
         double IncreaseBuyWeight(double buyWeight, double weight = 0.1);
         double LowerBuyWeight(double buyWeight, double weight = 0.1);

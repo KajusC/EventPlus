@@ -114,46 +114,45 @@ namespace EventPlus.Server.Controllers
 			foreach (var e in eventList)
 			{
 				var eventTickets = await _ticketLogic.FetchAllEventTickets(e.IdEvent); //5-6
-				var eventSectorPrice = await _ticketLogic.FetchAllEventSectorPrices(e.IdEvent);//7-8
-				var eventSameCategorySectorPrice = await _ticketLogic.CollectSameCategoryEventSectorPricesAsync(e.IdEvent);// 
-				var organiser = await _ticketLogic.GetOrganiserByEvent(e.FkOrganiseridUser);
+				var eventSameCategorySectorPrice = await _ticketLogic.CollectSameCategoryEventSectorPrices(e.IdEvent);//7-8 
+				var organiser = await _ticketLogic.GetOrganiserByEvent(e.FkOrganiseridUser);//9-10
 				var task1 = Task.Run(() => {
                     var task1BW = buyWeight;
-					var speedWeight = _ticketLogic.SoldEventTicketSpeed(e, eventTickets.Value);
-					if (speedWeight > 10)
-						task1BW = _ticketLogic.IncreaseBuyWeight(task1BW);
-					else if (speedWeight < 1)
-						task1BW = _ticketLogic.LowerBuyWeight(task1BW);
+					var speedWeight = _ticketLogic.SoldEventTicketSpeed(e, eventTickets.Value);//11
+					if (speedWeight < 1)
+						task1BW = _ticketLogic.LowerBuyWeight(task1BW); //12
+					else if (speedWeight > 10)
+						task1BW = _ticketLogic.IncreaseBuyWeight(task1BW); //13
 
-                    var quantityWeight = _ticketLogic.RemainingEventTicketQuantity(e, eventTickets.Value);
+					var quantityWeight = _ticketLogic.RemainingEventTicketQuantity(e, eventTickets.Value);//14
 					if (quantityWeight > 90)
-						task1BW = _ticketLogic.LowerBuyWeight(task1BW);
+						task1BW = _ticketLogic.LowerBuyWeight(task1BW); //15
 					else if (quantityWeight < 20)
-						task1BW = _ticketLogic.IncreaseBuyWeight(task1BW);
+						task1BW = _ticketLogic.IncreaseBuyWeight(task1BW); //16
 
-			        var monthsUntilEvent = _ticketLogic.RemainingWaitingTime(e);
+			        var monthsUntilEvent = _ticketLogic.RemainingWaitingTime(e);//17
 					if (monthsUntilEvent >= 6)
-						task1BW = _ticketLogic.LowerBuyWeight(task1BW);
+						task1BW = _ticketLogic.LowerBuyWeight(task1BW); //18
 					else if (monthsUntilEvent < 1)
-						task1BW = _ticketLogic.IncreaseBuyWeight(task1BW);
+						task1BW = _ticketLogic.IncreaseBuyWeight(task1BW); //19
                     return task1BW;
 				});
 
 				var task2 = Task.Run(() => {
-					var mode = _ticketLogic.CalculateModeAndMultiply(eventSameCategorySectorPrice);
-					return _ticketLogic.IncludeToWeight(buyWeight, mode);
+					var mode = _ticketLogic.CalculateModeAndMultiply(eventSameCategorySectorPrice);//20
+					return _ticketLogic.IncludeToWeight(buyWeight, mode);//21
 				});
 
 				var task3 = Task.Run(() => {
 					double result = buyWeight;
 					if (organiser.Rating < 3)
-						result = _ticketLogic.LowerBuyWeight(result);
+						result = _ticketLogic.LowerBuyWeight(result);//22
 					else if (organiser.Rating > 8.5)
-						result = _ticketLogic.IncreaseBuyWeight(result);
+						result = _ticketLogic.IncreaseBuyWeight(result);//23
 					if (organiser.FollowerCount < 1000)
-						result = _ticketLogic.LowerBuyWeight(result);
+						result = _ticketLogic.LowerBuyWeight(result);//24
 					else if (organiser.FollowerCount > 100000)
-						result = _ticketLogic.IncreaseBuyWeight(result);
+						result = _ticketLogic.IncreaseBuyWeight(result);//25
 					return result;
 				});
 
@@ -162,7 +161,7 @@ namespace EventPlus.Server.Controllers
 				var result2 = task2.Result-1;
 				var result3 = task3.Result-1;
 				var final = (1+result1 + result2 + result3);
-				await _ticketLogic.MultiplyWeightAndSectorPrices(e.IdEvent, final);
+				await _ticketLogic.MultiplyWeightAndSectorPrices(e.IdEvent, final);//26
 			}
 			return Ok();
 		}
