@@ -123,10 +123,10 @@ namespace EventPlus.Server.Application.Handlers
 			{
 				throw new ArgumentNullException(nameof(eventViewModel));
 			}
-			if (eventLocation == null)
-			{
-				throw new ArgumentNullException(nameof(eventLocation));
-			}
+			if (eventLocation == null && (sectors != null && sectors.Any()))
+            {
+                throw new ArgumentNullException(nameof(eventLocation), "EventLocation cannot be null if sectors are provided or if a new location is intended.");
+            }
 
 			try
 			{
@@ -135,40 +135,91 @@ namespace EventPlus.Server.Application.Handlers
 					throw new ArgumentException("Invalid event data.");
 				}
 
-				var locationCreated = await CreateEventLocation(eventLocation);
-				if (locationCreated == null)
-				{
-					throw new Exception("Failed to create event location.");
-				}
+				EventLocation locationToAssociate = null;
+				int? finalLocationIdForEvent = null; // Laikys galutinį ID, kuris bus priskirtas renginiui
 
-				eventViewModel.FkEventLocationidEventLocation = locationCreated.IdEventLocation;
+                if (eventLocation != null && eventLocation.IdEventLocation > 0)
+                {
+                    locationToAssociate = await _unitOfWork.EventLocations.GetByIdAsync(eventLocation.IdEventLocation);
+                    if (locationToAssociate == null)
+                    {
+                        throw new KeyNotFoundException($"Supplied EventLocation ID {eventLocation.IdEventLocation} not found.");
+                    }
+                    finalLocationIdForEvent = locationToAssociate.IdEventLocation;
+                }
+                else if (eventLocation != null && !string.IsNullOrWhiteSpace(eventLocation.Name))
+                {
+                    // Kuriam naują vietą
+                    var locationMapped = _mapper.Map<EventLocation>(eventLocation);
+                    await _unitOfWork.EventLocations.CreateAsync(locationMapped);
+                    await _unitOfWork.SaveAsync(); // <<< SVARBU: Išsaugome naują vietą, kad gautume jos ID
+                    locationToAssociate = locationMapped;
+                    finalLocationIdForEvent = locationToAssociate.IdEventLocation;
+                }
+                else if (eventLocation == null && (sectors == null || !sectors.Any()))
+                {
+                    // Leidžiama situacija, kai renginys neturi fizinės vietos IR neturi sektorių
+                }
+                else
+                {
+                    throw new ArgumentException("Event location details are missing or invalid for creating/assigning a location.");
+                }
 
-				var eventCreated = await CreateEventAsync(eventViewModel);
-				if (eventCreated <= 0)
-				{
-					throw new Exception("Failed to create event.");
-				}
+				
+				if (finalLocationIdForEvent.HasValue)
+                {
+                    eventViewModel.FkEventLocationidEventLocation = finalLocationIdForEvent.Value;
+                }
+                else if (eventViewModel.FkEventLocationidEventLocation > 0) // Jei ID jau buvo nustatytas anksčiau
+                {
+                    var existingLocCheck = await _unitOfWork.EventLocations.GetByIdAsync(eventViewModel.FkEventLocationidEventLocation);
+                    if (existingLocCheck == null)
+                    {
+                        throw new KeyNotFoundException($"EventViewModel.FkEventLocationidEventLocation {eventViewModel.FkEventLocationidEventLocation} refers to a non-existent location.");
+                    }
+                    // finalLocationIdForEvent lieka null, nes eventViewModel.FkEventLocationidEventLocation jau teisingas
+                }
 
-				int eventId = eventCreated;
 
-				var createdSectors = new Dictionary<int, Sector>();
+                // Dabar kuriam renginį. eventViewModel jau turi teisingą FkEventLocationidEventLocation.
+                // CreateEventAsync turėtų taip pat išsaugoti ir grąžinti TIKRĄ ID.
+                // Jei CreateEventAsync pats neišsaugo, reikėtų daryti panašiai:
+                // var eventEntity = _mapper.Map<Event>(eventViewModel);
+                // await _unitOfWork.Events.AddAsync(eventEntity);
+                // await _unitOfWork.SaveAsync(); // <<< Išsaugome renginį
+                // int eventId = eventEntity.IdEvent;
+                // Vietoj to, jei CreateEventAsync jau tai daro:
+                var eventId = await CreateEventAsync(eventViewModel);
+                if (eventId <= 0)
+                {
+                    throw new Exception("Failed to create event or retrieve its ID.");
+                }
 
-				if (sectors != null && sectors.Count > 0)
-				{
-					Console.WriteLine($"Processing {sectors.Count} sectors");
+                var createdSectors = new Dictionary<int, Sector>();
 
-					for (int i = 0; i < sectors.Count; i++)
-					{
-						var s = sectors[i];
-						s.FkEventLocationidEventLocation = locationCreated.IdEventLocation;
+                if (sectors != null && sectors.Count > 0)
+                {
+                    // Patikriname, ar turime su kuo susieti sektorius
+                    int? locationIdForSectors = locationToAssociate?.IdEventLocation ?? (eventViewModel.FkEventLocationidEventLocation > 0 ? eventViewModel.FkEventLocationidEventLocation : (int?)null);
+                    if (!locationIdForSectors.HasValue)
+                    {
+                        throw new ArgumentException("Cannot create sectors without an associated event location ID.");
+                    }
 
-						Console.WriteLine($"Creating sector {i}: {s.Name}, Location ID: {s.FkEventLocationidEventLocation}");
+                    Console.WriteLine($"Processing {sectors.Count} sectors");
 
-						var sectorCreated = await CreateSectors(s);
-						createdSectors.Add(i, sectorCreated);
+                    for (int i = 0; i < sectors.Count; i++)
+                    {
+                        var s = sectors[i];
+                        s.FkEventLocationidEventLocation = locationIdForSectors.Value; // Naudojame jau gautą ID
 
-						Console.WriteLine($"Created sector with database ID: {sectorCreated.IdSector}");
-					}
+                        Console.WriteLine($"Creating sector {i}: {s.Name}, Location ID: {s.FkEventLocationidEventLocation}");
+
+                        var sectorCreated = await CreateSectors(s);
+                        createdSectors.Add(i, sectorCreated);
+
+                        Console.WriteLine($"Created sector with database ID: {sectorCreated.IdSector}");
+                    }
 
 					if (sectorPrices != null && sectorPrices.Count > 0)
 					{
@@ -223,9 +274,14 @@ namespace EventPlus.Server.Application.Handlers
 				}
 				else if (sector != null)
 				{
-					sector.FkEventLocationidEventLocation = locationCreated.IdEventLocation;
-					await CreateSectors(sector);
-				}
+					int? locationIdForSingleSector = locationToAssociate?.IdEventLocation ?? (eventViewModel.FkEventLocationidEventLocation > 0 ? eventViewModel.FkEventLocationidEventLocation : finalLocationIdForEvent);
+                    if (!locationIdForSingleSector.HasValue)
+                    {
+                        throw new ArgumentException("Cannot create a single sector without an associated event location ID.");
+                    }
+                    sector.FkEventLocationidEventLocation = locationIdForSingleSector.Value;
+                    await CreateSectors(sector);
+                }
 
 				if (partner != null && !string.IsNullOrEmpty(partner.Name))
 				{
@@ -357,5 +413,50 @@ namespace EventPlus.Server.Application.Handlers
 			var events = await _unitOfWork.Events.GetEventsByOrganiserIdAsync(organiserId);
 			return _mapper.Map<List<EventViewModel>>(events);
 		}
+
+		public async Task<List<EventViewModel>> GetEventsByLocationIdAsync(int locationId) // Pataisytas metodas
+        {
+            var events = await _unitOfWork.Events.GetEventsByLocationIdAsync(locationId); // Tarkime, šis metodas grąžina Task<List<Event>>
+            return _mapper.Map<List<EventViewModel>>(events);
+        }
+
+        public async Task<List<EventLocationViewModel>> GetSuggestedLocationsAsync(int? capacity, decimal? price, int? categoryId) // Implementuotas metodas
+        {
+            var allLocationEntities = await _unitOfWork.EventLocations.GetAllAsync();
+            IEnumerable<EventLocation> query = allLocationEntities.AsEnumerable(); // Naudojame AsEnumerable LINQ to Objects operacijoms
+
+            if (capacity.HasValue && capacity.Value > 0)
+			{
+				query = query.Where(loc => loc.Capacity >= capacity.Value);
+			}
+			else if (capacity.HasValue && capacity.Value == 0)
+			{
+				return new List<EventLocationViewModel>();
+			}
+
+            if (price.HasValue && price.Value > 0)
+			{
+				query = query.Where(loc => loc.Price <= (double)price.Value);
+			}
+			else if (price.HasValue && price.Value == 0)
+			{
+				return new List<EventLocationViewModel>();
+			}
+
+            if (categoryId.HasValue)
+            {
+                var allEvents = await _unitOfWork.Events.GetAllAsync();
+                var relevantLocationIds = allEvents
+                    .Where(ev => ev.Category == categoryId.Value && ev.FkEventLocationidEventLocation > 0)
+                    .Select(ev => ev.FkEventLocationidEventLocation)
+                    .Distinct()
+                    .ToHashSet();
+
+                query = query.Where(loc => relevantLocationIds.Contains(loc.IdEventLocation));
+            }
+
+            var resultLocations = query.ToList();
+            return _mapper.Map<List<EventLocationViewModel>>(resultLocations);
+        }
     }
 }

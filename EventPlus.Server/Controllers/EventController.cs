@@ -20,6 +20,14 @@ namespace EventPlus.Server.Controllers
 		private readonly ISeatingLogic _seatingLogic;
 		private readonly IOrganiserLogic _organiserLogic;
 
+		private const double EVENT_COUNT_AVG_THRESHOLD_INCREASE = 3.0;
+        private const double EVENT_COUNT_AVG_THRESHOLD_DECREASE = 1.0;
+        private const int PAST_EVENTS_REVIEW_COUNT_THRESHOLD_INCREASE = 30;
+        private const int PAST_EVENTS_REVIEW_COUNT_THRESHOLD_DECREASE = 10;
+        private const double VIEWERS_AVG_THRESHOLD_INCREASE = 200.0;
+        private const double VIEWERS_AVG_THRESHOLD_DECREASE = 50.0;
+        private const double SUITABILITY_INDEX_INCREMENT = 0.2;
+        private const double SUITABILITY_INDEX_DECREMENT = 0.1;
 		public EventController(
 			IEventLogic eventLogic,
 			ITicketLogic ticketLogic,
@@ -302,6 +310,188 @@ namespace EventPlus.Server.Controllers
 			var boughtTickets = await _ticketLogic.GetTicketsByUserIdAsync(userId);
 			return boughtTickets;
 		}
+
+		 [HttpGet("location/{id}/ratings")]
+        public async Task<ActionResult<List<FeedbackViewModel>>> GetLocationRatings(int id)
+        {
+            var ratings = await _feedbackLogic.GetFeedbackByLocationIdAsync(id);
+            return Ok(ratings);
+        }
+
+
+        [HttpPost("venue-suitability")]
+        [Authorize(Roles = "Organiser,Administrator")]
+        public async Task<ActionResult<List<EventLocationViewModel>>> GetVenueSuitabilityRecommendations([FromBody] EventViewModel eventFormData)
+        {
+            if (!CheckEventFormDataInternal(eventFormData))
+            {
+                return BadRequest("Invalid event form data for suitability check.");
+            }
+
+            var locationSuitabilityScores = new Dictionary<int, double>();
+
+            var initialSuitabilityLocations = await GetSuitableLocationListInternal(eventFormData);
+
+            if (initialSuitabilityLocations == null || !initialSuitabilityLocations.Any())
+            {
+                return Ok(new { Message = "No suitable venues found based on initial criteria.", RecommendedVenues = new List<EventLocationViewModel>() });
+            }
+
+            foreach (var loc in initialSuitabilityLocations)
+            {
+                locationSuitabilityScores[loc.IdEventLocation] = 1.0; // Base score
+            }
+            
+            foreach (var location in initialSuitabilityLocations)
+            {
+                var pastEvents = await GetPastEventsDataInternal(location.IdEventLocation);
+
+                if (pastEvents.Any())
+                {
+                    double avgEventCount = EvaluateEventCountAvgInternal(pastEvents);
+                    if (avgEventCount > EVENT_COUNT_AVG_THRESHOLD_INCREASE) // e.g., if avg events > 3
+                    {
+                        IncreaseSuitabilityIndexInternal(locationSuitabilityScores, location.IdEventLocation, SUITABILITY_INDEX_INCREMENT);
+                    }
+                    else if (avgEventCount < EVENT_COUNT_AVG_THRESHOLD_DECREASE) // e.g., if avg events < 1
+                    {
+                        DecreaseSuitabilityIndexInternal(locationSuitabilityScores, location.IdEventLocation, SUITABILITY_INDEX_DECREMENT);
+                    }
+
+                    var eventIdsAtLocation = pastEvents.Select(e => e.IdEvent).ToList();
+                    var feedbacksForLocationEvents = await GetDataInternal_Feedback(eventIdsAtLocation);
+
+                    if (feedbacksForLocationEvents.Any())
+                    {
+                        int reviewCount = EvaluatePastEventsReviewCountInternal(feedbacksForLocationEvents);
+                        if (reviewCount > PAST_EVENTS_REVIEW_COUNT_THRESHOLD_INCREASE) // e.g., if review count > 30
+                        {
+                            IncreaseSuitabilityIndexInternal(locationSuitabilityScores, location.IdEventLocation, SUITABILITY_INDEX_INCREMENT);
+                        }
+                        else if (reviewCount < PAST_EVENTS_REVIEW_COUNT_THRESHOLD_DECREASE) // e.g., if review count < 10
+                        {
+                            DecreaseSuitabilityIndexInternal(locationSuitabilityScores, location.IdEventLocation, SUITABILITY_INDEX_DECREMENT);
+                        }
+                    }
+
+                    var ticketsForLocationEvents = await GetSoldTicketsInternal(eventIdsAtLocation); // Assuming this gets all relevant tickets
+
+                    if (ticketsForLocationEvents.Any())
+                    {
+                        double avgViewers = EvaluateViewersAvgInternal(ticketsForLocationEvents);
+                        if (avgViewers > VIEWERS_AVG_THRESHOLD_INCREASE) // e.g., if avg viewers > 200
+                        {
+                            IncreaseSuitabilityIndexInternal(locationSuitabilityScores, location.IdEventLocation, SUITABILITY_INDEX_INCREMENT);
+                        }
+                        else if (avgViewers < VIEWERS_AVG_THRESHOLD_DECREASE) // e.g., if avg viewers < 50
+                        {
+                            DecreaseSuitabilityIndexInternal(locationSuitabilityScores, location.IdEventLocation, SUITABILITY_INDEX_DECREMENT);
+                        }
+                    }
+                }
+            }
+
+            var recommendedVenues = CreatePlaceListInternal(initialSuitabilityLocations, locationSuitabilityScores);
+
+            if (!recommendedVenues.Any())
+            {
+                 return Ok(new { Message = "Not Found: No venues meet the refined suitability criteria.", RecommendedVenues = new List<EventLocationViewModel>() });
+            }
+            
+            return Ok(new { Message = "Venue recommendations generated.", RecommendedVenues = recommendedVenues });
+        }
+
+        private bool CheckEventFormDataInternal(EventViewModel eventData)
+        {
+            if (eventData == null) return false;
+            if (string.IsNullOrWhiteSpace(eventData.Name)) return false;
+            if (eventData.StartDate == null || eventData.EndDate == null) return false;
+            if (eventData.MaxTicketCount < 0) return false;
+            if (eventData.Category == null || eventData.Category <= 0) return false;
+            return true;
+        }
+        private async Task<List<EventLocationViewModel>> GetSuitableLocationListInternal(EventViewModel eventData)
+        {
+            return await _eventLogic.GetSuggestedLocationsAsync(
+                eventData.MaxTicketCount,
+                eventData.Budget,
+                eventData.Category
+            );
+        }
+
+        private async Task<List<EventViewModel>> GetPastEventsDataInternal(int locationId)
+        {
+            return await _eventLogic.GetEventsByLocationIdAsync(locationId);
+        }
+
+        private double EvaluateEventCountAvgInternal(List<EventViewModel> pastEvents)
+        {
+            if (pastEvents == null || !pastEvents.Any()) return 0.0;
+            return pastEvents.Count; 
+        }
+
+        private void IncreaseSuitabilityIndexInternal(Dictionary<int, double> scores, int locationId, double amount)
+        {
+            if (scores.ContainsKey(locationId))
+            {
+                scores[locationId] += amount;
+            }
+        }
+
+        private void DecreaseSuitabilityIndexInternal(Dictionary<int, double> scores, int locationId, double amount)
+        {
+            if (scores.ContainsKey(locationId))
+            {
+                scores[locationId] -= amount;
+                if (scores[locationId] < 0) scores[locationId] = 0;
+            }
+        }
+        private async Task<List<FeedbackViewModel>> GetDataInternal_Feedback(List<int> eventIds)
+        {
+            var allFeedbacks = new List<FeedbackViewModel>();
+            if (eventIds == null || !eventIds.Any()) return allFeedbacks;
+
+            foreach (var eventId in eventIds)
+            {
+                var feedbacks = await _feedbackLogic.GetFeedbacksByEventIdAsync(eventId);
+                if (feedbacks != null) allFeedbacks.AddRange(feedbacks);
+            }
+            return allFeedbacks;
+        }
+        
+        private int EvaluatePastEventsReviewCountInternal(List<FeedbackViewModel> feedbacks)
+        {
+            return feedbacks?.Count ?? 0;
+        }
+
+        private async Task<List<TicketViewModel>> GetSoldTicketsInternal(List<int> eventIdsAtLocation)
+        {
+            var allTickets = new List<TicketViewModel>();
+            if (eventIdsAtLocation == null || !eventIdsAtLocation.Any()) return allTickets;
+
+            var allSystemTickets = await _ticketLogic.GetAllTicketsAsync();
+            foreach (var eventId in eventIdsAtLocation)
+            {
+                allTickets.AddRange(allSystemTickets.Where(t => t.FkEventidEvent == eventId));
+            }
+            return allTickets;
+        }
+        
+        private double EvaluateViewersAvgInternal(List<TicketViewModel> tickets)
+        {
+            if (tickets == null || !tickets.Any()) return 0.0;
+            var ticketsByEvent = tickets.GroupBy(t => t.FkEventidEvent);
+            if (!ticketsByEvent.Any()) return 0.0;
+            return ticketsByEvent.Average(g => g.Count());
+        }
+
+        private List<EventLocationViewModel> CreatePlaceListInternal(List<EventLocationViewModel> allLocations, Dictionary<int, double> scores)
+        {
+            return allLocations
+                .Where(loc => scores.ContainsKey(loc.IdEventLocation) && scores[loc.IdEventLocation] > 0) 
+                .OrderByDescending(loc => scores[loc.IdEventLocation])
+                .ToList();
+        }
 
 		public class CompleteEvent
 		{

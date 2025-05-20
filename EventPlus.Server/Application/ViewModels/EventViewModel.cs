@@ -13,5 +13,6 @@ namespace EventPlus.Server.Application.ViewModels
         public int? Category { get; set; }
         public int FkEventLocationidEventLocation { get; set; }
         public int FkOrganiseridUser { get; set; }
+        public decimal Budget { get; set; }
     }
 }

@@ -4,7 +4,7 @@ namespace EventPlus.Server.Application.IHandlers
 {
     public interface IFeedbackLogic
     {
-        Task<bool> CreateFeedbackAsync(FeedbackViewModel feedbackViewModel, int userId,string role);
+        Task<bool> CreateFeedbackAsync(FeedbackViewModel feedbackViewModel, int userId, string role);
         Task<bool> UpdateFeedbackAsync(FeedbackViewModel feedback);
         Task<bool> DeleteFeedbackAsync(int id);
         Task<FeedbackViewModel> GetFeedbackByIdAsync(int id);
@@ -13,5 +13,6 @@ namespace EventPlus.Server.Application.IHandlers
         Task<List<FeedbackViewModel>> GetFeedbacksByEventIdAsync(int eventId);
         Task<List<FeedbackViewModel>> GetFeedbacksByUserIdAsync(int userId);
         Task<bool> DeleteEventFeedbacks(int eventId);
+        Task<List<FeedbackViewModel>> GetFeedbackByLocationIdAsync(int locationId);
     }
 }

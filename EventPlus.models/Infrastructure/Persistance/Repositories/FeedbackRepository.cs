@@ -172,5 +172,23 @@ namespace eventplus.models.Infrastructure.Persistance.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<List<Feedback>> GetFeedbacksByLocationIdAsync(int locationId)
+        {
+            var eventIdsInLocation = await _context.Events
+                                              .Where(e => e.FkEventLocationidEventLocation == locationId)
+                                              .Select(e => e.IdEvent)
+                                              .ToListAsync();
+
+            if (!eventIdsInLocation.Any())
+            {
+                return new List<Feedback>();
+            }
+
+            return await _feedbacks
+                               .Where(f => eventIdsInLocation.Contains(f.FkEventidEvent))
+                               .Include(f => f.FkEventidEventNavigation)
+                               .ToListAsync();
+        }
     }
 }
